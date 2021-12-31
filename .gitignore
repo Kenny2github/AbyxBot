@@ -1,0 +1,6 @@
+.vs*
+*.pyc
+__pycache__/
+*.egg*
+config.json
+*.db
