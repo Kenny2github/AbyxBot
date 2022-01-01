@@ -1,16 +1,18 @@
-from discord.ext.commands import command, Cog, Context, Bot
-from .i18n import Msg
+from discord.ext.slash import SlashBot, cmd
+from .i18n import Context
 
-class Miscellaneous(Cog):
-    """misc/cog-desc"""
+class Miscellaneous:
+    """Miscellaneous commands with no clear thread."""
 
-    @command(brief='misc/hello-desc')
+    @cmd()
     async def hello(self, ctx: Context):
-        await ctx.send(Msg(ctx, 'hello'))
+        """Test whether the bot is running! Simply says "Hello World!"."""
+        await ctx.respond(ctx.msg('hello'), ephemeral=True)
 
-    @command(brief='misc/hmmst-desc')
+    @cmd()
     async def hmmst(self, ctx: Context):
-        await ctx.send(Msg(ctx, 'hmmst'))
+        """hmmst"""
+        await ctx.respond(ctx.msg('hmmst'))
 
-def setup(bot: Bot):
-    bot.add_cog(Miscellaneous())
+def setup(bot: SlashBot):
+    bot.add_slash_cog(Miscellaneous())

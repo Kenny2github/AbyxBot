@@ -1,6 +1,5 @@
 import discord
 from discord.ext import tasks, commands
-from .config import PREFIX
 
 class SetStatus:
     def __init__(self, bot: commands.Bot):
@@ -12,7 +11,7 @@ class SetStatus:
         if self.task.current_loop & 1:
             message = f'{len(self.bot.users)} people'
         else:
-            message = PREFIX + 'help'
+            message = '/help'
         await self.bot.change_presence(activity=discord.Activity(
             type=discord.ActivityType.watching, name=message))
 

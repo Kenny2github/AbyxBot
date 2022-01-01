@@ -1,9 +1,9 @@
 import os
 import asyncio
 from discord.ext import commands
-from .logger import getLogger
+from .logger import get_logger
 
-logger = getLogger('watcher')
+logger = get_logger('watcher')
 
 mtimes: dict[str, float] = {}
 

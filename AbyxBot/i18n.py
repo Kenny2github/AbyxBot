@@ -1,275 +1,191 @@
 from __future__ import annotations
 import os
+import time
 import json
-from typing import Iterable, Union
+from typing import Any, Iterable, Optional, Union
 import aiofiles
 import discord
-from discord.ext import commands
-from .chars import LABR, RABR, DONE
+from discord.ext import slash
+from .chars import LABR, RABR
+from .logger import get_logger
 from .db import db
-from .logger import getLogger
-from .utils import lone_group
 
-ROOT = 'l10n' # TODO: change to i18n
+ROOT = 'i18n'
 SUPPORTED_LANGS = set(
     fn[:-5] for fn in os.listdir(ROOT) if fn.endswith('.json'))
 
-logger = getLogger('i18n')
-
-IDContext = Union[commands.Context, discord.abc.Snowflake]
+logger = get_logger('i18n')
 
 class Msg:
-    """Represents an i18n string by key."""
+    """An i18n message.
 
-    unformatted: dict[str, dict[str, str]] = {}
-    user_langs: dict[int, str] = {}
-    channel_langs: dict[int, str] = {}
+    This can be initialized with a language code or a context from
+    which to get it, like a slash.Context or discord.User or channel.
 
-    def __init__(
-        self,
-        ctx: Union[commands.Context, str],
-        key: str = None, *params: str,
-        lang: str = None, **kwparams: str
-    ):
-        if lang is not None:
-            self.lang = lang
-            if key is not None:
-                params = (key, *params)
-            key = ctx # Msg(key, ..., lang=...)
-        elif isinstance(ctx, commands.Context):
-            self.set_lang(ctx)
-        else:
-            self.lang = None
-            if key is not None:
-                params = (key, *params)
-            key = ctx # Msg(key, ...)
-        self.key = key
-        self.params = params
-        self.kwparams = kwparams
-        if self.lang is None:
-            self.message = None
-        else:
-            self.set_message()
+    Or it can be lazily initialized (preferred when being directly
+    instantiated) and have its language set by other functions
+    in this module.
+    """
 
-    def set_message(self):
-        if self.lang == 'qqx':
-            self.message = f'({self.default()})'
-        else:
-            self.message = self.unformatted[self.lang].get(self.key)
-            if self.message is None:
-                self.message = self.unformatted['en'].get(self.key)
-            if self.message is None:
-                self.message = LABR + self.default() + RABR
+    # class attributes
+    unformatted: dict[str, dict[str, str]] = {} # unformatted message strings
+    user_langs: dict[int, str] = {} # user language settings
+    channel_langs: dict[int, str] = {} # channel language settings
 
-    def __str__(self) -> str:
-        """Format the message and return it for use."""
-        if self.message is None:
-            if self.lang is None:
-                return f'<Msg key={self.key} params={self.params} ' \
-                    f'kwparams={self.kwparams}>'
-            # lang is no longer None, finally get the string
-            self.set_message()
-        return self.message.format(*self.params, **self.kwparams)
-
-    def __add__(self, other: str) -> str:
-        return str(self) + str(other)
-
-    def __radd__(self, other: str) -> str:
-        return str(other) + str(self)
-
-    def default(self) -> str:
-        """Default message (without brackets) if no i18n available."""
-        result = self.key
-        if self.params or self.kwparams:
-            result += ': '
-        if self.params:
-            result += ', '.join(
-                f'{{{i}}}' for i in range(len(self.params)))
-        if self.kwparams:
-            if self.params:
-                result += ', '
-            result += ', '.join(
-                f'{key}={{{key}}}' for key in self.kwparams)
-        return result
+    # instance attributes
+    key: str # i18n key
+    params: tuple[str] # {0}, {1}, etc
+    kwparams: dict[str, str] # {param}, {another}, etc
+    lang: Optional[str] = None # can be set later
+    # only set on init if lang is provided
+    # otherwise, set upon str() casting
+    message: Optional[str] = None
 
     @classmethod
-    async def load_state(cls):
-        """Load translation strings and user/channel language data."""
+    def get_lang(cls, ctx: IDContext, default: str = 'en') -> str:
+        """Get the correct language for the context."""
+        if isinstance(ctx, slash.Context):
+            return cls.get_lang(ctx.author, cls.get_lang(ctx.channel))
+        if isinstance(ctx, discord.User):
+            return cls.user_langs.get(ctx.id, default)
+        if isinstance(ctx, discord.TextChannel):
+            return cls.channel_langs.get(ctx.id, default)
+        if isinstance(ctx, discord.abc.Snowflake): # all you have is an ID
+            return cls.user_langs.get(
+                ctx.id, cls.channel_langs.get(ctx.id, default))
+        return default
+
+    @classmethod
+    async def load_state(cls) -> None:
+        """Load translation strings and user/channel language settings."""
+        start = time.time()
         for lang in SUPPORTED_LANGS:
             async with aiofiles.open(os.path.join(ROOT, f'{lang}.json')) as f:
                 data: dict = json.loads(await f.read())
             cls.unformatted.setdefault(lang, {}).update(data)
         for dirname in os.listdir(ROOT):
             if not os.path.isdir(os.path.join(ROOT, dirname)):
-                continue
+                continue # now dirname is an actual dir name
             for lang in SUPPORTED_LANGS:
                 path = os.path.join(ROOT, dirname, f'{lang}.json')
-                if not os.path.isfile(path):
-                    if lang != 'qqx': # qqx only has one file
-                        logger.warning('No %s i18n for %s', lang, dirname)
+                try:
+                    async with aiofiles.open(path) as f:
+                        data: dict = json.loads(await f.read())
+                except FileNotFoundError:
+                    if lang != 'qqx': # qqx only needs one file
+                        logger.warning('No %s i18n for %s/', lang, dirname)
                     continue
-                async with aiofiles.open(path) as f:
-                    data: dict = json.loads(await f.read())
-                for key, value in data.items():
-                    cls.unformatted[lang][f'{dirname}/{key}'] = value
+                for key, string in data.items():
+                    cls.unformatted[lang][f'{dirname}/{key}'] = string
         cls.user_langs.update(await db.user_langs())
         cls.channel_langs.update(await db.channel_langs())
-        logger.info('Loaded i18n cache')
+        end = time.time()
+        logger.info('Loaded i18n cache in %.2f ms', (end - start) * 1000)
 
-    @classmethod
-    def get_lang(cls, ctx: IDContext) -> str:
-        """Get the correct language for the context."""
-        if not isinstance(ctx, commands.Context):
-            # None may
-            if cls.user_langs.get(ctx.id, None) is not None:
-                return cls.user_langs[ctx.id]
-        elif cls.user_langs.get(ctx.author.id, None) is not None:
-            return cls.user_langs[ctx.author.id]
-        if isinstance(ctx, commands.Context):
-            if cls.channel_langs.get(ctx.channel.id, None) is not None:
-                return cls.channel_langs[ctx.channel.id]
-        return 'en'
-
-    def set_lang(self, ctx: IDContext):
-        """Set this message's language for this context."""
-        self.lang = self.get_lang(ctx)
-
-MsgStr = Union[Msg, str]
-
-def cast(ctx: commands.Context, msg: MsgStr) -> str:
-    """If a message is a plain string, return it.
-    Otherwise, render the message in the context.
-    """
-    if isinstance(msg, str):
-        return msg
-    msg.set_lang(ctx)
-    return str(msg)
-
-def Embed(
-    ctx: commands.Context,
-    title: MsgStr = None,
-    description: MsgStr = None,
-    fields: Iterable[tuple[MsgStr, MsgStr, bool]] = (),
-    footer: MsgStr = None,
-    **kwargs
-) -> discord.Embed:
-    """Return an Embed with internationalized data."""
-    if title:
-        kwargs['title'] = cast(ctx, title)
-    if description:
-        kwargs['description'] = cast(ctx, description)
-    embed = discord.Embed(**kwargs)
-    if footer:
-        embed.set_footer(text=cast(ctx, footer))
-    for name, value, inline in fields or ():
-        embed.add_field(
-            name=cast(ctx, name),
-            value=cast(ctx, value),
-            inline=inline
-        )
-    return embed
-
-class LanguageConverter(commands.Converter):
-    async def convert(self, ctx: commands.Context, argument: str) -> str:
-        """Convert a language argument or fail with BadArgument."""
-        language = argument.strip().strip('`').casefold()
-        if language not in SUPPORTED_LANGS:
-            raise commands.BadArgument(str(Msg(
-                ctx, 'i18n/unsupported-lang', language)))
-        return language
-
-class Internationalization(commands.Cog):
-    """i18n/cog-desc"""
-
-    @commands.is_owner()
-    @commands.command(brief='i18n/r24n-desc')
-    async def r25n(self, ctx: commands.Context):
-        await Msg.load_state()
-        await ctx.message.add_reaction(DONE)
-
-    @commands.group(brief='i18n/lang-desc')
-    @lone_group
-    async def lang(self, ctx):
-        pass
-
-    @lang.command(name='get', brief='i18n/lang-get-desc')
-    async def user_get(self, ctx: commands.Context):
-        if Msg.user_langs.get(ctx.author.id, None) is None:
-            await ctx.send(embed=Embed(
-                ctx, description=Msg('i18n/lang-get-null'),
-                color=discord.Color.red()
-            ))
-        else:
-            await ctx.send(embed=Embed(
-                ctx, description=Msg(
-                    'i18n/lang-get',
-                    Msg.user_langs[ctx.author.id]),
-                color=discord.Color.blue()
-            ))
-
-    @lang.command(name='set', brief='i18n/lang-set-desc')
-    async def user_set(
-        self, ctx: commands.Context,
-        *, language: LanguageConverter
+    def __init__(
+        self,
+        key: str,
+        *params: str,
+        lang: Union[str, IDContext, None] = None,
+        **kwparams: str
     ):
-        Msg.user_langs[ctx.author.id] = language
-        await db.set_user_lang(ctx.author.id, language)
-        await ctx.send(embed=Embed(
-            ctx, description=Msg('i18n/lang-set', language),
-            color=discord.Color.blue()
-        ))
-
-    @lang.command(name='reset', brief='i18n/lang-reset-desc')
-    async def user_reset(self, ctx: commands.Context):
-        Msg.user_langs.pop(ctx.author.id, None)
-        await db.set_user_lang(ctx.author.id, None)
-        await ctx.send(embed=Embed(
-            ctx, description=Msg('i18n/lang-reset'),
-            color=discord.Color.blue()
-        ))
-
-    @commands.has_permissions(manage_channels=True)
-    @lang.group(brief='i18n/lang-channel-desc')
-    @lone_group
-    async def channel(self, ctx):
-        pass
-
-    @channel.command(name='get', brief='i18n/lang-channel-get-desc')
-    async def channel_get(self, ctx: commands.Context):
-        if Msg.channel_langs.get(ctx.channel.id, None) is None:
-            await ctx.send(embed=Embed(
-                ctx, description=Msg('i18n/lang-channel-get-null'),
-                color=discord.Color.red()
-            ))
+        if lang is None:
+            pass
+        elif isinstance(lang, str):
+            self.lang = lang
+        elif isinstance(lang, (slash.Context, discord.TextChannel, discord.User)):
+            self.lang = self.get_lang(lang)
         else:
-            await ctx.send(embed=Embed(
-                ctx, description=Msg(
-                    'i18n/lang-channel-get',
-                    Msg.channel_langs[ctx.channel.id]),
-                color=discord.Color.blue()
-            ))
+            raise TypeError(f'unexpected {type(lang).__name__!r} for "lang"')
+        self.key = key
+        self.params = params
+        self.kwparams = kwparams
+        if self.lang is not None:
+            self.set_message()
 
-    @channel.command(name='set', brief='i18n/lang-channel-set-desc')
-    async def channel_set(
-        self, ctx: commands.Context,
-        *, language: LanguageConverter
-    ):
-        Msg.channel_langs[ctx.channel.id] = language
-        await db.set_channel_lang(ctx.channel.id, language)
-        await ctx.send(embed=Embed(
-            ctx, description=Msg('i18n/lang-channel-set', language),
-            color=discord.Color.blue()
-        ))
+    def __repr__(self) -> str:
+        """Barebones representation of the object."""
+        params = ', '.join(map(repr, self.params))
+        kwparams = ', '.join(f'{kw}={param!r}'
+                             for kw, param in self.kwparams.items())
+        return f'Msg({self.key!r}, {params}, lang={self.lang!r}, {kwparams})'
 
-    @channel.command(name='reset', brief='i18n/lang-channel-reset-desc')
-    async def channel_reset(self, ctx: commands.Context):
-        Msg.channel_langs.pop(ctx.channel.id, None)
-        await db.set_channel_lang(ctx.channel.id, None)
-        await ctx.send(embed=Embed(
-            ctx, description=Msg('i18n/lang-channel-reset'),
-            color=discord.Color.blue()
-        ))
+    def __str__(self) -> str:
+        """Format the message and return it for use."""
+        if self.message is None:
+            if self.lang is None:
+                return repr(self)
+            self.set_message()
+        return self.message.format(*self.params, **self.kwparams)
 
-def setup(bot: commands.Bot):
+    def set_message(self) -> None:
+        """Load the unformatted message from language information."""
+        if self.lang == 'qqx':
+            self.message = f'({self.default()})'
+        else:
+            self.message = self.unformatted[self.lang].get(self.key)
+            if self.message is None:
+                logger.debug('no %s string set for %r', self.lang, self.key)
+                self.message = self.unformatted['en'].get(self.key)
+            if self.message is None:
+                logger.warning('no en string set for %r', self.key)
+                self.message = LABR + self.default() + RABR
+
+    def default(self) -> str:
+        """Fallback message (without brackets) if no string is set."""
+        # format: (key): {0}, {1}, param={param}, another={another}
+        # when .format()ted, becomes (key): p0, p1, param=p2, another=p3
+        result = self.key
+        if self.params or self.kwparams:
+            result += ': '
+        if self.params:
+            result += ', '.join('{%s}' % i for i in range(len(self.params)))
+        if self.kwparams:
+            if self.params:
+                result += ', ' # separate positional and keyword
+            result += ', '.join('%s={%s}' % (key, key)
+                                for key in self.kwparams.keys())
+        return result
+
+class Context(slash.Context):
+
+    def cast(self, msg: Any) -> str:
+        """If msg is a message object, format and return it.
+        Otherwise, cast it to a string in the usual manner.
+        """
+        if isinstance(msg, Msg):
+            msg.lang = msg.get_lang(self)
+        return str(msg)
+
+    def msg(self, key: str, *params: str, **kwparams: str):
+        """Format a message in this context."""
+        return str(Msg(key, *params, **kwparams, lang=self))
+
+    def embed(
+        self,
+        title: Any = None,
+        description: Any = None,
+        fields: Iterable[tuple[Any, Any, bool]] = (),
+        footer: Any = None,
+        **kwargs
+    ) -> discord.Embed:
+        """Construct an Embed with messages or strings"""
+        if title:
+            kwargs['title'] = self.cast(title)
+        if description:
+            kwargs['description'] = self.cast(description)
+        embed = discord.Embed(**kwargs)
+        if footer:
+            embed.set_footer(text=self.cast(footer))
+        for name, value, inline in fields or ():
+            embed.add_field(
+                name=self.cast(name),
+                value=self.cast(value),
+                inline=inline
+            )
+        return embed
+
+IDContext = Union[slash.Context, discord.TextChannel, discord.User]
+
+def setup(bot: slash.SlashBot):
     bot.loop.run_until_complete(Msg.load_state())
-    bot.add_cog(Internationalization())

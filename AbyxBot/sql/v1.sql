@@ -3,9 +3,7 @@ CREATE TABLE IF NOT EXISTS users (
 	-- user ID
 	user_id integer PRIMARY KEY NOT NULL,
 	-- i18n language
-	lang text DEFAULT 'en',
-	-- command prefix
-	prefix text DEFAULT ';'
+	lang text DEFAULT 'en'
 );
 
 -- main channels table

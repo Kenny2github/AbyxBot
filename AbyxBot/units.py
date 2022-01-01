@@ -1,9 +1,9 @@
 from decimal import Decimal as D, InvalidOperation
 from typing import Iterable
 import discord
-from discord.ext import commands
+from discord.ext import slash, commands
 from .chars import ZWNJ
-from .i18n import Embed, Msg
+from .i18n import Msg, Context
 
 UNITS: dict[str, tuple[tuple[list[str], D], ...]] = {
     'area': (
@@ -230,19 +230,24 @@ def similarity(a: str, b: str) -> float:
 
     return 1 - distance[row][col] / (len(a) + len(b))
 
-class Units(commands.Cog):
-    """units/cog-desc"""
+class Units:
+    """Unit conversion cog"""
 
-    @commands.command(brief='units/convert-desc')
+    @slash.cmd()
     async def convert(
         self,
-        ctx: commands.Context,
-        category: str,
-        source: str,
-        dest: str,
-        value: str = None,
+        ctx: Context,
+        source: slash.Option(
+            description='The unit from which you are converting.'),
+        dest: slash.Option(
+            description='The unit to which you are converting.'),
+        value: slash.Option(
+            description='The value you are converting.'),
+        category: slash.Option(
+            description='The category of unit you are converting. '
+            'Specify this to make unit recognition more accurate.') = None,
     ):
-        """units/convert-help"""
+        """Convert values between units. Run `/help convert`."""
         try:
             if value is None:
                 value = D(dest)
@@ -259,7 +264,7 @@ class Units(commands.Cog):
             key = max(UNITS, key=lambda k: max(max(
                 similarity(name, source)
                 for name in unit[0]) for unit in UNITS[k]))
-            assumptions.append((str(Msg(ctx, 'units/category')), key))
+            assumptions.append((ctx.msg('units/category'), key))
         else:
             key = self.best(UNITS, category)
             if category != key:
@@ -275,11 +280,11 @@ class Units(commands.Cog):
             assumptions.append((repr(dest), dstkey))
         dst = dst[1]
         if src == dst:
-            await ctx.send(embed=Embed(
-                ctx, Msg('error'), Msg(
+            await ctx.respond(embed=ctx.embed(
+                Msg('error'), Msg(
                     'units/same-unit',
                     self.assumptions(ctx, assumptions)
-                ), color=0xff0000))
+                ), color=0xff0000), ephemeral=True)
             return
         if key != 'temperature':
             try:
@@ -322,18 +327,18 @@ class Units(commands.Cog):
             await self.send_amount(ctx, assumptions, amount)
 
     @staticmethod
-    def assumptions(ctx: commands.Context, inp: list[tuple[str, str]]) -> str:
-        return str(Msg(ctx, ',')).join(
-            str(Msg(ctx, 'units/assumption', source, dest))
+    def assumptions(ctx: Context, inp: list[tuple[str, str]]) -> str:
+        return ctx.msg(',').join(
+            ctx.msg('units/assumption', source, dest)
             for source, dest in inp
-        ) or str(Msg(ctx, 'units/nothing'))
+        ) or ctx.msg('units/nothing')
 
-    async def send_amount(self, ctx: commands.Context,
+    async def send_amount(self, ctx: Context,
                           assumptions: list[tuple[str, str]], amount: D):
         """Send the final amount, stating assumptions of input."""
         assumptions = self.assumptions(ctx, assumptions)
-        await ctx.send(Msg(ctx, 'units/assumptions',
-                           assumptions, float(amount)))
+        await ctx.respond(ctx.msg('units/assumptions',
+                                  assumptions, float(amount)))
 
     @staticmethod
     def best(iterable: Iterable[str], key: str) -> str:
@@ -346,20 +351,23 @@ class Units(commands.Cog):
         return max(UNITS[cat], key=lambda unit: max(
             similarity(name, key) for name in unit[0]))
 
-    @commands.command(brief='units/units-desc')
-    async def units(self, ctx: commands.Context, category: str = None):
-        """units/units-help"""
+    @slash.cmd()
+    async def units(
+        self, ctx: Context,
+        category: slash.Option(
+            description='The category of units to list; '
+            'leave unspecified to list categories.') = None
+    ):
+        """List categories of units, or units in categories."""
         if category is None:
-            await ctx.send(embed=Embed(
-                ctx,
-                description=Msg('units/category-list', ctx.prefix),
+            await ctx.respond(embed=ctx.embed(
+                description=Msg('units/category-list'),
                 fields=((ZWNJ, key, True) for key in UNITS),
                 color=discord.Color.blue()
             ))
         else:
             key = self.best(UNITS, category)
-            await ctx.send(embed=Embed(
-                ctx,
+            await ctx.respond(embed=ctx.embed(
                 description=(
                     Msg('units/unit-list', key)
                     if key == category
@@ -367,13 +375,13 @@ class Units(commands.Cog):
                 fields=(
                     (name[0], Msg(
                         'units/aka',
-                        str(Msg(ctx, ',')).join(name[1:])
-                        or str(Msg(ctx, 'units/no-aka'))
+                        ctx.msg(',').join(name[1:])
+                        or ctx.msg('units/no-aka')
                     ), True)
                     for name, _ in UNITS[key]
                 ),
                 color=discord.Color.blue()
             ))
 
-def setup(bot: commands.Bot):
-    bot.add_cog(Units())
+def setup(bot: slash.SlashBot):
+    bot.add_slash_cog(Units())

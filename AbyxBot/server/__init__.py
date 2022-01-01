@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from aiohttp import web, ClientSession
 from ..config import config
 from ..db import db
-from ..logger import getLogger
+from ..logger import get_logger
 
 DISCORD_API = 'https://discord.com/api/v8'
 CLIENT_ID: int = config.client_id
@@ -16,7 +16,7 @@ FILE_ROOT: str = os.path.dirname(os.path.abspath(__file__))
 SCOPES = 'identify guilds'
 TOKEN_TYPE = 'Bearer'
 
-logger = getLogger('server')
+logger = get_logger('server')
 
 @dataclass
 class Session:
