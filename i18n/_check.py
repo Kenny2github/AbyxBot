@@ -11,6 +11,8 @@ subparsers = parser.add_subparsers(
 
 audit_parser = subparsers.add_parser(
     'audit', description='Run i18n auditing.')
+audit_parser.add_argument('-a', action='store_true', default=False,
+                          help='Show all i18n calls.')
 
 view_parser = subparsers.add_parser(
     'view', description='View i18n string(s).')
@@ -36,6 +38,25 @@ def audit(cmdargs: argparse.Namespace):
 
     strings = load_i18n_strings()
 
+    if cmdargs.a:
+        for fn, content in contents.items():
+            print(fn + ':')
+            lines = content.splitlines()
+            for lineno, line in enumerate(lines, start=1):
+                for check in '.msg(', 'Msg(':
+                    if check in line:
+                        break
+                else:
+                    continue
+                if lineno > 1:
+                    print(lineno-1, lines[lineno-2])
+                print(lineno, line)
+                if lineno < len(lines):
+                    print(lineno+1, lines[lineno])
+                print()
+            print()
+
+    print('----------------------')
     status = 0
     for key in strings['en']:
         for lang in strings.keys():
