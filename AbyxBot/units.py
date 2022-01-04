@@ -4,6 +4,7 @@ import discord
 from discord.ext import slash, commands
 from .chars import ZWNJ
 from .i18n import Msg, Context
+from .utils import similarity
 
 UNITS: dict[str, tuple[tuple[list[str], D], ...]] = {
     'area': (
@@ -198,37 +199,6 @@ UNITS: dict[str, tuple[tuple[list[str], D], ...]] = {
         (['in3', 'cubic-inch', 'cubic-inches'], 1 / D('61.024'))
     )
 }
-
-def similarity(a: str, b: str) -> float:
-    """Calculate the Levenshtein ratio of similarity between a and b.
-
-    Adapted from:
-    https://www.datacamp.com/community/tutorials/fuzzy-string-python
-    """
-    rows = len(a) + 1
-    cols = len(b) + 1
-    distance = [[0] * cols for _ in range(rows)]
-
-    for i in range(1, rows):
-        for j in range(1, cols):
-            distance[i][0] = i
-            distance[0][j] = j
-
-    for col in range(1, cols):
-        for row in range(1, rows):
-            if a[row-1] == b[col-1]:
-                cost = 0
-            elif a[row-1].casefold() == b[col-1].casefold():
-                cost = 1 # don't penalize capitalization changes as much
-            else:
-                cost = 2
-            distance[row][col] = min(
-                distance[row-1][col] + 1,
-                distance[row][col-1] + 1,
-                distance[row-1][col-1] + cost
-            )
-
-    return 1 - distance[row][col] / (len(a) + len(b))
 
 class Units:
     """Unit conversion cog"""
