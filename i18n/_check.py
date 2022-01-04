@@ -1,3 +1,4 @@
+import os
 import sys
 import json
 import argparse
@@ -80,17 +81,21 @@ def view(cmdargs: argparse.Namespace):
             print(strings[cmdargs.lang].get(key, default))
 
 def change(cmdargs: argparse.Namespace):
+    lang = cmdargs.lang
     try:
         dirname, key = cmdargs.key.rsplit('/', 1)
     except TypeError:
-        dirname, key = None, cmdargs.key
-    lang = cmdargs.lang
-    if dirname:
-        fname = f'{ROOT}/{dirname}/{lang}.json'
+        key = cmdargs.key
+        fname = os.path.join(ROOT, f'{lang}.json')
     else:
-        fname = f'{ROOT}/{lang}.json'
-    with open(fname) as f:
-        strings = json.load(f)
+        dirname = dirname.replace('/', os.pathsep)
+        os.makedirs(os.path.join(ROOT, dirname), exist_ok=True)
+        fname = os.path.join(ROOT, dirname, f'{lang}.json')
+    try:
+        with open(fname) as f:
+            strings = json.load(f)
+    except FileNotFoundError:
+        strings = {}
     strings[key] = sys.stdin.read().strip()
     with open(fname, 'w') as f:
         json.dump(strings, f, indent=2)
