@@ -256,7 +256,13 @@ class Internationalization:
     async def channel_check(self, ctx: Context):
         """Ensure channel configurers have permission to do so."""
         set_channel = ctx.options.get('set_channel', ctx.channel)
-        return set_channel.permissions_for(ctx.author).manage_channels
+        if not set_channel.permissions_for(ctx.author).manage_channels:
+            await ctx.respond(embed=ctx.embed(
+                Msg('error'), Msg('i18n/lang-channel-noperms', set_channel.mention),
+                color=discord.Color.red()
+            ))
+            return False
+        return True
 
     @channel.slash_cmd(name='get')
     async def channel_get(self, ctx: Context,

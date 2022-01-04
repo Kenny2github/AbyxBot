@@ -16,5 +16,5 @@
 	"lang-channel-get-null": "Message explaining the effects of a channel having no configured language",
 	"lang-channel-set": "Success message for when the channel's language is set",
 	"lang-channel-reset": "Success message for when the channel's langauge is reset, explaining the effects of it",
-	"unsupported-lang": "Error message for when a language code is invalid or unsupported"
+	"lang-channel-noperms": "Error message for when the user is missing Manage Channels"
 }
