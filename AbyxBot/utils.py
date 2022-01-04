@@ -1,6 +1,5 @@
-from functools import wraps
+import os
 from typing import Optional, TypeVar
-from discord.ext import commands
 
 T = TypeVar('T')
 
@@ -19,17 +18,15 @@ class AttrDict:
     def get(self, key: str, default: T = None) -> Optional[T]:
         return self.__dict__.get(key, default)
 
-def lone_group(func):
-    """Send group help if the group itself is invoked."""
-    @wraps(func)
-    async def newfunc(*args):
-        for arg in args:
-            if isinstance(arg, commands.Context):
-                ctx = arg
-                break
-        else:
-            return
-        if ctx.invoked_subcommand is not None:
-            return
-        await ctx.send_help(ctx.command)
-    return newfunc
+def recurse_mtimes(dir: str, *path: str,
+                   current: dict[str, float] = None) -> dict[str, float]:
+    """Recursively get the mtimes of all files of interest."""
+    if current is None:
+        current = {}
+    for item in os.listdir(os.path.join(*path, dir)):
+        fullitem = os.path.join(*path, dir, item)
+        if os.path.isdir(fullitem):
+            recurse_mtimes(item, *path, dir, current=current)
+        elif item.endswith(('.py', '.sql', '.json')):
+            current[fullitem] = os.path.getmtime(fullitem)
+    return current

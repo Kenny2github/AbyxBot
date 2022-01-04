@@ -6,13 +6,10 @@ import asyncio
 import discord
 from discord.abc import Snowflake
 from discord.ext import slash
+from .load_i18n import load_strings as load_i18n_strings, SUPPORTED_LANGS
 from .chars import LABR, RABR
 from .logger import get_logger
 from .db import db
-
-ROOT = 'i18n'
-SUPPORTED_LANGS = set(
-    fn[:-5] for fn in os.listdir(ROOT) if fn.endswith('.json'))
 
 logger = get_logger('i18n')
 
@@ -61,24 +58,7 @@ class Msg:
     def load_strings(cls) -> None:
         """Load translation strings synchronously."""
         start = time.time()
-        for lang in SUPPORTED_LANGS:
-            with open(os.path.join(ROOT, f'{lang}.json')) as f:
-                data: dict = json.load(f)
-            cls.unformatted.setdefault(lang, {}).update(data)
-        for dirname in os.listdir(ROOT):
-            if not os.path.isdir(os.path.join(ROOT, dirname)):
-                continue # now dirname is an actual dir name
-            for lang in SUPPORTED_LANGS:
-                path = os.path.join(ROOT, dirname, f'{lang}.json')
-                try:
-                    with open(path) as f:
-                        data: dict = json.load(f)
-                except FileNotFoundError:
-                    if lang != 'qqx': # qqx only needs one file
-                        logger.warning('No %s i18n for %s/', lang, dirname)
-                    continue
-                for key, string in data.items():
-                    cls.unformatted[lang][f'{dirname}/{key}'] = string
+        cls.unformatted.update(load_i18n_strings())
         end = time.time()
         logger.info('Loaded i18n strings in %.2f ms', (end - start) * 1000)
 
