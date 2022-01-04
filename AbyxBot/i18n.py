@@ -268,4 +268,4 @@ class Internationalization:
 
 def setup(bot: slash.SlashBot):
     bot.add_slash_cog(Internationalization())
-    bot.loop.run_until_complete(Msg.load_config())
+    bot.loop.create_task(Msg.load_config())
