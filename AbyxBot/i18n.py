@@ -6,7 +6,7 @@ import asyncio
 import discord
 from discord.abc import Snowflake
 from discord.ext import slash
-from .load_i18n import load_strings as load_i18n_strings, SUPPORTED_LANGS
+from .load_i18n import load_i18n_strings, SUPPORTED_LANGS
 from .chars import LABR, RABR
 from .logger import get_logger
 from .db import db

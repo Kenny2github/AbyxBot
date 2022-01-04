@@ -6,8 +6,8 @@ ROOT = 'i18n'
 SUPPORTED_LANGS = set(
     fn[:-5] for fn in os.listdir(ROOT) if fn.endswith('.json'))
 
-def load_strings() -> None:
-    """Load translation strings synchronously."""
+def load_i18n_strings() -> dict[str, dict[str, str]]:
+    """Load translation strings."""
     unformatted: dict[str, dict[str, str]] = {}
     for lang in SUPPORTED_LANGS:
         with open(os.path.join(ROOT, f'{lang}.json')) as f:
