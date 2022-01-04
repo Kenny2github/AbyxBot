@@ -19,12 +19,20 @@ class AsyncEmitter:
 
     super_emit: Callable
 
+    def get_event_loop(self) -> asyncio.AbstractEventLoop:
+        try:
+            return asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            return loop
+
     async def aemit(self, record) -> None:
-        await asyncio.get_event_loop().run_in_executor(
+        await self.get_event_loop().run_in_executor(
             None, self.super_emit, record)
 
     def emit(self, record) -> None:
-        asyncio.get_event_loop().create_task(self.aemit(record))
+        self.get_event_loop().create_task(self.aemit(record))
 
 class AsyncStreamHandler(AsyncEmitter, logging.StreamHandler):
     super_emit = logging.StreamHandler.emit
