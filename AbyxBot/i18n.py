@@ -3,7 +3,6 @@ import os
 import time
 import json
 from typing import Any, Iterable, Optional, Union
-import aiofiles
 import discord
 from discord.ext import slash
 from .chars import LABR, RABR
@@ -56,12 +55,12 @@ class Msg:
         return default
 
     @classmethod
-    async def load_state(cls) -> None:
-        """Load translation strings and user/channel language settings."""
+    def load_strings(cls) -> None:
+        """Load translation strings synchronously."""
         start = time.time()
         for lang in SUPPORTED_LANGS:
-            async with aiofiles.open(os.path.join(ROOT, f'{lang}.json')) as f:
-                data: dict = json.loads(await f.read())
+            with open(os.path.join(ROOT, f'{lang}.json')) as f:
+                data: dict = json.load(f)
             cls.unformatted.setdefault(lang, {}).update(data)
         for dirname in os.listdir(ROOT):
             if not os.path.isdir(os.path.join(ROOT, dirname)):
@@ -69,18 +68,25 @@ class Msg:
             for lang in SUPPORTED_LANGS:
                 path = os.path.join(ROOT, dirname, f'{lang}.json')
                 try:
-                    async with aiofiles.open(path) as f:
-                        data: dict = json.loads(await f.read())
+                    with open(path) as f:
+                        data: dict = json.load(f)
                 except FileNotFoundError:
                     if lang != 'qqx': # qqx only needs one file
                         logger.warning('No %s i18n for %s/', lang, dirname)
                     continue
                 for key, string in data.items():
                     cls.unformatted[lang][f'{dirname}/{key}'] = string
+        end = time.time()
+        logger.info('Loaded i18n strings in %.2f ms', (end - start) * 1000)
+
+    @classmethod
+    async def load_config(cls) -> None:
+        """Load translation strings and user/channel language settings."""
+        start = time.time()
         cls.user_langs.update(await db.user_langs())
         cls.channel_langs.update(await db.channel_langs())
         end = time.time()
-        logger.info('Loaded i18n cache in %.2f ms', (end - start) * 1000)
+        logger.info('Loaded i18n config cache in %.2f ms', (end - start) * 1000)
 
     def __init__(
         self,
@@ -146,6 +152,8 @@ class Msg:
             result += ', '.join('%s={%s}' % (key, key)
                                 for key in self.kwparams.keys())
         return result
+
+Msg.load_strings()
 
 class Context(slash.Context):
 
