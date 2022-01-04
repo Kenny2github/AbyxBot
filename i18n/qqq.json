@@ -1,4 +1,5 @@
 {
+	"@name": "Language name",
 	"hello": "Message sent by /hello",
 	"hmmst": "hmmst",
 	"error": "Title of error embeds",
