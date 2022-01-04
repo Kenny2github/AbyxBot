@@ -124,7 +124,7 @@ class Database:
         """Fetch user language settings."""
         return await self._obj_settings('user')
 
-    async def set_user_lang(self, user_id, int, lang: Optional[str]) -> None:
+    async def set_user_lang(self, user_id: int, lang: Optional[str]) -> None:
         """Change a user's language setting."""
         await self._obj_set('user', user_id, lang)
 
