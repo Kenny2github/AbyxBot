@@ -9,6 +9,7 @@ from .status import SetStatus
 from .watcher import stop_on_change
 
 MODULES = {
+    'Help': ('help', 'help'),
     'Internationalization': ('i18n', 'i18n'),
     'Miscellaneous Commands': ('misc_cmds', 'misc'),
     'Sudo Commands': ('sudo', 'sudo'),
