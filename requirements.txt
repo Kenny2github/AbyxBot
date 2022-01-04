@@ -2,3 +2,4 @@ discord.py
 discord-ext-slash
 aiofiles
 aiosqlite
+google-cloud-translate

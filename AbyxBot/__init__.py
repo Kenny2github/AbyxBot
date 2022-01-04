@@ -13,6 +13,7 @@ MODULES = {
     'Internationalization': ('i18n', 'i18n'),
     'Miscellaneous Commands': ('misc_cmds', 'misc'),
     'Sudo Commands': ('sudo', 'sudo'),
+    'Translation': ('translation', 'trans'),
     'Unit Conversions': ('units', 'units'),
 }
 
