@@ -207,12 +207,12 @@ class Units:
     async def convert(
         self,
         ctx: Context,
+        value: slash.Option(
+            description='The value you are converting.'),
         source: slash.Option(
             description='The unit from which you are converting.'),
         dest: slash.Option(
             description='The unit to which you are converting.'),
-        value: slash.Option(
-            description='The value you are converting.'),
         category: slash.Option(
             description='The category of unit you are converting. '
             'Specify this to make unit recognition more accurate.') = None,
