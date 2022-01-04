@@ -14,7 +14,8 @@ def load_i18n_strings() -> dict[str, dict[str, str]]:
             data: dict = json.load(f)
         unformatted.setdefault(lang, {}).update(data)
     for dirname in os.listdir(ROOT):
-        if not os.path.isdir(os.path.join(ROOT, dirname)):
+        if not os.path.isdir(os.path.join(ROOT, dirname)) \
+                or dirname.startswith('_'):
             continue # now dirname is an actual dir name
         for lang in SUPPORTED_LANGS:
             path = os.path.join(ROOT, dirname, f'{lang}.json')
