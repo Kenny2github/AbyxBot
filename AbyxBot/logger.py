@@ -54,7 +54,11 @@ else:
     handler = AsyncFileHandler(
         'logs/%s.log' % time.strftime(TIME), 'a', 'utf8')
 handler.setFormatter(logging.Formatter(FORMAT, style="{"))
-logging.getLogger('discord').setLevel(logging.WARNING)
+discord_logger = logging.getLogger('discord')
+discord_logger.setLevel(logging.WARNING)
+discord_logger.addHandler(handler)
+slash_logger = logging.getLogger('discord.ext.slash')
+slash_logger.setLevel(cmdargs.level)
 
 def get_logger(name: str) -> CtxLogger:
     """Get an asynchronous logger for your module."""
