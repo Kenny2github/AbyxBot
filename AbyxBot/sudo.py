@@ -12,11 +12,14 @@ async def stop(ctx: Context):
     await ctx.respond(ctx.msg('sudo/stop'), ephemeral=True)
     await ctx.bot.close()
 
+async def load_strings():
+    await asyncio.get_running_loop().run_in_executor(
+        None, Msg.load_strings)
+
 @sudo.slash_cmd()
 async def r25n(ctx: Context):
     """Reload i18n strings immediately."""
-    asyncio.create_task(asyncio.get_running_loop().run_in_executor(
-        None, Msg.load_strings))
+    asyncio.create_task(load_strings())
     await ctx.respond(ctx.msg('sudo/r25n'), ephemeral=True)
 
 def setup(bot: SlashBot):
