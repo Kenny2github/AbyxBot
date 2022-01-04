@@ -182,6 +182,11 @@ lang_opt = slash.Option(
              # don't include the string documentation, but do include qqx
              for key in SUPPORTED_LANGS if key != 'qqq'))
 
+channel_opt = slash.Option(
+    name='channel', description='The channel to configure languages for. \
+By default, this is the one in which this command is run.',
+    channel_type=discord.ChannelType.text)
+
 class Internationalization:
     """i18n configuration commands"""
 
@@ -194,12 +199,12 @@ class Internationalization:
         """Centralized user- or channel-language getter."""
         if repo.get(obj.id) is None:
             await ctx.respond(embed=ctx.embed(
-                description=Msg(key2),
+                description=Msg(key2, obj.mention),
                 color=discord.Color.red()
             ))
         else:
             await ctx.respond(embed=ctx.embed(
-                description=Msg(key1, repo[obj.id]),
+                description=Msg(key1, repo[obj.id], obj.mention),
                 color=discord.Color.blue()
             ))
 
@@ -210,7 +215,7 @@ class Internationalization:
         repo[obj.id] = value
         asyncio.create_task(method(obj.id, value))
         await ctx.respond(embed=ctx.embed(
-            description=Msg(key, value),
+            description=Msg(key, value, obj.mention),
             color=discord.Color.blue()
         ))
 
@@ -221,7 +226,7 @@ class Internationalization:
         repo[obj.id] = None
         asyncio.create_task(method(obj.id, None))
         await ctx.respond(embed=ctx.embed(
-            description=Msg(key),
+            description=Msg(key, obj.mention),
             color=discord.Color.blue()
         ))
 
@@ -247,24 +252,35 @@ class Internationalization:
     async def channel(self, ctx: Context):
         """Get or set the command language of a channel."""
 
+    @channel.check
+    async def channel_check(self, ctx: Context):
+        """Ensure channel configurers have permission to do so."""
+        set_channel = ctx.options.get('set_channel', ctx.channel)
+        return set_channel.permissions_for(ctx.author).manage_channels
+
     @channel.slash_cmd(name='get')
-    async def channel_get(self, ctx: Context):
+    async def channel_get(self, ctx: Context,
+                          set_channel: channel_opt = None):
         """Get your command language."""
-        await self.obj_get(ctx, ctx.channel, Msg.channel_langs,
-                           'i18n/lang-channel-get',
-                           'i18n/lang-channel-get-null')
+        await self.obj_get(
+            ctx, set_channel or ctx.channel, Msg.channel_langs,
+            'i18n/lang-channel-get', 'i18n/lang-channel-get-null')
 
     @channel.slash_cmd(name='set')
-    async def channel_set(self, ctx: Context, channel_lang: lang_opt):
+    async def channel_set(self, ctx: Context, channel_lang: lang_opt,
+                          set_channel: channel_opt = None):
         """Set your command language."""
-        await self.obj_set(ctx, ctx.channel, Msg.channel_langs, channel_lang,
-                           'i18n/lang-channel-set', db.set_channel_lang)
+        await self.obj_set(
+            ctx, set_channel or ctx.channel, Msg.channel_langs,
+            channel_lang, 'i18n/lang-channel-set', db.set_channel_lang)
 
     @channel.slash_cmd(name='reset')
-    async def channel_reset(self, ctx: Context):
+    async def channel_reset(self, ctx: Context,
+                            set_channel: channel_opt = None):
         """Reset your command language."""
-        await self.obj_reset(ctx, ctx.channel, Msg.channel_langs,
-                             'i18n/lang-channel-reset', db.set_channel_lang)
+        await self.obj_reset(
+            ctx, set_channel or ctx.channel, Msg.channel_langs,
+            'i18n/lang-channel-reset', db.set_channel_lang)
 
 def setup(bot: slash.SlashBot):
     bot.add_slash_cog(Internationalization())
