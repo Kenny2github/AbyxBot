@@ -40,7 +40,7 @@ def run():
 async def cleanup_tasks():
     for task in asyncio.all_tasks():
         try:
-            await asyncio.wait_for(task, 5.0)
+            await asyncio.wait_for(task, 3.0)
         except asyncio.TimeoutError:
             pass
         except asyncio.CancelledError:
