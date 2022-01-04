@@ -219,16 +219,10 @@ class Units:
     ):
         """Convert values between units. Run `/help convert`."""
         try:
-            if value is None:
-                value = D(dest)
-                dest = source
-                source = category
-                category = None
-            else:
-                value = D(value)
+            value = D(value)
         except InvalidOperation:
             raise commands.BadArgument(
-                f'bad number: {value or dest}') from None
+                f'bad number: {value}') from None
         assumptions = []
         if category is None:
             key = max(UNITS, key=lambda k: max(max(
