@@ -47,12 +47,12 @@ class Msg:
         if isinstance(ctx, slash.Context):
             return cls.get_lang(ctx.author, cls.get_lang(ctx.channel))
         if isinstance(ctx, discord.User):
-            return cls.user_langs.get(ctx.id, default)
+            return cls.user_langs.get(ctx.id) or default
         if isinstance(ctx, discord.TextChannel):
-            return cls.channel_langs.get(ctx.id, default)
+            return cls.channel_langs.get(ctx.id) or default
         if isinstance(ctx, discord.abc.Snowflake): # all you have is an ID
-            return cls.user_langs.get(
-                ctx.id, cls.channel_langs.get(ctx.id, default))
+            return cls.user_langs.get(ctx.id) or \
+                cls.channel_langs.get(ctx.id) or default
         return default
 
     @classmethod
