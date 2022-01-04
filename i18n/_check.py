@@ -60,13 +60,17 @@ def audit(cmdargs: argparse.Namespace):
     print('----------------------')
     status = 0
     for key in strings['en']:
-        for lang in strings.keys():
-            if strings[lang].get(key) is None and lang != 'qqx':
-                print(lang, 'missing', key)
+        for lang, lang_strings in strings.items():
+            if lang_strings.get(key) is None and lang != 'qqx':
+                print('lang', lang, 'missing', key)
                 status = 1
         if key not in all_contents:
-            print(key, 'unused')
+            print('unused key:', key)
             status = 1
+    for lang, lang_strings in strings.items():
+        for key in lang_strings:
+            if key not in strings['en']:
+                print('extra key', key, 'in lang', lang)
     sys.exit(status)
 
 def view(cmdargs: argparse.Namespace):
@@ -98,7 +102,7 @@ def change(cmdargs: argparse.Namespace):
         strings = {}
     strings[key] = sys.stdin.read().strip()
     with open(fname, 'w') as f:
-        json.dump(strings, f, indent=2)
+        json.dump(strings, f, indent='\t')
 
 def main(args: list[str]):
     cmdargs = parser.parse_args(args[1:])
