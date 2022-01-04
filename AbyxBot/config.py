@@ -1,3 +1,5 @@
+import sys
+import os
 import argparse
 import json
 import logging
@@ -14,6 +16,10 @@ parser.add_argument('--stdout', action='store_true', default=False,
 parser.add_argument('-v', '--verbose', action='store_const', dest='level',
                     const=logging.DEBUG, default=logging.INFO,
                     help='emit debug logging messages')
-cmdargs = parser.parse_args()
+if os.path.basename(sys.argv[0]) != '__init__.py':
+    # dummy cmdargs for other importers
+    cmdargs = AttrDict({'disable': [], 'stdout': True, 'level': logging.INFO})
+else:
+    cmdargs = parser.parse_args()
 
 TOKEN: str = config.token
