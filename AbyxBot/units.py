@@ -225,9 +225,9 @@ class Units:
                 f'bad number: {value}') from None
         assumptions = []
         if category is None:
-            key = max(UNITS, key=lambda k: max(max(
-                similarity(name, source)
-                for name in unit[0]) for unit in UNITS[k]))
+            key = max(UNITS, key=lambda k: (
+                self.category_score(k, source)
+                + self.category_score(k, dest)))
             assumptions.append((ctx.msg('units/category'), key))
         else:
             key = self.best(UNITS, category)
@@ -314,6 +314,13 @@ class Units:
         """Get the best match of key inside cat."""
         return max(UNITS[cat], key=lambda unit: max(
             similarity(name, key) for name in unit[0]))
+
+    @staticmethod
+    def category_score(cat: str, key: str) -> str:
+        """Get how well the key matches the category."""
+        return max(max(similarity(name, key)
+                       for name in unit[0])
+                   for unit in UNITS[cat])
 
     @slash.cmd()
     async def units(
