@@ -1,9 +1,10 @@
-from __future__ import annotations
 import os
 import time
 import json
-from typing import Any, Iterable, Optional, Union
+from typing import Any, Callable, Iterable, Optional, Union
+import asyncio
 import discord
+from discord.abc import Snowflake
 from discord.ext import slash
 from .chars import LABR, RABR
 from .logger import get_logger
@@ -14,6 +15,8 @@ SUPPORTED_LANGS = set(
     fn[:-5] for fn in os.listdir(ROOT) if fn.endswith('.json'))
 
 logger = get_logger('i18n')
+
+IDContext = Union[slash.Context, discord.TextChannel, discord.User]
 
 class Msg:
     """An i18n message.
@@ -193,7 +196,96 @@ class Context(slash.Context):
             )
         return embed
 
-IDContext = Union[slash.Context, discord.TextChannel, discord.User]
+lang_opt = slash.Option(
+    name='lang', description='The language to switch to.',
+    choices=(slash.Choice(name=str(Msg('@name', lang=key)), value=key)
+             # don't include the string documentation, but do include qqx
+             for key in SUPPORTED_LANGS if key != 'qqq'))
+
+class Internationalization:
+    """i18n configuration commands"""
+
+    @slash.group()
+    async def lang(self, ctx: Context):
+        """Get or set your command language, or that of a channel."""
+
+    async def obj_get(self, ctx: Context, obj: Snowflake,
+                      repo: dict[int, str], key1: str, key2: str) -> None:
+        """Centralized user- or channel-language getter."""
+        if repo.get(obj.id) is None:
+            await ctx.respond(embed=ctx.embed(
+                description=Msg(key2),
+                color=discord.Color.red()
+            ))
+        else:
+            await ctx.respond(embed=ctx.embed(
+                description=Msg(key1, repo[obj.id]),
+                color=discord.Color.blue()
+            ))
+
+    async def obj_set(self, ctx: Context, obj: Snowflake,
+                      repo: dict[int, str], value: str, key: str,
+                      method: Callable[[int, Optional[str]], None]) -> None:
+        """Centralized user- or channel-language setter."""
+        repo[obj.id] = value
+        asyncio.create_task(method(obj.id, value))
+        await ctx.respond(embed=ctx.embed(
+            description=Msg(key, value),
+            color=discord.Color.blue()
+        ))
+
+    async def obj_reset(self, ctx: Context, obj: Snowflake,
+                        repo: dict[int, str], key: str,
+                        method: Callable[[int, Optional[str]], None]) -> None:
+        """Centralized user- or channel-language resetter."""
+        repo[obj.id] = None
+        asyncio.create_task(method(obj.id, None))
+        await ctx.respond(embed=ctx.embed(
+            description=Msg(key),
+            color=discord.Color.blue()
+        ))
+
+    @lang.slash_cmd(name='get')
+    async def user_get(self, ctx: Context):
+        """Get your command language."""
+        await self.obj_get(ctx, ctx.author, Msg.user_langs,
+                           'i18n/lang-get', 'i18n/lang-get-null')
+
+    @lang.slash_cmd(name='set')
+    async def user_set(self, ctx: Context, user_lang: lang_opt):
+        """Set your command language."""
+        await self.obj_set(ctx, ctx.author, Msg.user_langs, user_lang,
+                           'i18n/lang-set', db.set_user_lang)
+
+    @lang.slash_cmd(name='reset')
+    async def user_reset(self, ctx: Context):
+        """Reset your command language."""
+        await self.obj_reset(ctx, ctx.author, Msg.user_langs,
+                             'i18n/lang-reset', db.set_user_lang)
+
+    @lang.slash_group()
+    async def channel(self, ctx: Context):
+        """Get or set the command language of a channel."""
+
+    @channel.slash_cmd(name='get')
+    async def channel_get(self, ctx: Context):
+        """Get your command language."""
+        await self.obj_get(ctx, ctx.channel, Msg.channel_langs,
+                           'i18n/lang-channel-get',
+                           'i18n/lang-channel-get-null')
+
+    @channel.slash_cmd(name='set')
+    async def channel_set(self, ctx: Context, channel_lang: lang_opt):
+        """Set your command language."""
+        await self.obj_set(ctx, ctx.channel, Msg.channel_langs, channel_lang,
+                           'i18n/lang-channel-set', db.set_channel_lang)
+
+    @channel.slash_cmd(name='reset')
+    async def channel_reset(self, ctx: Context):
+        """Reset your command language."""
+        await self.obj_reset(ctx, ctx.channel, Msg.channel_langs,
+                             'i18n/lang-channel-reset', db.set_channel_lang)
 
 def setup(bot: slash.SlashBot):
-    bot.loop.run_until_complete(Msg.load_state())
+    bot.add_slash_cog(Internationalization())
+    bot.loop.run_until_complete(Msg.load_config())
