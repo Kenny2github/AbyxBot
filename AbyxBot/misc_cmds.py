@@ -1,5 +1,5 @@
 from discord.ext.slash import SlashBot, cmd
-from .i18n import Context
+from .i18n import Context, Msg
 
 class Miscellaneous:
     """Miscellaneous commands with no clear thread."""
@@ -13,6 +13,13 @@ class Miscellaneous:
     async def hmmst(self, ctx: Context):
         """hmmst"""
         await ctx.respond(ctx.msg('hmmst'))
+
+    @cmd()
+    async def ping(self, ctx: Context):
+        """Pong! Get bot latency in milliseconds."""
+        await ctx.respond(embed=ctx.embed(
+            Msg('misc/pong-title'), Msg('misc/pong-ms', ctx.bot.latency * 1000)
+        ))
 
 def setup(bot: SlashBot):
     bot.add_slash_cog(Miscellaneous())
