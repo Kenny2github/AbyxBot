@@ -3,5 +3,9 @@
 	"pong-ms": "Millisecond display of /ping embed",
 	"purge-perms": "Permission error message for /purge",
 	"purge-title": "Title of /purge embed",
-	"purge": "Result display of /purge"
+	"purge": "Result display of /purge",
+	"charname-not-found": "Placeholder for characters with unknown names",
+	"charinfo": "Format for character information",
+	"charinfo-title": "Title of /charinfo embed",
+	"charinfo-start": "Header before character information"
 }

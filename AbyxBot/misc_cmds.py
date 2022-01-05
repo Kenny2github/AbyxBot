@@ -1,5 +1,7 @@
 # stdlib
 import asyncio
+import json
+import unicodedata
 
 # 3rd-party
 import discord
@@ -69,6 +71,26 @@ class Miscellaneous:
         ))
         await asyncio.sleep(2)
         await ctx.delete()
+
+    @cmd()
+    async def charinfo(self, ctx: Context, chars: Option('The characters.')):
+        """Get information about a sequence of characters."""
+        chars: str = chars
+        if '\\' in chars:
+            try:
+                chars = chars.encode().decode('unicode-escape')
+            except UnicodeDecodeError:
+                pass # use original string
+        def to_string(char: str) -> str:
+            digit = f'{ord(char):>08x}'
+            name = unicodedata.name(char, ctx.msg('misc/charname-not-found'))
+            return ctx.msg('misc/charinfo', digit, name, char,
+                           json.dumps(char).strip('"'))
+        msg = '\n'.join(map(to_string, chars))
+        msg = ctx.msg('misc/charinfo-start') + '\n' + msg
+        await ctx.respond(embed=ctx.embed(
+            Msg('misc/charinfo-title'), msg[:2000]
+        ))
 
 def setup(bot: SlashBot):
     bot.add_slash_cog(Miscellaneous())

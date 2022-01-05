@@ -3,5 +3,9 @@
 	"pong-ms": "{0:.0f} ms",
 	"purge-perms": "Either you are missing Manage Messages permissions, or I am.",
 	"purge-title": "Purged",
-	"purge": "Purged {0} message(s)"
+	"purge": "Purged {0} message(s)",
+	"charname-not-found": "Name not found.",
+	"charinfo": "`\\U{0}`|`{3}`: {1} \u2014 \"{2}\" \u2014 <http://www.fileformat.info/info/unicode/char/{0}>",
+	"charinfo-title": "Character Information",
+	"charinfo-start": "`Python Esc`|`JSON`"
 }
