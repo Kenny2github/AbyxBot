@@ -93,6 +93,6 @@ def md_to_html(text: str) -> str:
 def html_to_md(text: str) -> str:
     """Unparse Markdown from HTML."""
     for tag, (closed, token) in TAGS.items():
-        text = text.replace(f'<{tag}>', token)
-        text = text.replace(f'</{tag}>', token if closed else '\n')
+        text = re.sub(f'<{tag}[^>]*>', token, text)
+        text = re.sub(f'</{tag}[^>]*>', token if closed else '\n', text)
     return unescape(text)
