@@ -44,10 +44,8 @@ class Miscellaneous:
         """Purge messages. See descriptions of the `after` and `limit` parameters."""
         if not (ctx.channel.permissions_for(ctx.author).manage_messages
                 and ctx.channel.permissions_for(ctx.me).manage_messages):
-            await ctx.respond(embed=ctx.embed(
-                Msg('error'), Msg('misc/purge-perms'),
-                color=discord.Color.red()
-            ), ephemeral=True)
+            await ctx.respond(embed=ctx.error_embed(
+                Msg('misc/purge-perms')), ephemeral=True)
             return
         def check_msg(msg: discord.Message) -> bool:
             if user is not None:

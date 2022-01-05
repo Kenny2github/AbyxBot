@@ -213,10 +213,7 @@ async def define(ctx: Context, word: Option('A word (or sometimes phrase).')):
     result = await fetch_words(qe='sp', sp=word, md='dpsrf', ipa='1', max=1)
     result: WordResp = result[0]
     if 'defs' not in result:
-        await ctx.respond(embed=ctx.embed(
-            Msg('error'), Msg('words/no-def', word),
-            color=discord.Color.red()
-        ))
+        await ctx.respond(embed=ctx.error_embed(Msg('words/no-def', word)))
         return
     tags: list[str] = result['tags']
     parts_of_speech = set()

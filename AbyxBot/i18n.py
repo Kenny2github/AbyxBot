@@ -179,6 +179,12 @@ class Context(slash.Context):
             )
         return embed
 
+    def error_embed(self, error_message: Any, **kwargs) -> discord.Embed:
+        return self.embed(
+            Msg('error'), error_message,
+            color=discord.Color.red()
+        )
+
 lang_opt = slash.Option(
     name='lang', description='The language to switch to.',
     choices=(slash.Choice(name=str(Msg('@name', lang=key)), value=key)
@@ -260,10 +266,9 @@ class Internationalization:
         """Ensure channel configurers have permission to do so."""
         set_channel = ctx.options.get('set_channel', ctx.channel)
         if not set_channel.permissions_for(ctx.author).manage_channels:
-            await ctx.respond(embed=ctx.embed(
-                Msg('error'), Msg('i18n/lang-channel-noperms', set_channel.mention),
-                color=discord.Color.red()
-            ))
+            await ctx.respond(embed=ctx.error_embed(
+                Msg('i18n/lang-channel-noperms', set_channel.mention)
+            ), ephemeral=True)
             return False
         return True
 

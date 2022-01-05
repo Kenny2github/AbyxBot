@@ -249,11 +249,10 @@ class Units:
             assumptions.append((repr(dest), dstkey))
         dst = dst[1]
         if src == dst:
-            await ctx.respond(embed=ctx.embed(
-                Msg('error'), Msg(
-                    'units/same-unit',
-                    self.assumptions(ctx, assumptions)
-                ), color=0xff0000), ephemeral=True)
+            await ctx.respond(embed=ctx.error_embed(Msg(
+                'units/same-unit',
+                self.assumptions(ctx, assumptions)
+            )), ephemeral=True)
             return
         if key != 'temperature':
             try:

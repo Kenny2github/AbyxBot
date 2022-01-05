@@ -43,8 +43,7 @@ async def on_command_error(ctx: Context, exc: Exception):
             method = partial(ctx.respond, ephemeral=True)
         else:
             method = ctx.webhook.send
-        await method(embed=ctx.embed(
-            'error', str(exc), color=0xff0000))
+        await method(embed=ctx.error_embed(str(exc)))
         return
     if isinstance(exc, UNLOGGED_EXCS):
         return
