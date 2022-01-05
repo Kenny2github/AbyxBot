@@ -20,6 +20,7 @@ MODULES = {
     'Sudo Commands': ('sudo', 'sudo'),
     'Translation': ('translation', 'trans'),
     'Unit Conversions': ('units', 'units'),
+    'Lexical Analysis': ('words', 'words'),
 }
 
 logger = get_logger('init')
@@ -27,7 +28,10 @@ logger = get_logger('init')
 def import_cog(bot: slash.SlashBot, name: str, fname: str):
     """Load a module and run its setup function."""
     module = importlib.import_module('.' + fname, __name__)
-    module.setup(bot)
+    if asyncio.iscoroutinefunction(module.setup):
+        bot.loop.run_until_complete(module.setup(bot))
+    else:
+        module.setup(bot)
     logger.info('Loaded %s', name)
 
 globs = {}

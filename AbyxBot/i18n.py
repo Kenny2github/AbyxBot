@@ -291,6 +291,6 @@ class Internationalization:
             ctx, set_channel or ctx.channel, Msg.channel_langs,
             'i18n/lang-channel-reset', db.set_channel_lang)
 
-def setup(bot: slash.SlashBot):
+async def setup(bot: slash.SlashBot):
     bot.add_slash_cog(Internationalization())
-    bot.loop.create_task(Msg.load_config())
+    await Msg.load_config()
