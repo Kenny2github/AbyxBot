@@ -1,4 +1,7 @@
 {
 	"pong-title": "Pong!",
-	"pong-ms": "{0:.0f} ms"
+	"pong-ms": "{0:.0f} ms",
+	"purge-perms": "Either you are missing Manage Messages permissions, or I am.",
+	"purge-title": "Purged",
+	"purge": "Purged {0} message(s)"
 }

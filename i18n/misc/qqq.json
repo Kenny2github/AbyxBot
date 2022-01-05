@@ -1,4 +1,7 @@
 {
-	"pong-title": "Title of Pong embed",
-	"pong-ms": "Millisecond display of Pong embed"
+	"pong-title": "Title of /ping embed",
+	"pong-ms": "Millisecond display of /ping embed",
+	"purge-perms": "Permission error message for /purge",
+	"purge-title": "Title of /purge embed",
+	"purge": "Result display of /purge"
 }
