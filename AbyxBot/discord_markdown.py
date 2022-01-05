@@ -1,5 +1,6 @@
 import re
 from typing import Generator
+from html import unescape
 
 TOKENS: dict[str, tuple[bool, str]] = {
     '': (False, 'p'),
@@ -93,4 +94,4 @@ def html_to_md(text: str) -> str:
     for tag, (closed, token) in TAGS.items():
         text = text.replace(f'<{tag}>', token)
         text = text.replace(f'</{tag}>', token if closed else '\n')
-    return text
+    return unescape(text)
