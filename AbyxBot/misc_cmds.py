@@ -1,4 +1,7 @@
+# 3rd-party
 from discord.ext.slash import SlashBot, cmd
+
+# 1st-party
 from .i18n import Context, Msg
 
 class Miscellaneous:

@@ -1,10 +1,13 @@
+# stdlib
 import sys
 import os
 import argparse
 import json
 import logging
 from typing import NamedTuple, Optional
-from AbyxBot.utils import AttrDict
+
+# 1st-party
+from .utils import AttrDict
 
 class Config(NamedTuple):
     token: str

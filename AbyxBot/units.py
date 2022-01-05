@@ -1,7 +1,12 @@
+# stdlib
 from decimal import Decimal as D, InvalidOperation
 from typing import Iterable
+
+# 3rd-party
 import discord
 from discord.ext import slash, commands
+
+# 1st-party
 from .chars import ZWNJ
 from .i18n import Msg, Context
 from .utils import similarity

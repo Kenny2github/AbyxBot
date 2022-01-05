@@ -1,5 +1,8 @@
+# 3rd-party
 import discord
 from discord.ext.slash import Option, SlashBot, cmd
+
+# 1st-party
 from .i18n import Context, Msg
 from .utils import similarity
 

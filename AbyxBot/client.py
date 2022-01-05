@@ -1,6 +1,11 @@
+# stdlib
 from functools import partial
+
+# 3rd-party
 import discord
 from discord.ext import commands, slash
+
+# 1st-party
 from .config import config
 from .i18n import Context
 from .logger import get_logger

@@ -1,9 +1,14 @@
+# stdlib
 import time
 from typing import Any, Callable, Iterable, Optional, Union
 import asyncio
+
+# 3rd-party
 import discord
 from discord.abc import Snowflake
 from discord.ext import slash
+
+# 1st-party
 from .load_i18n import load_i18n_strings, SUPPORTED_LANGS
 from .chars import LABR, RABR
 from .logger import get_logger

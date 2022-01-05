@@ -1,5 +1,10 @@
+# stdlib
 import asyncio
+
+# 3rd-party
 from discord.ext.slash import SlashBot, group
+
+# 1st-party
 from .i18n import Context, Msg
 from .utils import asyncify
 

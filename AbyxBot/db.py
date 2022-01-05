@@ -1,10 +1,13 @@
+# stdlib
 import asyncio
 import os
-from time import time
-from typing import Iterable, Literal, Optional, Union
-from secrets import token_hex
+from typing import Optional
+
+# 3rd-party
 import aiofiles
 import aiosqlite
+
+# 1st-party
 from .logger import get_logger
 
 __all__ = [

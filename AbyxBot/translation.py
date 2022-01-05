@@ -1,12 +1,17 @@
+# stdlib
 import json
 import os
 import re
 from typing import Callable, Union
 from functools import partial
 import asyncio
+
+# 3rd-party
 import discord
 from google.cloud import translate
 from discord.ext.slash import Option, SlashBot
+
+# 1st-party
 from .chars import REGU
 from .config import config
 from .discord_markdown import html_to_md, md_to_html

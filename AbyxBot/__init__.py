@@ -1,6 +1,11 @@
+# stdlib
 import importlib
 import asyncio
+
+# 3rd-party
 from discord.ext import slash
+
+# 1st-party
 from .client import client
 from .config import TOKEN, cmdargs
 from .db import db

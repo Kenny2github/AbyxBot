@@ -1,3 +1,4 @@
+# stdlib
 import re
 from typing import Generator
 from html import unescape

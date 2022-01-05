@@ -1,10 +1,15 @@
+# stdlib
 import sys
 import os
 import time
 import logging
 import asyncio
 from typing import Callable
+
+# 3rd-party
 from discord.ext import slash
+
+# 1st-party
 from .config import cmdargs
 
 FORMAT = '{levelname}\t{asctime} {name:20}{message}'
