@@ -3,3 +3,4 @@ discord-ext-slash
 aiofiles
 aiosqlite
 google-cloud-translate
+aiohttp
