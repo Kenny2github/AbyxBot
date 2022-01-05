@@ -27,6 +27,13 @@ change_parser.add_argument('--lang', choices=SUPPORTED_LANGS,
                            default='en', help='The language of i18n to change.')
 change_parser.add_argument('key', help='The i18n key to modify.')
 
+stub_parser = subparsers.add_parser(
+    'stub', description='Generate i18n stubs for non-English languages.')
+stub_parser.add_argument('--dir', default=None,
+                         help='The i18n directory.')
+stub_parser.add_argument('--lang', default='qqq',
+                         help='The language to generate stubs for.')
+
 def audit(cmdargs: argparse.Namespace):
     """Conduct an audit of i18n string use and presence."""
     mtimes = recurse_mtimes('AbyxBot')
@@ -61,7 +68,8 @@ def audit(cmdargs: argparse.Namespace):
     status = 0
     for key in strings['en']:
         for lang, lang_strings in strings.items():
-            if lang_strings.get(key) is None and lang != 'qqx':
+            if lang_strings.get(key, '__MISSING__') == '__MISSING__' \
+                    and lang != 'qqx':
                 print('lang', lang, 'missing', key)
                 status = 1
         if key not in all_contents:
@@ -103,6 +111,34 @@ def change(cmdargs: argparse.Namespace):
     strings[key] = sys.stdin.read().strip()
     with open(fname, 'w') as f:
         json.dump(strings, f, indent='\t')
+
+def stub(cmdargs: argparse.Namespace):
+    lang = cmdargs.lang
+    if cmdargs.dir is None:
+        langname = os.path.join(ROOT, f'{lang}.json')
+        enname = os.path.join(ROOT, 'en.json')
+    else:
+        langname = os.path.join(ROOT, cmdargs.dir, f'{lang}.json')
+        enname = os.path.join(ROOT, cmdargs.dir, 'en.json')
+    try:
+        with open(enname) as f:
+            enstrings: dict[str, str] = json.load(f)
+    except FileNotFoundError:
+        stub_parser.error(f'Missing en.json for {cmdargs.dir}')
+    try:
+        with open(langname) as f:
+            langstrings: dict[str, str] = json.load(f)
+    except FileNotFoundError:
+        langstrings = {}
+    missing = set(enstrings.keys()) - set(langstrings.keys())
+    if missing:
+        print('Generating', lang, 'stubs for', end=' ')
+        for key in enstrings.keys():
+            if key not in langstrings:
+                print(key, end=' ')
+                langstrings[key] = '__MISSING__'
+        with open(langname, 'w') as f:
+            json.dump(langstrings, f, indent='\t')
 
 def main(args: list[str]):
     cmdargs = parser.parse_args(args[1:])
