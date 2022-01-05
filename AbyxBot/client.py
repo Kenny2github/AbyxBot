@@ -25,7 +25,7 @@ client = slash.SlashBot(
     command_prefix='/',
     help_command=None,
     intents=discord.Intents.all(),
-    debug_guild=config.get('debug_guild'),
+    debug_guild=config.debug_guild,
     fetch_if_not_get=True
 )
 

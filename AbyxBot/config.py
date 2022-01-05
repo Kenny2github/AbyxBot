@@ -3,10 +3,20 @@ import os
 import argparse
 import json
 import logging
+from typing import NamedTuple, Optional
 from AbyxBot.utils import AttrDict
 
+class Config(NamedTuple):
+    token: str
+    client_id: int
+    client_secret: str
+    web_root: str
+    gcloud_project_id: str
+    gcloud_auth_json: str
+    debug_guild: Optional[int] = None
+
 with open('config.json') as f:
-    config = AttrDict(json.load(f))
+    config = Config(**json.load(f))
 
 parser = argparse.ArgumentParser(description='Run AbyxBot.')
 parser.add_argument('-d', '--disable', nargs='*', metavar='disable',
