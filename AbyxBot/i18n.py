@@ -1,6 +1,4 @@
-import os
 import time
-import json
 from typing import Any, Callable, Iterable, Optional, Union
 import asyncio
 import discord
