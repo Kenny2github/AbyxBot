@@ -188,8 +188,10 @@ class Context(slash.Context):
 lang_opt = slash.Option(
     name='lang', description='The language to switch to.',
     choices=(slash.Choice(name=str(Msg('@name', lang=key)), value=key)
-             # don't include the string documentation, but do include qqx
-             for key in SUPPORTED_LANGS if key != 'qqq'))
+             # don't include the string documentation, but do include qqx;
+             # sort languages here so that command definition updates
+             # aren't triggered by differing choice orders
+             for key in sorted(SUPPORTED_LANGS) if key != 'qqq'))
 
 channel_opt = slash.Option(
     name='channel', description='The channel to configure languages for. \
