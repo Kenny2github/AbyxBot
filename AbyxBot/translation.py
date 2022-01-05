@@ -94,6 +94,7 @@ async def translate(
     text: Option('Text to translate.') = None
 ):
     """Translate message text. Run `/help translate`."""
+    await ctx.respond(deferred=True)
     if to_language is None:
         to_language = Msg.get_lang(ctx)
     if text:
