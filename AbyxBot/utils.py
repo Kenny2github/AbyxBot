@@ -1,5 +1,7 @@
+import asyncio
 import os
 from typing import Optional, TypeVar
+from functools import partial
 
 T = TypeVar('T')
 
@@ -61,3 +63,7 @@ def similarity(a: str, b: str) -> float:
             )
 
     return 1 - distance[row][col] / (len(a) + len(b))
+
+async def asyncify(func, *args, **kwargs):
+    return await asyncio.get_event_loop().run_in_executor(
+        None, partial(func, *args, **kwargs))

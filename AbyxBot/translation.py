@@ -12,7 +12,7 @@ from .config import config
 from .discord_markdown import html_to_md, md_to_html
 from .logger import get_logger
 from .i18n import Context, IDContext, Msg
-from .utils import AttrDict
+from .utils import AttrDict, asyncify
 
 logger = get_logger('translation')
 
@@ -44,8 +44,7 @@ async def translate_text(text: Union[str, list[str]],
     }
     if source:
         req['source_language_code'] = source
-    resp = await asyncio.get_event_loop().run_in_executor(
-        None, client.translate_text, req)
+    resp = await asyncify(client.translate_text, req)
     return [AttrDict({
         'text': re.sub(UNK.replace(r'\1', '([^"]+)'), r'\1',
                        html_to_md(t.translated_text)),
