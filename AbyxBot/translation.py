@@ -1,13 +1,20 @@
+import json
+import os
 import re
 from typing import Callable, Union
+from functools import partial
 import asyncio
 import discord
 from google.cloud import translate
 from discord.ext.slash import Option, SlashBot
+from .chars import REGU
 from .config import config
 from .discord_markdown import html_to_md, md_to_html
+from .logger import get_logger
 from .i18n import Context, IDContext, Msg
 from .utils import AttrDict
+
+logger = get_logger('translation')
 
 client: translate.TranslationServiceClient = \
     translate.TranslationServiceClient \
@@ -15,6 +22,13 @@ client: translate.TranslationServiceClient = \
 PARENT = f'projects/{config.gcloud_project_id}/locations/global'
 ESCAPES = re.compile('(<[:@#][^>]+>|:[^:]+:)')
 UNK = r'<unk value="\1" />'
+LETTERS = {reg: letter for letter, reg in REGU.items()}
+with open(os.path.join('AbyxBot', 'countrylangs.json')) as f:
+    COUNTRYLANGS: dict[str, list[str]] = json.load(f)
+LANGUAGES: list[str] = [
+    language.language_code for language in
+    client.get_supported_languages(parent=PARENT).languages]
+logger.info('Loaded supported translation languages')
 
 async def translate_text(text: Union[str, list[str]],
                          dest: str, source: str = None) -> list[AttrDict]:
@@ -94,4 +108,36 @@ async def translate(
     await send_translation(ctx, ctx.respond, text, to_language, from_language, url)
 
 def setup(bot: SlashBot):
+    async def on_raw_reaction_add(event: discord.RawReactionActionEvent):
+        emoji: str = event.emoji.name
+        if not (
+            len(emoji) == 2
+            and emoji[0] in LETTERS
+            and emoji[1] in LETTERS
+        ):
+            return # not a flag, ignore
+        country_code = LETTERS[emoji[0]] + LETTERS[emoji[1]]
+        lang: str = ''
+        for country_lang in COUNTRYLANGS[country_code]:
+            if country_lang in LANGUAGES:
+                lang = country_lang
+                break
+            country_lang = country_lang.split('-')[0] # try only the first part
+            if country_lang in LANGUAGES:
+                lang = country_lang
+                break
+        else:
+            logger.warning('No supported language for %s', country_code)
+            return # no supported language, ignore
+        user: discord.User = bot.get_user(event.user_id) # for i18n context
+        # needed to fetch the message in question
+        channel: discord.TextChannel = bot.get_channel(event.channel_id)
+        message: discord.Message = await channel.fetch_message(event.message_id)
+        method = partial(message.reply, mention_author=False) # don't ping
+        logger.info(
+            'User %s\t(%18d) in channel %s\t(%18d) '
+            'translating message %18d to %s (from %s)',
+            user, user.id, channel, channel.id, message.id, lang, country_code)
+        await send_translation(user, method, [message.content], lang)
+    bot.event(on_raw_reaction_add)
     bot.add_slash(translate)
