@@ -3,7 +3,7 @@ from typing import Callable, Union
 import asyncio
 import discord
 from google.cloud import translate
-from discord.ext.slash import Option, SlashBot, cmd
+from discord.ext.slash import Option, SlashBot
 from .config import config
 from .discord_markdown import html_to_md, md_to_html
 from .i18n import Context, IDContext, Msg
