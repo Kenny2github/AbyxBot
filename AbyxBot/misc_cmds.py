@@ -84,7 +84,8 @@ class Miscellaneous:
         def to_string(char: str) -> str:
             digit = f'{ord(char):>08x}'
             name = unicodedata.name(char, ctx.msg('misc/charname-not-found'))
-            return ctx.msg('misc/charinfo', digit, name, char,
+            return ctx.msg('misc/charinfo', digit, name,
+                           discord.utils.escape_markdown(char),
                            json.dumps(char).strip('"'))
         msg = '\n'.join(map(to_string, chars))
         msg = ctx.msg('misc/charinfo-start') + '\n' + msg
