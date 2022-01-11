@@ -109,7 +109,7 @@ async def translate(
         url = None
     else:
         msgs: list[discord.Message] = (await ctx.channel.history(
-            limit=count).flatten())[::-1]
+            limit=count+1).flatten())[:0:-1]
         url = msgs[0].jump_url
         text = [m.content for m in msgs]
     await send_translation(ctx, ctx.respond, text, to_language, from_language, url)
