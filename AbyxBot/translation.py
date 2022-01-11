@@ -41,6 +41,7 @@ async def translate_text(text: Union[str, list[str]],
     if isinstance(text, str):
         text = [text]
     text = [ESCAPES.sub(UNK, md_to_html(chunk)) for chunk in text]
+    logger.debug('Translating from %s to %s:\n%s', source, dest, text)
     req = {
         'parent': PARENT,
         'mime_type': 'text/html',
