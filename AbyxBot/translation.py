@@ -33,6 +33,14 @@ with open(os.path.join('AbyxBot', 'countrylangs.json')) as f:
 LANGUAGES: list[str] = [
     language.language_code for language in
     client.get_supported_languages(parent=PARENT).languages]
+SPECIAL_LANGS = {
+    '\N{WAVING BLACK FLAG}'
+    + ''.join(chr(0xe0000 + ord(c)) for c in code)
+    + '\N{CANCEL TAG}'
+    : (code, langcode)
+    for code, langcode in {
+        'gbwls': 'cy', 'gbsct': 'gd', 'gbeng': 'en'}.items()
+}
 logger.info('Loaded supported translation languages')
 
 async def translate_text(text: Union[str, list[str]],
@@ -117,25 +125,27 @@ async def translate(
 def setup(bot: SlashBot):
     async def on_raw_reaction_add(event: discord.RawReactionActionEvent):
         emoji: str = event.emoji.name
-        if not (
-            len(emoji) == 2
-            and emoji[0] in LETTERS
-            and emoji[1] in LETTERS
-        ):
-            return # not a flag, ignore
-        country_code = LETTERS[emoji[0]] + LETTERS[emoji[1]]
-        lang: str = ''
-        for country_lang in COUNTRYLANGS[country_code]:
-            if country_lang in LANGUAGES:
-                lang = country_lang
-                break
-            country_lang = country_lang.split('-')[0] # try only the first part
-            if country_lang in LANGUAGES:
-                lang = country_lang
-                break
-        else:
-            logger.warning('No supported language for %s', country_code)
-            return # no supported language, ignore
+        country_code, lang = SPECIAL_LANGS.get(emoji, ('', ''))
+        if not lang:
+            if not (
+                len(emoji) == 2
+                and emoji[0] in LETTERS
+                and emoji[1] in LETTERS
+            ):
+                return # not a flag, ignore
+            country_code = LETTERS[emoji[0]] + LETTERS[emoji[1]]
+            for country_lang in COUNTRYLANGS[country_code]:
+                if country_lang in LANGUAGES:
+                    lang = country_lang
+                    break
+                # try only the en of en-GB, for example
+                country_lang = country_lang.split('-')[0]
+                if country_lang in LANGUAGES:
+                    lang = country_lang
+                    break
+            else:
+                logger.warning('No supported language for %s', country_code)
+                return # no supported language, ignore
         user: discord.User = bot.get_user(event.user_id) # for i18n context
         # needed to fetch the message in question
         channel: discord.TextChannel = bot.get_channel(event.channel_id)
