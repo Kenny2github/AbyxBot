@@ -124,7 +124,7 @@ async def translate(
 
 def setup(bot: SlashBot):
     async def on_raw_reaction_add(event: discord.RawReactionActionEvent):
-        emoji: str = event.emoji.name
+        emoji: str = str(event.emoji)
         country_code, lang = SPECIAL_LANGS.get(emoji, ('', ''))
         if not lang:
             if not (
