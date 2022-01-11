@@ -150,6 +150,11 @@ def setup(bot: SlashBot):
         # needed to fetch the message in question
         channel: discord.TextChannel = bot.get_channel(event.channel_id)
         message: discord.Message = await channel.fetch_message(event.message_id)
+        for reaction in message.reactions:
+            if str(reaction) == emoji and reaction.count > 1:
+                logger.debug(
+                    'Ignoring duplicate request for translation to %s', lang)
+                return
         method = partial(message.reply, mention_author=False) # don't ping
         logger.info(
             'User %s\t(%18d) in channel %s\t(%18d) '
