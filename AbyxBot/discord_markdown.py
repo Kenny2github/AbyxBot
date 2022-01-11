@@ -17,8 +17,6 @@ TOKENS: dict[str, tuple[bool, str]] = {
 }
 TAGS = {tag: (closed, token) for token, (closed, tag) in TOKENS.items()}
 
-SPECIAL = re.compile(r'<[:@#][^>]+>|:[^:]+:')
-
 class RetSaveGen:
     """Generator wrapper that saves the return value of the generator.
     Adapted from https://stackoverflow.com/a/34073559/6605349
