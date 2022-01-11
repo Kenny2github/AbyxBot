@@ -51,8 +51,9 @@ async def translate_text(text: Union[str, list[str]],
         req['source_language_code'] = source
     resp = await asyncify(client.translate_text, req)
     return [AttrDict({
-        'text': re.sub(UNK.replace(r'\1', '([^"]+)'), r'\1',
-                       html_to_md(t.translated_text)),
+        'text': html_to_md(re.sub(
+            UNK.replace(r'\1', '([^"]+)'),
+            r'\1', t.translated_text)),
         'lang': t.detected_language_code or source})
     for t in resp.translations]
 
