@@ -101,6 +101,48 @@ class Game:
         bottom_border = f'\n{BOTLEFT}{DBL*4}{(BOTSIDE+DBL*4)*3}{BOTRIGHT}'
         return f'```\n{top_border + rows + bottom_border}\n```'
 
+    def merge(self, xrange: list[int], yrange: list[int],
+              dx: int, dy: int) -> bool:
+        """Merge adjacent identical tiles."""
+        moved = set()
+        changed_once = False
+        changed = True
+        while changed:
+            changed = False
+            for x in xrange:
+                for y in yrange:
+                    if self.board[x][y] is None or (x, y) in moved:
+                        continue
+                    if self.board[x][y] == self.board[x+dx][y+dy]:
+                        self.board[x+dx][y+dy] *= 2
+                        self.board[x][y] = None
+                        self.points += self.board[x+dx][y+dy]
+                        changed = changed_once = True
+                        moved.add((x + dx, y + dy))
+                        moved.add((x, y))
+        return changed_once
+
+    def fall(self, xrange: list[int], yrange: list[int],
+             dx: int, dy: int) -> bool:
+        """Fall to one side."""
+        changed_once = False
+        changed = True
+        while changed:
+            changed = False
+            for x in xrange:
+                for y in yrange:
+                    if self.board[x][y] is None:
+                        #   v
+                        # 1 0 1 1
+                        continue
+                    if self.board[x+dx][y+dy] is None:
+                        #     v        v
+                        # 1 0 1 => 1 1 0
+                        self.board[x+dx][y+dy] = self.board[x][y]
+                        self.board[x][y] = None
+                        changed = changed_once = True
+        return changed_once
+
     def update(self, dx: int, dy: int) -> bool:
         """Update the game state.
 
@@ -121,38 +163,11 @@ class Game:
             yrange = list(range(1, 4))
         else:
             yrange = list(range(4))
-        # merge
-        moved = set()
         changed = True
         while changed:
             changed = False
-            for x in xrange:
-                for y in yrange:
-                    if self.board[x][y] is None or (x, y) in moved:
-                        continue
-                    if self.board[x][y] == self.board[x+dx][y+dy]:
-                        self.board[x+dx][y+dy] *= 2
-                        self.board[x][y] = None
-                        self.points += self.board[x+dx][y+dy]
-                        changed = True
-                        moved.add((x + dx, y + dy))
-                        moved.add((x, y))
-        # fall
-        changed = True
-        while changed:
-            changed = False
-            for x in xrange:
-                for y in yrange:
-                    if self.board[x][y] is None:
-                        #   v
-                        # 1 0 1 1
-                        continue
-                    if self.board[x+dx][y+dy] is None:
-                        #     v        v
-                        # 1 0 1 => 1 1 0
-                        self.board[x+dx][y+dy] = self.board[x][y]
-                        self.board[x][y] = None
-                        changed = True
+            changed = changed or self.fall(xrange, yrange, dx, dy)
+            changed = changed or self.merge(xrange, yrange, dx, dy)
         self.add_random_tile()
 
 class Pow211:
