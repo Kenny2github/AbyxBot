@@ -4,15 +4,23 @@ import asyncio
 from typing import Optional
 
 # 3rd-party
+import discord
 from discord.ext import slash
 
-TWO_CHANCE = 0.9
+# 1st-party
+from ..chars import UP, DOWN, LEFT, RIGHT
+from ..i18n import Context, Msg
+from ..utils import str_to_emoji
 
-LEFT = '\N{LEFTWARDS BLACK ARROW}'
-RIGHT = '\N{BLACK RIGHTWARDS ARROW}'
-UP = '\N{UPWARDS BLACK ARROW}'
-DOWN = '\N{DOWNWARDS BLACK ARROW}'
-ARROWS = LEFT, RIGHT, UP, DOWN
+TWO_CHANCE = 0.9
+TIMEOUT = 60.0
+
+ARROWS: dict[str, tuple[int, int]] = {
+    LEFT: (0, -1),
+    UP: (-1, 0),
+    DOWN: (1, 0),
+    RIGHT: (0, 1),
+}
 
 HORI = '\N{BOX DRAWINGS LIGHT HORIZONTAL}'
 LEFTSIDE = '\N{BOX DRAWINGS VERTICAL DOUBLE AND RIGHT SINGLE}'
@@ -150,8 +158,51 @@ class Game:
 class Pow211:
 
     @slash.cmd(name='2048')
-    async def pow211(self, ctx: slash.Context):
+    async def pow211(self, ctx: Context):
         """Play 2048!"""
+        game = Game()
+        done = False
+        prefix = f'2048-{ctx.id}:'
+        await ctx.respond(embed=self.gen_embed(ctx, game),
+                          components=[self.gen_buttons(prefix)])
+        futs = [ctx.bot.loop.create_future()]
 
-if __name__ == '__main__':
-    game = Game()
+        @ctx.bot.component_callback(
+            lambda c: c.custom_id.startswith(prefix), ttl=None)
+        async def handle_button(context: slash.ComponentContext):
+            _, dx, dy = map(int, context.custom_id.split(':'))
+            game_done = game.update(dx, dy)
+            futs[0].set_result(game_done)
+            futs[0] = ctx.bot.loop.create_future()
+            await context.respond(embed=self.gen_embed(ctx, game))
+        @handle_button.check
+        async def author_only(context: slash.ComponentContext):
+            return context.author.id == ctx.author.id
+
+        try:
+            while not done:
+                try:
+                    done = await asyncio.wait_for(futs[0], TIMEOUT)
+                except asyncio.TimeoutError:
+                    await ctx.webhook.send(embed=ctx.error_embed(Msg('2048/timeout')))
+                await asyncio.sleep(1)
+        finally:
+            handle_button.deregister(ctx.bot)
+
+    def gen_embed(self, ctx: Context, game: Game) -> discord.Embed:
+        return ctx.embed(
+            Msg('2048/embed-title'), game.board_to_text(),
+            fields=((Msg('2048/points-title'), Msg(
+                '2048/points', game.points), False),),
+            footer=Msg('2048/footer'), color=discord.Color.gold()
+        )
+
+    def gen_buttons(self, prefix: str) -> slash.ActionRow:
+        return slash.ActionRow(slash.Button(
+            slash.ButtonStyle.PRIMARY,
+            emoji=str_to_emoji(arrow),
+            custom_id=f'{prefix}{dv[0]}:{dv[1]}'
+        ) for arrow, dv in ARROWS.items())
+
+def setup(bot: slash.SlashBot):
+    bot.add_slash_cog(Pow211())

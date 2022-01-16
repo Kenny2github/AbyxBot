@@ -1,0 +1,7 @@
+{
+	"embed-title": "Title of board embed",
+	"points-title": "Title of points field",
+	"points": "Description of points field. {0} is the number of points.",
+	"footer": "Instructions footer of board embed.",
+	"timeout": "Error message for timeout."
+}

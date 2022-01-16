@@ -1,0 +1,7 @@
+{
+	"embed-title": "Board",
+	"points-title": "Points",
+	"points": "You have **{0}** points.",
+	"footer": "Click an arrow to move in that direction.",
+	"timeout": "You didn't make a move for while and so have been timed out."
+}
