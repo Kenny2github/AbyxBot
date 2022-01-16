@@ -182,12 +182,16 @@ class Game:
             yrange = list(range(1, 4))
         else:
             yrange = list(range(4))
+        changed_once = False
         changed = True
         while changed:
             changed = False
             changed = changed or self.fall(xrange, yrange, dx, dy)
             changed = changed or self.merge(xrange, yrange, dx, dy)
-        self.add_random_tile()
+            changed_once = changed_once or changed
+        if changed_once:
+            self.add_random_tile()
+        return self.game_done()
 
 class Pow211:
 
