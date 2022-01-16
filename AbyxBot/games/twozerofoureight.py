@@ -193,12 +193,20 @@ class Game:
             self.add_random_tile()
         return self.game_done()
 
+ending_opt = slash.Option(
+    'The power of 2 to end at. Default 11 (2**11=2048, the name of the game).',
+    min_value=4)
+allow_opt = slash.Option(
+    'Whether to keep playing after you reach the end. Default False (no).',
+    type=slash.ApplicationCommandOptionType.BOOLEAN)
+
 class Pow211:
 
     @slash.cmd(name='2048')
-    async def pow211(self, ctx: Context):
+    async def pow211(self, ctx: Context, ending: ending_opt = 11,
+                     allow_continue: allow_opt = False):
         """Play 2048!"""
-        game = Game()
+        game = Game(1 << ending, allow_continue)
         done = False
         prefix = f'2048-{ctx.id}:'
         highscore = await db.get_2048_highscore(ctx.author.id)
