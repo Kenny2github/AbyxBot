@@ -94,8 +94,22 @@ class Database:
                 settings[row[f'{obj_type}_id']] = row[setting]
         return settings
 
+    async def _obj_get(
+        self, obj_type: str, obj_id: int,
+        setting: str = 'lang', table: str = None
+    ):
+        """Internal use generic [obj]_id->[setting] fetcher."""
+        query = f'SELECT {obj_type}_id, {setting} FROM {table or obj_type+"s"}'
+        query += f' WHERE {obj_type}_id=?'
+        async with self.lock:
+            await self.cur.execute(query, (obj_id,))
+            row = await self.cur.fetchone()
+            if row is None:
+                return None
+            return row[setting]
+
     async def _obj_set(
-        self, obj_type: str, obj_id: int, value: Optional[str],
+        self, obj_type: str, obj_id: int, value,
         setting: str = 'lang', table: str = None
     ) -> None:
         """Internal use generic upsert [obj][obj_id].[setting] = [value]."""
@@ -146,5 +160,19 @@ class Database:
     ) -> None:
         """Change a channel's language setting."""
         await self._obj_set('channel', channel_id, lang)
+
+    ## methods for 2048
+
+    async def get_2048_highscore(self, user_id: int) -> int:
+        """Get the highscore for a user in 2048."""
+        await self.touch_user(user_id)
+        return (await self._obj_get(
+            'user', user_id, 'score', 'pow211_highscores'
+        )) or 0
+
+    async def set_2048_highscore(self, user_id: int, score: int) -> None:
+        """Set the highscore for a user in 2048."""
+        await self._obj_set('user', user_id, score, 'score',
+                            'pow211_highscores')
 
 db: Database = Database()

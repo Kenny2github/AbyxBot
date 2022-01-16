@@ -1,7 +1,9 @@
 {
 	"embed-title": "Board",
 	"points-title": "Points",
-	"points": "You have **{0}** points.",
+	"points": "You have **{0}** points. (Your highscore: **{1}**)",
 	"footer": "Click an arrow to move in that direction.",
-	"timeout": "You didn't make a move for while and so have been timed out."
+	"timeout": "You didn't make a move for while and so have been timed out.",
+	"highscore-title": "New Highscore!",
+	"highscore": "You set a new highscore of **{0}** points!",
 }

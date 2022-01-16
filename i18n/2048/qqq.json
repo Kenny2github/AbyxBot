@@ -1,7 +1,9 @@
 {
 	"embed-title": "Title of board embed",
 	"points-title": "Title of points field",
-	"points": "Description of points field. {0} is the number of points.",
+	"points": "Description of points field. {0} is the number of points; {1} is the highscore.",
 	"footer": "Instructions footer of board embed.",
-	"timeout": "Error message for timeout."
+	"timeout": "Error message for timeout.",
+	"highscore-title": "Title of highscore embed",
+	"highscore": "Description of highscore embed. {0} is the new highscore.",
 }

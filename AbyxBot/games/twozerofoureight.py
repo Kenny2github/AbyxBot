@@ -9,6 +9,7 @@ from discord.ext import slash
 
 # 1st-party
 from ..chars import UP, DOWN, LEFT, RIGHT
+from ..db import db
 from ..i18n import Context, Msg
 from ..utils import str_to_emoji
 
@@ -178,7 +179,8 @@ class Pow211:
         game = Game()
         done = False
         prefix = f'2048-{ctx.id}:'
-        await ctx.respond(embed=self.gen_embed(ctx, game),
+        highscore = await db.get_2048_highscore(ctx.author.id)
+        await ctx.respond(embed=self.gen_embed(ctx, game, highscore),
                           components=[self.gen_buttons(prefix)])
         futs = [ctx.bot.loop.create_future()]
 
@@ -189,7 +191,7 @@ class Pow211:
             game_done = game.update(int(dx), int(dy))
             futs[0].set_result(game_done)
             futs[0] = ctx.bot.loop.create_future()
-            await context.respond(embed=self.gen_embed(ctx, game))
+            await context.respond(embed=self.gen_embed(ctx, game, highscore))
         @handle_button.check
         async def author_only(context: slash.ComponentContext):
             return context.author.id == ctx.author.id
@@ -203,12 +205,20 @@ class Pow211:
                 await asyncio.sleep(1)
         finally:
             handle_button.deregister(ctx.bot)
+            if game.points > highscore:
+                await db.set_2048_highscore(ctx.author.id, game.points)
+                await ctx.webhook.send(embed=ctx.embed(
+                    Msg('2048/highscore-title'),
+                    Msg('2048/highscore', game.points),
+                    color=discord.Color.blurple()
+                ))
 
-    def gen_embed(self, ctx: Context, game: Game) -> discord.Embed:
+    def gen_embed(self, ctx: Context, game: Game,
+                  highscore: int) -> discord.Embed:
         return ctx.embed(
             Msg('2048/embed-title'), game.board_to_text(),
             fields=((Msg('2048/points-title'), Msg(
-                '2048/points', game.points), False),),
+                '2048/points', game.points, highscore), False),),
             footer=Msg('2048/footer'), color=discord.Color.gold()
         )
 
