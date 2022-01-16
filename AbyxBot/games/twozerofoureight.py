@@ -63,9 +63,9 @@ class Game:
             for y in range(4):
                 if any((
                     x > 0 and self.board[x][y] == self.board[x-1][y],
-                    x < 4 and self.board[x][y] == self.board[x+1][y],
+                    x < 3 and self.board[x][y] == self.board[x+1][y],
                     y > 0 and self.board[x][y] == self.board[x][y-1],
-                    y < 4 and self.board[x][y] == self.board[x][y+1],
+                    y < 3 and self.board[x][y] == self.board[x][y+1],
                 )):
                     return False # a legal move is possible
         # no legal moves are possible
