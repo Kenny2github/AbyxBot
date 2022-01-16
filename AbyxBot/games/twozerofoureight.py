@@ -43,8 +43,13 @@ class Game:
 
     points: int
     board: Board
+    ending: int = 2048
+    allow_continue: bool = False
 
-    def __init__(self) -> None:
+    def __init__(self, ending: int = 2048,
+                 allow_continue: bool = False) -> None:
+        self.ending = ending
+        self.allow_continue = allow_continue
         self.points = 0
         self.board = [[None] * 4 for _ in range(4)]
         self.add_random_tile()
@@ -52,12 +57,10 @@ class Game:
 
     def game_done(self) -> bool:
         """Has the game ended?"""
-        for row in self.board:
-            for tile in row:
-                if tile == 2048:
-                    return True # ended by winning!
-                if tile is None:
-                    return False
+        # only allow win/lose state to control done state
+        # if continuing past victory is not allowed
+        if not self.allow_continue and (won := self.won()) is not None:
+            return won
         # no empty squares, but maybe we can still move?
         for x in range(4):
             for y in range(4):
@@ -70,6 +73,21 @@ class Game:
                     return False # a legal move is possible
         # no legal moves are possible
         return True
+
+    def won(self) -> Optional[bool]:
+        """Has the game ended by winning?
+        Returns:
+        * ``True`` for yes
+        * ``None`` if the game has ended, but not by winning
+        * ``False`` if the game has not yet ended
+        """
+        for row in self.board:
+            for tile in row:
+                if tile is None:
+                    return False # not ended at all
+                if tile >= self.ending:
+                    return True  # ended by winning!
+        return None # maybe?
 
     def random_space(self) -> tuple[Optional[int], Optional[int]]:
         """Choose a random empty space on the board."""
