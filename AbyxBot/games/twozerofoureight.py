@@ -113,22 +113,6 @@ class Game:
             yrange = list(range(1, 4))
         else:
             yrange = list(range(4))
-        # fall
-        changed = True
-        while changed:
-            changed = False
-            for x in xrange:
-                for y in yrange:
-                    if self.board[x][y] is None:
-                        #   v
-                        # 1 0 1 1
-                        continue
-                    if self.board[x+dx][y+dy] is None:
-                        #     v        v
-                        # 1 0 1 => 1 1 0
-                        self.board[x+dx][y+dy] = self.board[x][y]
-                        self.board[x][y] = None
-                        changed = True
         # merge
         moved = set()
         changed = True
@@ -145,6 +129,22 @@ class Game:
                         changed = True
                         moved.add((x + dx, y + dy))
                         moved.add((x, y))
+        # fall
+        changed = True
+        while changed:
+            changed = False
+            for x in xrange:
+                for y in yrange:
+                    if self.board[x][y] is None:
+                        #   v
+                        # 1 0 1 1
+                        continue
+                    if self.board[x+dx][y+dy] is None:
+                        #     v        v
+                        # 1 0 1 => 1 1 0
+                        self.board[x+dx][y+dy] = self.board[x][y]
+                        self.board[x][y] = None
+                        changed = True
         self.add_random_tile()
 
 class Pow211:
