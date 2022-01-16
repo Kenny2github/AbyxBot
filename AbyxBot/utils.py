@@ -1,10 +1,15 @@
 # stdlib
+import re
 import asyncio
 import os
 from typing import Optional, TypeVar
 from functools import partial
 
+# 3rd-party
+import discord
+
 T = TypeVar('T')
+EMOJI_RE = re.compile(r'<(a?):([^:]+):([^>]+)>')
 
 class AttrDict:
     """Access data by key or attribute."""
@@ -66,5 +71,14 @@ def similarity(a: str, b: str) -> float:
     return 1 - distance[row][col] / (len(a) + len(b))
 
 async def asyncify(func, *args, **kwargs):
+    """Run a synchronous function in an executor."""
     return await asyncio.get_event_loop().run_in_executor(
         None, partial(func, *args, **kwargs))
+
+def str_to_emoji(s: str) -> discord.PartialEmoji:
+    match = EMOJI_RE.match(s)
+    if not match:
+        raise ValueError(f'Invalid emoji string {s}')
+    return discord.PartialEmoji(name=match.group(2),
+                                animated=bool(match.group(1)),
+                                id=match.group(3))
