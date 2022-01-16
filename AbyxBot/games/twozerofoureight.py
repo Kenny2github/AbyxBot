@@ -221,7 +221,14 @@ class Pow211:
             game_done = game.update(int(dx), int(dy))
             futs[0].set_result(game_done)
             futs[0] = ctx.bot.loop.create_future()
-            await context.respond(embed=self.gen_embed(ctx, game, highscore))
+            if game_done:
+                await context.respond(
+                    embed=self.gen_embed(ctx, game, highscore),
+                    components=[])
+                await self.conclude(game, highscore, ctx, context)
+            else:
+                await context.respond(
+                    embed=self.gen_embed(ctx, game, highscore))
         @handle_button.check
         async def author_only(context: slash.ComponentContext):
             return context.author.id == ctx.author.id
@@ -231,17 +238,34 @@ class Pow211:
                 try:
                     done = await asyncio.wait_for(futs[0], TIMEOUT)
                 except asyncio.TimeoutError:
-                    await ctx.webhook.send(embed=ctx.error_embed(Msg('2048/timeout')))
-                await asyncio.sleep(1)
+                    await ctx.respond(components=[])
+                    await ctx.webhook.send(embed=ctx.error_embed(
+                        Msg('2048/timeout')))
+                # allow the handler to update the future before we re-await it
+                await asyncio.sleep(.1)
         finally:
             handle_button.deregister(ctx.bot)
             if game.points > highscore:
                 await db.set_2048_highscore(ctx.author.id, game.points)
-                await ctx.webhook.send(embed=ctx.embed(
-                    Msg('2048/highscore-title'),
-                    Msg('2048/highscore', game.points),
-                    color=discord.Color.blurple()
-                ))
+
+    async def conclude(self, game: Game, highscore: int, ctx: Context,
+                       context: slash.ComponentContext):
+        if game.points > highscore:
+            await context.webhook.send(embed=ctx.embed(
+                Msg('2048/highscore-title'),
+                Msg('2048/highscore', game.points),
+                color=discord.Color.blurple()
+            ))
+        if game.won():
+            await context.webhook.send(embed=ctx.embed(
+                Msg('2048/gg'), Msg('2048/won', game.points, game.ending),
+                color=discord.Color.green()
+            ))
+        else:
+            await context.webhook.send(embed=ctx.embed(
+                Msg('2048/gg'), Msg('2048/lost', game.points),
+                color=discord.Color.red()
+            ))
 
     def gen_embed(self, ctx: Context, game: Game,
                   highscore: int) -> discord.Embed:

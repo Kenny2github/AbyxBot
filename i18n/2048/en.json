@@ -6,4 +6,7 @@
 	"timeout": "You didn't make a move for while and so have been timed out.",
 	"highscore-title": "New Highscore!",
 	"highscore": "You set a new highscore of **{0}** points!",
+	"gg": "Good Game!",
+	"won": "You got a {1} (or above)! In the process, you gained **{0}** points.",
+	"lost": "No more legal moves! You ended with **{0}** points."
 }
