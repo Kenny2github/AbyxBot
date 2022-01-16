@@ -185,8 +185,8 @@ class Pow211:
         @ctx.bot.component_callback(
             lambda c: c.custom_id.startswith(prefix), ttl=None)
         async def handle_button(context: slash.ComponentContext):
-            _, dx, dy = map(int, context.custom_id.split(':'))
-            game_done = game.update(dx, dy)
+            _, dx, dy = context.custom_id.split(':')
+            game_done = game.update(int(dx), int(dy))
             futs[0].set_result(game_done)
             futs[0] = ctx.bot.loop.create_future()
             await context.respond(embed=self.gen_embed(ctx, game))
