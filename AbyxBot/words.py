@@ -11,7 +11,6 @@ from discord.ext.slash import Group, Option, SlashBot, cmd, group
 
 # 1st-party
 from .i18n import Context, Msg
-from .utils import asyncify
 
 # TODO: implement censoring
 
