@@ -280,8 +280,8 @@ class Pow211:
         return slash.ActionRow(slash.Button(
             slash.ButtonStyle.PRIMARY,
             emoji=str_to_emoji(arrow),
-            custom_id=f'{prefix}{dv[0]}:{dv[1]}'
-        ) for arrow, dv in ARROWS.items())
+            custom_id=f'{prefix}{dx}:{dy}'
+        ) for arrow, (dx, dy) in ARROWS.items())
 
 def setup(bot: slash.SlashBot):
     bot.add_slash_cog(Pow211())
