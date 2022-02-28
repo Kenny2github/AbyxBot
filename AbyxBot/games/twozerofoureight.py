@@ -12,6 +12,7 @@ from ..chars import UP, DOWN, LEFT, RIGHT
 from ..db import db
 from ..i18n import Context, Msg
 from ..utils import str_to_emoji
+from .protocol.engine import GameEngine
 
 TWO_CHANCE = 0.9
 TIMEOUT = 60.0
@@ -39,7 +40,7 @@ DBLV = '\N{BOX DRAWINGS DOUBLE VERTICAL}'
 
 Board = list[list[Optional[int]]]
 
-class Game:
+class Engine2048(GameEngine):
 
     points: int
     board: Board
@@ -206,7 +207,7 @@ class Pow211:
     async def pow211(self, ctx: Context, ending: ending_opt = 11,
                      allow_continue: allow_opt = False):
         """Play 2048!"""
-        game = Game(1 << ending, allow_continue)
+        game = Engine2048(1 << ending, allow_continue)
         done = False
         prefix = f'2048-{ctx.id}:'
         highscore = await db.get_2048_highscore(ctx.author.id)
@@ -248,7 +249,7 @@ class Pow211:
             if game.points > highscore:
                 await db.set_2048_highscore(ctx.author.id, game.points)
 
-    async def conclude(self, game: Game, highscore: int, ctx: Context,
+    async def conclude(self, game: Engine2048, highscore: int, ctx: Context,
                        context: slash.ComponentContext):
         if game.points > highscore:
             await context.webhook.send(embed=ctx.embed(
@@ -267,7 +268,7 @@ class Pow211:
                 color=discord.Color.red()
             ))
 
-    def gen_embed(self, ctx: Context, game: Game,
+    def gen_embed(self, ctx: Context, game: Engine2048,
                   highscore: int) -> discord.Embed:
         return ctx.embed(
             Msg('2048/embed-title'), game.board_to_text(),
