@@ -1,0 +1,15 @@
+{
+	"title": "Numguess",
+	"cmp:-2": "Way too small! You already guessed higher than this.",
+	"cmp:-1": "Too small! Guess higher.",
+	"cmp:0": "You got it! Congratulations!",
+	"cmp:1": "Too high! Guess lower.",
+	"cmp:2": "Way too high! You already guessed smaller than this.",
+	"min": "Smallest guess",
+	"max": "Biggest guess",
+	"tries": "Tries left",
+	"footer": "Send a number in this channel to guess it.",
+	"ending-title": "Game Over!",
+	"won": "You found my secret, with just {0} tries left!",
+	"lost": "No more tries! Better luck next time! The secret number was {0}."
+}

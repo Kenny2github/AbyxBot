@@ -1,0 +1,12 @@
+{
+	"title": "Title of game embed",
+	"cmp:-2": "Description of embed when guess <= min",
+	"cmp:-1": "Description of embed when guess < secret",
+	"cmp:0": "Description of embed when guess == secret",
+	"cmp:1": "Description of embed when guess > secret",
+	"cmp:2": "Description of embed when guess >= max",
+	"min": "Title of smallest guess field",
+	"max": "Title of largest guess field",
+	"tries": "Title of tries field",
+	"footer": "Instructions for guessing"
+}
