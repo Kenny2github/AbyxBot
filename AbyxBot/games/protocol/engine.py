@@ -1,3 +1,4 @@
+from typing import Optional
 from abc import ABCMeta, abstractmethod
 
 class GameEngine(metaclass=ABCMeta):
@@ -8,4 +9,14 @@ class GameEngine(metaclass=ABCMeta):
 
     @abstractmethod
     def update(self, *args, **kwargs):
+        raise NotImplementedError
+
+    @abstractmethod
+    def won(self) -> Optional[bool]:
+        """Has the game ended by winning?
+        Returns:
+        * ``True`` for yes
+        * ``None`` if the game has ended, but not by winning
+        * ``False`` if the game has not yet ended
+        """
         raise NotImplementedError
