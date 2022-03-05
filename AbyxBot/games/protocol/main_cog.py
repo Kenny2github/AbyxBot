@@ -12,14 +12,6 @@ class GameClass(Protocol):
     name: str
     lobby: Lobby
 
-    async def join(self, ctx: Context, lobbier) -> None:
-        """Join the game."""
-        pass
-
-    async def spectate(self, ctx: Context, lobbier) -> None:
-        """Spectate the game."""
-        pass
-
 lobbier_opt = slash.Option(
     'Join the queue started by this person, '
     'or start (and join) a queue in their name.',
@@ -38,7 +30,7 @@ def setup(bot: slash.SlashBot):
     @bot.slash_cmd()
     async def join(ctx: Context, game: game_opt,
                    lobbier: lobbier_opt = None) -> None:
-        """Join a game!"""
+        """Join the queue for a game!"""
         await games[game].lobby.join(ctx, lobbier)
 
     @bot.slash_cmd()
@@ -46,3 +38,8 @@ def setup(bot: slash.SlashBot):
                        lobbier: lobbier_opt = None) -> None:
         """Spectate a game."""
         await games[game].lobby.spectate(ctx, lobbier)
+
+    @bot.slash_cmd()
+    async def leave(ctx: Context, game: game_opt) -> None:
+        """Leave the queue for a game."""
+        await games[game].lobby.leave(ctx)
