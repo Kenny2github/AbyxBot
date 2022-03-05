@@ -9,6 +9,10 @@ class GameEngine(metaclass=ABCMeta):
 
     @abstractmethod
     def update(self, *args, **kwargs):
+        """Update the game state.
+
+        This may take whatever arguments and return whatever value is useful.
+        """
         raise NotImplementedError
 
     @abstractmethod
