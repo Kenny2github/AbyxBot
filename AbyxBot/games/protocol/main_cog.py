@@ -21,7 +21,8 @@ class GameClass(Protocol):
         pass
 
 lobbier_opt = slash.Option(
-    'Join the queue started by this person, or start a queue in their name.',
+    'Join the queue started by this person, '
+    'or start (and join) a queue in their name.',
     type=slash.ApplicationCommandOptionType.USER)
 
 games: dict[str, GameClass] = {}
