@@ -1,0 +1,15 @@
+{
+	"joined-game-title": "Joined Game",
+	"joined-game": "You have joined the queue for {0}.",
+	"spectating-game-title": "Spectating Game",
+	"spectating-game": "You are queued to spectate the game of {0}.",
+	"nothing-to-leave": "You are not in this game; you cannot leave it.",
+	"left-title": "Left Game",
+	"left": "You have left the queue for {0}.",
+	"starting-now-title": "Game Starting",
+	"starting-now": "The game of {0} is starting now!",
+	"starting-soon-title": "Game Starting Soon",
+	"starting-soon": "Enough players have joined the game of {0}; waiting {1} more seconds for more players to join...",
+	"start-cancelled-title": "Start Cancelled",
+	"start-cancelled": "Too many players left the queue! The game start has been cancelled."
+}

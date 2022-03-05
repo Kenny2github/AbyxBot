@@ -23,6 +23,8 @@ MODULES = {
     'Translation': ('translation', 'trans'),
     'Unit Conversions': ('units', 'units'),
     'Lexical Analysis': ('words', 'words'),
+    # NOTE: This must come after all game entries
+    'Games': ('games.protocol.main_cog', 'games'),
 }
 
 logger = get_logger('init')
