@@ -1,5 +1,6 @@
 # stdlib
 import os
+from logging import getLogger
 import asyncio
 
 # 3rd-party
@@ -7,9 +8,8 @@ from discord.ext import commands
 
 # 1st-party
 from .utils import recurse_mtimes
-from .logger import get_logger
 
-logger = get_logger('watcher')
+logger = getLogger(__name__)
 
 async def stop_on_change(bot: commands.Bot, path: str):
     mtimes = recurse_mtimes(path)

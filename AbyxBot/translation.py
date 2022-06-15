@@ -2,6 +2,7 @@
 import json
 import os
 import re
+from logging import getLogger
 from typing import Callable, Union
 from functools import partial
 import asyncio
@@ -15,11 +16,10 @@ from discord.ext.slash import Option, SlashBot
 from .chars import REGU
 from .config import config
 from .discord_markdown import html_to_md, md_to_html
-from .logger import get_logger
 from .i18n import Context, IDContext, Msg
 from .utils import AttrDict, asyncify
 
-logger = get_logger('translation')
+logger = getLogger(__name__)
 
 client: translate.TranslationServiceClient = \
     translate.TranslationServiceClient \

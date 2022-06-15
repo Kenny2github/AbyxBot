@@ -1,21 +1,19 @@
 # stdlib
-import asyncio
 import os
+from logging import getLogger
 from typing import Optional
+import asyncio
 
 # 3rd-party
 import aiofiles
 import aiosqlite
-
-# 1st-party
-from .logger import get_logger
 
 __all__ = [
     'db',
     'Database'
 ]
 
-logger = get_logger('db')
+logger = getLogger(__name__)
 
 class Database:
     """Represents the database connection."""

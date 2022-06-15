@@ -1,5 +1,6 @@
 # stdlib
 import time
+from logging import getLogger
 from typing import Any, Callable, Iterable, Optional, Union
 import asyncio
 
@@ -11,10 +12,9 @@ from discord.ext import slash
 # 1st-party
 from .load_i18n import load_i18n_strings, SUPPORTED_LANGS
 from .chars import LABR, RABR
-from .logger import get_logger
 from .db import db
 
-logger = get_logger('i18n')
+logger = getLogger(__name__)
 
 IDContext = Union[slash.Context, discord.TextChannel, discord.User]
 

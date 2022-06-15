@@ -1,5 +1,6 @@
 # stdlib
 from functools import partial
+from logging import getLogger
 
 # 3rd-party
 import discord
@@ -8,7 +9,6 @@ from discord.ext import commands, slash
 # 1st-party
 from .config import config
 from .i18n import Context
-from .logger import get_logger
 
 SIGNALLED_EXCS = (
     commands.BotMissingPermissions,
@@ -23,8 +23,7 @@ UNLOGGED_EXCS = (
     commands.TooManyArguments
 )
 
-logger = get_logger('client')
-cmd_logger = get_logger('cmds')
+logger = getLogger(__name__)
 
 client = slash.SlashBot(
     command_prefix='/',
@@ -51,7 +50,9 @@ async def on_command_error(ctx: Context, exc: Exception):
 
 @client.event
 async def on_before_slash_command_invoke(ctx: Context):
-    cmd_logger.info(ctx)
+    logger.info('User %s\t(%18d) in channel %s\t(%18d) running /%s',
+                ctx.author, ctx.author.id, ctx.channel,
+                ctx.channel.id, ctx.command)
 
 @client.event
 async def on_ready():

@@ -1,6 +1,7 @@
 # stdlib
 import importlib
 import asyncio
+from logging import getLogger
 
 # 3rd-party
 from discord.ext import slash
@@ -9,7 +10,7 @@ from discord.ext import slash
 from .client import client
 from .config import TOKEN, cmdargs
 from .db import db
-from .logger import get_logger
+from .logger import activate as activate_logging
 from .status import SetStatus
 from .watcher import stop_on_change
 
@@ -28,7 +29,7 @@ MODULES = {
     'Games': ('games.protocol.main_cog', 'games'),
 }
 
-logger = get_logger('init')
+logger = getLogger(__name__)
 
 async def import_cog(bot: slash.SlashBot, name: str, fname: str):
     """Load a module and run its setup function."""
@@ -51,6 +52,7 @@ async def run():
             await import_cog(client, name, fname)
     globs['status'] = SetStatus(client)
     globs['wakeup'] = asyncio.create_task(stop_on_change(client, 'AbyxBot'))
+    globs['logger'] = activate_logging()
     globs['status'].start()
     await client.start(TOKEN)
 
@@ -71,6 +73,8 @@ async def done():
             globs['wakeup'].cancel()
         if 'status' in globs:
             globs['status'].cancel()
+        if 'logger' in globs:
+            globs['logger'].cancel()
     except RuntimeError as exc:
         print(exc)
     await client.close()
