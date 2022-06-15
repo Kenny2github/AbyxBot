@@ -15,18 +15,18 @@ from .status import SetStatus
 from .watcher import stop_on_change
 
 MODULES = {
-    '2048': ('games.twozerofoureight', '2048'),
-    'Help': ('help', 'help'),
-    'Internationalization': ('i18n', 'i18n'),
+    # '2048': ('games.twozerofoureight', '2048'),
+    # 'Help': ('help', 'help'),
+    # 'Internationalization': ('i18n', 'i18n'),
     'Miscellaneous Commands': ('misc_cmds', 'misc'),
-    'Numguess': ('games.numguess', 'numguess'),
-    'Sudo Commands': ('sudo', 'sudo'),
-    'Translation': ('translation', 'trans'),
-    'Unit Conversions': ('units', 'units'),
-    'Lexical Analysis': ('words', 'words'),
-    'Dummy Game': ('games.dummy_game', 'dummy_game'),
-    # NOTE: This must come after all game entries
-    'Games': ('games.protocol.main_cog', 'games'),
+    # 'Numguess': ('games.numguess', 'numguess'),
+    # 'Sudo Commands': ('sudo', 'sudo'),
+    # 'Translation': ('translation', 'trans'),
+    # 'Unit Conversions': ('units', 'units'),
+    # 'Lexical Analysis': ('words', 'words'),
+    # 'Dummy Game': ('games.dummy_game', 'dummy_game'),
+    # # NOTE: This must come after all game entries
+    # 'Games': ('games.protocol.main_cog', 'games'),
 }
 
 logger = getLogger(__name__)
