@@ -1,10 +1,18 @@
+import asyncio
 import os
-os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from pathlib import Path
+os.chdir(Path(__file__).resolve().parent.parent)
 from AbyxBot import done, run
 
+async def main():
+    try:
+        await run()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        await done()
+
 try:
-    run()
+    asyncio.run(main())
 except KeyboardInterrupt:
     pass
-finally:
-    done()

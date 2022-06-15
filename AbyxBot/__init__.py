@@ -30,40 +30,41 @@ MODULES = {
 
 logger = get_logger('init')
 
-def import_cog(bot: slash.SlashBot, name: str, fname: str):
+async def import_cog(bot: slash.SlashBot, name: str, fname: str):
     """Load a module and run its setup function."""
     module = importlib.import_module('.' + fname, __name__)
     if asyncio.iscoroutinefunction(module.setup):
-        bot.loop.run_until_complete(module.setup(bot))
+        await module.setup(bot)
     else:
         module.setup(bot)
     logger.info('Loaded %s', name)
 
-globs = {}
+globs: dict[str, asyncio.Task] = {}
 
-def run():
+async def run():
     """Run the bot."""
-    client.loop.run_until_complete(db.init())
+    await db.init()
     for name, (fname, cmdname) in MODULES.items():
         if cmdname in cmdargs.disable:
             logger.info('Not loading %s', name)
         else:
-            import_cog(client, name, fname)
+            await import_cog(client, name, fname)
     globs['status'] = SetStatus(client)
-    globs['wakeup'] = client.loop.create_task(stop_on_change(client, 'AbyxBot'))
+    globs['wakeup'] = asyncio.create_task(stop_on_change(client, 'AbyxBot'))
     globs['status'].start()
-    client.loop.run_until_complete(client.start(TOKEN))
+    await client.start(TOKEN)
 
 async def cleanup_tasks():
     for task in asyncio.all_tasks():
         try:
+            # note that this cancels the task on timeout
             await asyncio.wait_for(task, 3.0)
         except asyncio.TimeoutError:
             pass
         except asyncio.CancelledError:
             return
 
-def done():
+async def done():
     """Cleanup and shutdown the bot."""
     try:
         if 'wakeup' in globs:
@@ -72,9 +73,7 @@ def done():
             globs['status'].cancel()
     except RuntimeError as exc:
         print(exc)
-    client.loop.run_until_complete(client.close())
+    await client.close()
     if db.conn is not None:
-        client.loop.run_until_complete(db.stop())
-    client.loop.run_until_complete(cleanup_tasks())
-    client.loop.stop()
-    client.loop.close()
+        await db.stop()
+    await cleanup_tasks()
