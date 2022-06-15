@@ -143,6 +143,10 @@ Msg.load_strings()
 
 class Context(slash.Context):
 
+    def __hash__(self):
+        """More useful hash that will hopefully be part of d.e./ soon"""
+        return hash((self.author.id, self.channel.id))
+
     def cast(self, msg: Any) -> str:
         """If msg is a message object, format and return it.
         Otherwise, cast it to a string in the usual manner.
