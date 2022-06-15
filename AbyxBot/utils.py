@@ -2,7 +2,7 @@
 import re
 import asyncio
 import os
-from typing import Optional, TypeVar
+from typing import TypeVar
 from functools import partial
 
 # 3rd-party
@@ -11,20 +11,14 @@ import discord
 T = TypeVar('T')
 EMOJI_RE = re.compile(r'<(a?):([^:]+):([^>]+)>')
 
-class AttrDict:
+class AttrDict(dict[str, T]):
     """Access data by key or attribute."""
     def __init__(self, attrs: dict[str, T]):
-        self.__dict__.update(attrs)
-    def __getitem__(self, key: str) -> T:
-        return self.__dict__[key]
-    def __setitem__(self, key: str, value: T):
-        self.__dict__[key] = value
-    def __repr__(self) -> str:
-        return repr(self.__dict__)
-    def __str__(self) -> str:
-        return str(self.__dict__)
-    def get(self, key: str, default: T = None) -> Optional[T]:
-        return self.__dict__.get(key, default)
+        self.update(attrs)
+    def __getattr__(self, name: str) -> T:
+        return self[name]
+    def __setattr__(self, name: str, value: T) -> None:
+        self[name] = value
 
 def recurse_mtimes(dir: str, *path: str,
                    current: dict[str, float] = None) -> dict[str, float]:
