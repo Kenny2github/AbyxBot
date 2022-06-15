@@ -58,6 +58,7 @@ class UserQueue:
 
     def __contains__(self, player: Context) -> bool:
         """Check if a player is in queue."""
+        # TODO: why is this not working?
         return player in self.backmap
 
 class Lobby(metaclass=LobbyMeta):
