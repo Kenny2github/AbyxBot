@@ -18,6 +18,7 @@ class GameEngine(metaclass=ABCMeta):
     @abstractmethod
     def won(self) -> Optional[bool]:
         """Has the game ended by winning?
+
         Returns:
         * ``True`` for yes
         * ``None`` if the game has ended, but not by winning
