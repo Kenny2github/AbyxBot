@@ -2,9 +2,10 @@
 import importlib
 import asyncio
 from logging import getLogger
+from typing import Union
 
 # 3rd-party
-from discord.ext import slash
+from discord.ext import commands
 
 # 1st-party
 from .client import bot
@@ -31,7 +32,7 @@ MODULES = {
 
 logger = getLogger(__name__)
 
-async def import_cog(bot: slash.SlashBot, name: str, fname: str):
+async def import_cog(bot: commands.Bot, name: str, fname: str):
     """Load a module and run its setup function."""
     module = importlib.import_module('.' + fname, __name__)
     if asyncio.iscoroutinefunction(module.setup):
@@ -40,7 +41,7 @@ async def import_cog(bot: slash.SlashBot, name: str, fname: str):
         module.setup(bot)
     logger.info('Loaded %s', name)
 
-globs: dict[str, asyncio.Task] = {}
+globs: dict[str, Union[asyncio.Task, SetStatus]] = {}
 
 async def run():
     """Run the bot."""
