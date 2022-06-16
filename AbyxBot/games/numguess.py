@@ -5,10 +5,11 @@ from typing import Callable, Optional
 
 # 3rd-party
 import discord
-from discord.ext import slash
+from discord import app_commands
+from discord.ext import commands
 
 # 1st-party
-from ..i18n import Context, Msg
+from ..i18n import Msg, mkembed
 from .protocol.engine import GameEngine
 
 TIMEOUT = 60.0
@@ -56,43 +57,42 @@ class NumguessEngine(GameEngine):
         self.tries -= 1
         return result
 
-tries_opt = slash.Option(
-    'How many tries to give yourself. Default 7.',
-    min_value=0)
+class Numguess(commands.Cog):
 
-class Numguess:
-
-    @slash.cmd()
-    async def numguess(self, ctx: Context, tries: tries_opt = 7):
+    @app_commands.command()
+    @app_commands.describe(tries='How many tries to give yourself. Default 7.')
+    async def numguess(self, ctx: discord.Interaction,
+                       tries: app_commands.Range[int, 0] = 7):
         """Play a number-guessing game!"""
         game = NumguessEngine(tries)
-        await ctx.respond(embed=self.gen_embed(ctx, game, None))
+        await ctx.response.send_message(embed=self.gen_embed(ctx, game, None))
         while game.won() is False:
-            guess_msg: discord.Message = await ctx.bot.wait_for(
+            guess_msg: discord.Message = await ctx.client.wait_for(
                 'message', check=self.guess_check(ctx), timeout=TIMEOUT)
             guess = int(guess_msg.content)
             result = game.update(guess)
-            await ctx.webhook.send(embed=self.gen_embed(ctx, game, result))
+            await ctx.followup.send(embed=self.gen_embed(ctx, game, result))
         if game.won():
-            await ctx.webhook.send(embed=ctx.embed(
+            await ctx.followup.send(embed=mkembed(ctx,
                 title=Msg('numguess/ending-title'),
                 description=Msg('numguess/won', game.tries),
                 color=discord.Color.blurple()
             ))
         else:
-            await ctx.webhook.send(embed=ctx.embed(
+            await ctx.followup.send(embed=mkembed(ctx,
                 title=Msg('numguess/ending-title'),
                 description=Msg('numguess/lost', game.secret),
                 color=discord.Color.dark_red()
             ))
 
-    def guess_check(self, ctx: Context) -> Callable[[discord.Message], bool]:
+    def guess_check(self, ctx: discord.Interaction) -> Callable[[discord.Message], bool]:
         return lambda m: (
-            m.channel.id == ctx.channel.id
-            and NUM_RE.match(m.content)
+            ctx.channel is not None
+            and m.channel.id == ctx.channel.id
+            and bool(NUM_RE.match(m.content))
         )
 
-    def gen_embed(self, ctx: Context, game: NumguessEngine,
+    def gen_embed(self, ctx: discord.Interaction, game: NumguessEngine,
                   result: Optional[int]) -> discord.Embed:
         kwargs = dict(
             title=Msg('numguess/title'),
@@ -109,7 +109,7 @@ class Numguess:
             # numguess/cmp:1
             # numguess/cmp:2
             kwargs['description'] = Msg(f'numguess/cmp:{result}')
-        return ctx.embed(**kwargs)
+        return mkembed(ctx, **kwargs)
 
-def setup(bot: slash.SlashBot):
-    bot.add_slash_cog(Numguess())
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Numguess())
