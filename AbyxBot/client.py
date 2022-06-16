@@ -44,10 +44,11 @@ class AbyxTree(app_commands.CommandTree):
             return
         logger.error('', exc_info=exc)
 
-    async def interaction_check(self, ctx: discord.Interaction) -> None:
+    async def interaction_check(self, ctx: discord.Interaction) -> bool:
         logger.info('User %s\t(%18d) in channel %s\t(%18d) running /%s',
                     ctx.user, ctx.user.id, ctx.channel,
-                    ctx.channel.id, ctx.command.name)
+                    ctx.channel.id if ctx.channel else '(none)',
+                    ctx.command.name if ctx.command else '(none)')
         return True
 
 class AbyxBot(commands.Bot):
