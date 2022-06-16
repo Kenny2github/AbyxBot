@@ -9,6 +9,7 @@ from discord.ext import commands
 
 # 1st-party
 from .config import config
+from .i18n import error_embed
 
 SIGNALLED_EXCS = (
     app_commands.BotMissingPermissions,
@@ -26,20 +27,17 @@ class AbyxTree(app_commands.CommandTree):
     async def on_error(
         self, ctx: discord.Interaction, exc: Exception
     ) -> None:
-        logger.error('Ignoring exception in command %s - %s: %s',
+        logger.error('Ignoring exception in command %r - %s: %s',
                     ctx.command.qualified_name if ctx.command else 'None',
                     type(exc).__name__, exc)
+        if ctx.command and ctx.command.on_error:
+            return # on_error called
         if isinstance(exc, SIGNALLED_EXCS):
             if ctx.response.is_done():
                 method = ctx.followup.send
             else:
                 method = partial(ctx.response.send_message, ephemeral=True)
-            await method(embed=discord.Embed(
-                title='Error',
-                description=str(exc),
-                color=0xff0000
-            ))
-            # await method(embed=ctx.error_embed(str(exc)))
+            await method(embed=error_embed(ctx, str(exc)))
             return
         if isinstance(exc, UNLOGGED_EXCS):
             return
