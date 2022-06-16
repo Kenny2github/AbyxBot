@@ -71,4 +71,4 @@ class AbyxBot(commands.Bot):
     async def on_ready(self) -> None:
         logger.info('Ready!')
 
-client = AbyxBot()
+bot = AbyxBot()

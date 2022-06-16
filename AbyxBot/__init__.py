@@ -7,7 +7,7 @@ from logging import getLogger
 from discord.ext import slash
 
 # 1st-party
-from .client import client
+from .client import bot
 from .config import TOKEN, cmdargs
 from .database import db
 from .logs import activate as activate_logging
@@ -49,12 +49,12 @@ async def run():
         if cmdname in cmdargs.disable:
             logger.info('Not loading %s', name)
         else:
-            await import_cog(client, name, fname)
-    globs['status'] = SetStatus(client)
-    globs['wakeup'] = asyncio.create_task(stop_on_change(client, 'AbyxBot'))
+            await import_cog(bot, name, fname)
+    globs['status'] = SetStatus(bot)
+    globs['wakeup'] = asyncio.create_task(stop_on_change(bot, 'AbyxBot'))
     globs['logger'] = activate_logging()
     globs['status'].start()
-    await client.start(TOKEN)
+    await bot.start(TOKEN)
 
 async def cleanup_tasks():
     for task in asyncio.all_tasks():
@@ -77,7 +77,7 @@ async def done():
             globs['logger'].cancel()
     except RuntimeError as exc:
         print(exc)
-    await client.close()
+    await bot.close()
     if db.conn is not None:
         await db.stop()
     await cleanup_tasks()
