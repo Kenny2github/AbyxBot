@@ -193,7 +193,7 @@ def mkembed(
 def error_embed(ctx: IDContext, error_message: Any, **kwargs) -> discord.Embed:
     return mkembed(ctx,
         Msg('error'), error_message,
-        color=discord.Color.red()
+        color=discord.Color.red(), **kwargs
     )
 
 T = TypeVar('T', bound=Callable)
