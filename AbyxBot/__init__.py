@@ -9,7 +9,7 @@ from discord.ext import slash
 # 1st-party
 from .client import client
 from .config import TOKEN, cmdargs
-from .db import db
+from .database import db
 from .logs import activate as activate_logging
 from .status import SetStatus
 from .watcher import stop_on_change

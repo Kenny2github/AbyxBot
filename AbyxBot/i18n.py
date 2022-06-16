@@ -12,7 +12,7 @@ from discord.ext import slash
 # 1st-party
 from .load_i18n import load_i18n_strings, SUPPORTED_LANGS
 from .chars import LABR, RABR
-from .db import db
+from .database import db
 
 logger = getLogger(__name__)
 
