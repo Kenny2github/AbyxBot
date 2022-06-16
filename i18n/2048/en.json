@@ -4,6 +4,8 @@
 	"points": "You have **{0}** points. (Your highscore: **{1}**)",
 	"footer": "Click an arrow to move in that direction.",
 	"timeout": "You didn't make a move for while and so have been timed out.",
+	"won-continue-title": "Game Won!",
+	"won-continue": "You got a {0} (or above)! However, you've chosen to allow continuing past victory - the game will only end when you run out of moves or stay idle for too long.",
 	"highscore-title": "New Highscore!",
 	"highscore": "You set a new highscore of **{0}** points!",
 	"gg": "Good Game!",

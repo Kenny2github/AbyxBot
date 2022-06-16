@@ -1,16 +1,16 @@
 # stdlib
 import random
-import asyncio
 from typing import Optional
 
 # 3rd-party
 import discord
-from discord.ext import slash
+from discord import app_commands
+from discord.ext import commands
 
 # 1st-party
 from ..chars import UP, DOWN, LEFT, RIGHT
 from ..database import db
-from ..i18n import Context, Msg
+from ..i18n import Msg, error_embed, mkembed
 from ..utils import str_to_emoji
 from .protocol.engine import GameEngine
 
@@ -38,12 +38,10 @@ BOTRIGHT = '\N{BOX DRAWINGS DOUBLE UP AND LEFT}'
 VERT = '\N{BOX DRAWINGS LIGHT VERTICAL}'
 DBLV = '\N{BOX DRAWINGS DOUBLE VERTICAL}'
 
-Board = list[list[Optional[int]]]
-
 class Engine2048(GameEngine):
 
     points: int
-    board: Board
+    board: list[list[Optional[int]]]
     ending: int = 2048
     allow_continue: bool = False
 
@@ -58,37 +56,47 @@ class Engine2048(GameEngine):
 
     def game_done(self) -> bool:
         """Has the game ended?"""
-        # only allow win/lose state to control done state
-        # if continuing past victory is not allowed
-        if not self.allow_continue and (won := self.won()) is not None:
-            return won
-        # no empty squares, but maybe we can still move?
+        return self.won() is not False
+
+    def has_legal_move(self) -> bool:
         for x in range(4):
             for y in range(4):
+                if self.board[x][y] is None:
+                    return True # empty square = legal move
                 if any((
                     x > 0 and self.board[x][y] == self.board[x-1][y],
                     x < 3 and self.board[x][y] == self.board[x+1][y],
                     y > 0 and self.board[x][y] == self.board[x][y-1],
                     y < 3 and self.board[x][y] == self.board[x][y+1],
                 )):
-                    return False # a legal move is possible
-        # no legal moves are possible
-        return True
+                    return True # a legal move is possible
+        return False
 
-    def won(self) -> Optional[bool]:
+    def won(self, ignore_continue: bool = False) -> Optional[bool]:
         """Has the game ended by winning?
+
         Returns:
         * ``True`` for yes
         * ``None`` if the game has ended, but not by winning
         * ``False`` if the game has not yet ended
         """
-        for row in self.board:
-            for tile in row:
-                if tile is None:
-                    return False # not ended at all
-                if tile >= self.ending:
-                    return True  # ended by winning!
-        return None # maybe?
+        all_tiles = [tile for row in self.board for tile in row]
+        if self.allow_continue and not ignore_continue:
+            if self.has_legal_move():
+                # any legal move under allow_continue = not done
+                # though you may have already won
+                return False
+            if any(tile >= self.ending
+                   for tile in all_tiles if tile is not None):
+                # no legal moves and a tile is a winning tile
+                return True
+            return None # no legal moves and no tile won
+        if any(tile >= self.ending for tile in all_tiles if tile is not None):
+            # outside of allow_continue, any win is game end
+            return True
+        if self.has_legal_move():
+            return False # legal moves and not won = not done
+        return None # no legal moves and not won, so lost
 
     def random_space(self) -> tuple[Optional[int], Optional[int]]:
         """Choose a random empty space on the board."""
@@ -106,7 +114,7 @@ class Engine2048(GameEngine):
         """Add a tile to a random empty space on the board."""
         new_value = 2 if random.random() < TWO_CHANCE else 4
         x, y = self.random_space()
-        if x is None:
+        if x is None or y is None:
             return # failed to add tile
         self.board[x][y] = new_value
 
@@ -134,9 +142,13 @@ class Engine2048(GameEngine):
                     if self.board[x][y] is None or (x, y) in moved:
                         continue
                     if self.board[x][y] == self.board[x+dx][y+dy]:
-                        self.board[x+dx][y+dy] *= 2
+                        value = self.board[x+dx][y+dy]
+                        if value is None:
+                            continue
+                        value *= 2
+                        self.board[x+dx][y+dy] = value
                         self.board[x][y] = None
-                        self.points += self.board[x+dx][y+dy]
+                        self.points += value
                         changed = changed_once = True
                         moved.add((x + dx, y + dy))
                         moved.add((x, y))
@@ -194,95 +206,115 @@ class Engine2048(GameEngine):
             self.add_random_tile()
         return self.game_done()
 
-ending_opt = slash.Option(
-    'The power of 2 to end at. Default 11 (2**11=2048, the name of the game).',
-    min_value=4)
-allow_opt = slash.Option(
-    'Whether to keep playing after you reach the end. Default False (no).',
-    type=slash.ApplicationCommandOptionType.BOOLEAN)
+class ArrowView(discord.ui.View):
+    def __init__(self, author_id: int, highscore: int, game: Engine2048):
+        super().__init__(timeout=TIMEOUT)
+        for arrow, (dx, dy) in ARROWS.items():
+            self.add_item(ArrowButton(arrow, dx, dy))
+        self.author_id = author_id
+        self.highscore = highscore
+        self.game = game
+        self.last_ctx = None
+        self.victory_notified = False
 
-class Pow211:
+    async def interaction_check(self, ctx: discord.Interaction) -> bool:
+        self.last_ctx = ctx
+        return ctx.user.id == self.author_id
 
-    @slash.cmd(name='2048')
-    async def pow211(self, ctx: Context, ending: ending_opt = 11,
-                     allow_continue: allow_opt = False):
-        """Play 2048!"""
-        game = Engine2048(1 << ending, allow_continue)
-        done = False
-        prefix = f'2048-{ctx.id}:'
-        highscore = await db.get_2048_highscore(ctx.author.id)
-        await ctx.respond(embed=self.gen_embed(ctx, game, highscore),
-                          components=[self.gen_buttons(prefix)])
-        futs = [ctx.bot.loop.create_future()]
+    async def on_timeout(self) -> None:
+        assert self.last_ctx is not None
+        await self.last_ctx.edit_original_message(view=None)
+        await self.last_ctx.followup.send(embed=error_embed(
+            self.last_ctx, Msg('2048/timeout')))
 
-        @ctx.bot.component_callback(
-            lambda c: c.custom_id.startswith(prefix), ttl=None)
-        async def handle_button(context: slash.ComponentContext):
-            _, dx, dy = context.custom_id.split(':')
-            game_done = game.update(int(dx), int(dy))
-            futs[0].set_result(game_done)
-            futs[0] = ctx.bot.loop.create_future()
-            if game_done:
-                await context.respond(
-                    embed=self.gen_embed(ctx, game, highscore),
-                    components=[])
-                await self.conclude(game, highscore, ctx, context)
-            else:
-                await context.respond(
-                    embed=self.gen_embed(ctx, game, highscore))
-        @handle_button.check
-        async def author_only(context: slash.ComponentContext):
-            return context.author.id == ctx.author.id
+    async def update_state(self, ctx: discord.Interaction,
+                           dx: int, dy: int) -> None:
+        self.last_ctx = ctx
+        game_done = self.game.update(dx, dy)
+        if game_done:
+            await ctx.response.edit_message(
+                embed=self.gen_embed(ctx), view=None)
+            await self.conclude(ctx)
+        else:
+            await ctx.response.edit_message(embed=self.gen_embed(ctx))
+            if not self.victory_notified \
+                    and self.game.won(ignore_continue=True):
+                self.victory_notified = True
+                await ctx.followup.send(embed=mkembed(ctx,
+                    Msg('2048/won-continue-title'),
+                    Msg('2048/won-continue', self.game.ending),
+                    color=discord.Color.green()
+                ))
 
-        try:
-            while not done:
-                try:
-                    done = await asyncio.wait_for(futs[0], TIMEOUT)
-                except asyncio.TimeoutError:
-                    await ctx.respond(components=[])
-                    await ctx.webhook.send(embed=ctx.error_embed(
-                        Msg('2048/timeout')))
-                # allow the handler to update the future before we re-await it
-                await asyncio.sleep(.1)
-        finally:
-            handle_button.deregister(ctx.bot)
-            if game.points > highscore:
-                await db.set_2048_highscore(ctx.author.id, game.points)
-
-    async def conclude(self, game: Engine2048, highscore: int, ctx: Context,
-                       context: slash.ComponentContext):
-        if game.points > highscore:
-            await context.webhook.send(embed=ctx.embed(
+    async def conclude(self, ctx: discord.Interaction):
+        self.last_ctx = ctx
+        if self.game.points > self.highscore:
+            await ctx.followup.send(embed=mkembed(ctx,
                 Msg('2048/highscore-title'),
-                Msg('2048/highscore', game.points),
+                Msg('2048/highscore', self.game.points),
                 color=discord.Color.blurple()
             ))
-        if game.won():
-            await context.webhook.send(embed=ctx.embed(
-                Msg('2048/gg'), Msg('2048/won', game.points, game.ending),
+        if self.game.won():
+            await ctx.followup.send(embed=mkembed(ctx,
+                Msg('2048/gg'), Msg('2048/won', self.game.points, self.game.ending),
                 color=discord.Color.green()
             ))
         else:
-            await context.webhook.send(embed=ctx.embed(
-                Msg('2048/gg'), Msg('2048/lost', game.points),
+            await ctx.followup.send(embed=mkembed(ctx,
+                Msg('2048/gg'), Msg('2048/lost', self.game.points),
                 color=discord.Color.red()
             ))
+        self.stop()
 
-    def gen_embed(self, ctx: Context, game: Engine2048,
-                  highscore: int) -> discord.Embed:
-        return ctx.embed(
-            Msg('2048/embed-title'), game.board_to_text(),
+    def gen_embed(self, ctx: discord.Interaction) -> discord.Embed:
+        self.last_ctx = ctx
+        return mkembed(ctx,
+            Msg('2048/embed-title'), self.game.board_to_text(),
             fields=((Msg('2048/points-title'), Msg(
-                '2048/points', game.points, highscore), False),),
+                '2048/points', self.game.points, self.highscore), False),),
             footer=Msg('2048/footer'), color=discord.Color.gold()
         )
 
-    def gen_buttons(self, prefix: str) -> slash.ActionRow:
-        return slash.ActionRow(slash.Button(
-            slash.ButtonStyle.PRIMARY,
-            emoji=str_to_emoji(arrow),
-            custom_id=f'{prefix}{dx}:{dy}'
-        ) for arrow, (dx, dy) in ARROWS.items())
+class ArrowButton(discord.ui.Button[ArrowView]):
 
-def setup(bot: slash.SlashBot):
-    bot.add_slash_cog(Pow211())
+    def __init__(self, arrow: str, dx: int, dy: int):
+        super().__init__(
+            style=discord.ButtonStyle.primary,
+            emoji=str_to_emoji(arrow),
+            custom_id=f'{dx}:{dy}'
+        )
+        self.dx, self.dy = dx, dy
+
+    async def callback(self, ctx: discord.Interaction) -> None:
+        assert self.view is not None
+        await self.view.update_state(ctx, self.dx, self.dy)
+
+class Pow211(commands.Cog):
+
+    @app_commands.command(name='2048')
+    @app_commands.describe(
+        ending='The power of 2 to end at. Default 11 '
+        '(2**11=2048, the name of the game).',
+        allow_continue='Whether to keep playing after you reach the end. '
+        'Default False (no).'
+    )
+    async def pow211(self, ctx: discord.Interaction,
+                     ending: app_commands.Range[int, 4] = 11,
+                     allow_continue: bool = False):
+        """Play 2048!"""
+        game = Engine2048(1 << ending, allow_continue)
+        highscore = await db.get_2048_highscore(ctx.user.id)
+        view = ArrowView(ctx.user.id, highscore, game)
+        await ctx.response.send_message(
+            embed=view.gen_embed(ctx), view=view)
+
+        try:
+            await view.wait()
+        finally:
+            if not view.is_finished():
+                view.stop()
+            if game.points > highscore:
+                await db.set_2048_highscore(ctx.user.id, game.points)
+
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Pow211())
