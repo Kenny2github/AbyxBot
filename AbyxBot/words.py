@@ -1,20 +1,21 @@
 # stdlib
 from functools import wraps
-from typing import TypedDict
+from typing import Callable, TypedDict
 from operator import itemgetter
 from itertools import groupby
 
 # 3rd-party
 import aiohttp
 import discord
-from discord.ext.slash import Group, Option, SlashBot, cmd, group
+from discord import app_commands
+from discord.ext import commands
 
 # 1st-party
-from .i18n import Context, Msg
+from .i18n import Msg, mkembed, mkmsg, error_embed
 
 # TODO: implement censoring
 
-session: aiohttp.ClientSession = None
+session: aiohttp.ClientSession = None # type: ignore - set on init
 
 TITLES = {
     'ml': 'words/meaning-title',
@@ -38,6 +39,10 @@ TITLES = {
 class WordResp(TypedDict):
     score: int
     word: str
+    tags: list[str]
+    numSyllables: int
+    defs: list[str]
+    defHeadword: str
 
 async def fetch_words(**kwargs) -> list[WordResp]:
     """Get API data, passing kwargs."""
@@ -45,55 +50,57 @@ async def fetch_words(**kwargs) -> list[WordResp]:
     async with session.get(API_URL, params=kwargs) as resp:
         return await resp.json()
 
-def format_words(ctx: Context, api_code: str, word: str,
+def format_words(ctx: discord.Interaction, api_code: str, word: str,
                  data: list[WordResp]) -> discord.Embed:
     """Format API data into an embed."""
-    return ctx.embed(
+    return mkembed(ctx,
         title=Msg(TITLES[api_code], word),
-        description=ctx.msg(',').join(
+        description=mkmsg(ctx, ',').join(
             '{score}: {word}'.format(**i)
             for i in data
         ) or Msg('none-paren'),
         color=discord.Color.blue()
     )
 
-def endpoint(group: Group, api_code: str):
+def endpoint(group: app_commands.Group, api_code: str, param_desc: str):
     """Take a stub function and make it into a subcommand
     that returns the corresponding API data.
     """
-    def decorator(func):
-        @group.slash_cmd()
+    def decorator(func: Callable):
+        assert func.__doc__ is not None
+        param_name = [key for key, value in func.__annotations__.items()
+                      if value is str or value == 'str'][0]
+        @group.command(name=func.__name__, description=func.__doc__)
+        @app_commands.describe(**{param_name: param_desc})
         @wraps(func)
-        async def subcommand(ctx: Context, word: str):
-            await ctx.respond(deferred=True)
+        async def subcommand(ctx: discord.Interaction, **kwargs):
+            word = kwargs[param_name]
+            await ctx.response.defer()
             resp = await fetch_words(**{api_code: word})
-            await ctx.respond(embed=format_words(ctx, api_code, word, resp))
+            await ctx.edit_original_message(
+                embed=format_words(ctx, api_code, word, resp))
         return subcommand
     return decorator
 
-word_opt = Option('A word.')
-of_opt = Option('A word.', name='of')
-
 ### /words <command> <arg>:<thing>
 
-@group()
-async def words(ctx: Context):
-    """Lexical data related to words!"""
+words = app_commands.Group(
+    name='words', description="""Lexical data related to words!""")
 
 ### rhyming is a special case
 
-@words.slash_cmd()
-async def rhyming(ctx: Context, word: Option(
-    name='with', description='The word that other words rhyme with.'
-)):
+@words.command()
+@app_commands.rename(word='with')
+@app_commands.describe(word='The word that other words rhyme with.')
+async def rhyming(ctx: discord.Interaction, word: str):
     """Words that rhyme with a word."""
-    await ctx.respond(deferred=True)
+    await ctx.response.defer()
     perf: list[WordResp] = await fetch_words(rel_rhy=word, md='s')
     near: list[WordResp] = await fetch_words(rel_nry=word, md='s')
     key = itemgetter('numSyllables')
     perf.sort(key=key)
     near.sort(key=key)
-    comma = ctx.msg(',')
+    comma = mkmsg(ctx, ',')
     fields = []
     for count, results in groupby(perf, key):
         fields.append((
@@ -101,7 +108,7 @@ async def rhyming(ctx: Context, word: Option(
             comma.join(result['word'] for result in results),
             False
         ))
-    perf_embed = ctx.embed(
+    perf_embed = mkembed(ctx,
         Msg('words/perfect-rhymes'),
         # no description if any rhymes were found
         description=None if fields else Msg('none-paren'),
@@ -115,109 +122,108 @@ async def rhyming(ctx: Context, word: Option(
             comma.join(result['word'] for result in results),
             False
         ))
-    near_embed = ctx.embed(
+    near_embed = mkembed(ctx,
         Msg('words/near-rhymes'),
         # no description if any rhymes were found
         description=None if fields else Msg('none-paren'),
         fields=fields,
         color=0xe67e22
     )
-    await ctx.respond(embeds=[perf_embed, near_embed])
+    await ctx.edit_original_message(embeds=[perf_embed, near_embed])
 
-@endpoint(words, 'ml')
-async def meaning(ctx: Context, word: Option('A phrase.', name='phrase')):
+@endpoint(words, 'ml', 'A phrase.')
+async def meaning(ctx: discord.Interaction, phrase: str):
     """Words that mean something."""
 
-@endpoint(words, 'sl')
-async def sounding(ctx: Context, word: Option('The sound.', name='like')):
+@endpoint(words, 'sl', 'The sound.')
+async def sounding(ctx: discord.Interaction, like: str):
     """Words that sound like something."""
 
-@endpoint(words, 'sp')
-async def spelled(ctx: Context, word: Option(
+@endpoint(
+    words, 'sp',
     'The spelling. Wildcards allowed - use `re*ing` to get words starting '
-    'with re- and ending with -ing', name='like'
-)):
+    'with re- and ending with -ing')
+async def spelled(ctx: discord.Interaction, like: str):
     """Words that are spelled like something."""
 
-@endpoint(words, 'rel_jja')
-async def modified(ctx: Context, word: Option('An adjective.', name='by')):
+@endpoint(words, 'rel_jja', 'An adjective.')
+async def modified(ctx: discord.Interaction, by: str):
     """Popular nouns modified by the given adjective, \
 per Google Books Ngrams."""
 
-@endpoint(words, 'rel_jjb')
-async def modifying(ctx: Context, word: Option('A noun.')):
+@endpoint(words, 'rel_jjb', 'A noun.')
+async def modifying(ctx: discord.Interaction, word: str):
     """Popular adjectives used to modify the given noun, \
 per Google Books Ngrams."""
 
-@endpoint(words, 'rel_trg')
-async def associated(ctx: Context, word: Option(
-    name='with', description='A word.'
-)):
+@endpoint(words, 'rel_trg', 'A word.')
+async def associated(ctx: discord.Interaction, word: str):
     """Words that are statistically associated with the query word \
 in the same piece of text."""
 
-@endpoint(words, 'rel_bga')
-async def after(ctx: Context, word: word_opt):
+@endpoint(words, 'rel_bga', 'A word.')
+async def after(ctx: discord.Interaction, word: str):
     """Frequent predecessors of the given word (per Google Books Ngrams)."""
 
-@endpoint(words, 'rel_bgb')
-async def before(ctx: Context, word: word_opt):
+@endpoint(words, 'rel_bgb', 'A word.')
+async def before(ctx: discord.Interaction, word: str):
     """Words that frequently follow the given word \
 (per Google Books Ngrams)."""
 
 ### /lex <command> <arg>:<word>
 
-@group()
-async def lex(ctx: Context):
-    """Lexical data related to words!"""
+lex = app_commands.Group(
+    name='lex', description="""Lexical data related to words!""")
 
-@endpoint(lex, 'rel_syn')
-async def synonyms(ctx: Context, word: of_opt):
+@endpoint(lex, 'rel_syn', 'A word.')
+async def synonyms(ctx: discord.Interaction, word: str):
     """Synonyms of the given word (per WordNet)."""
 
-@endpoint(lex, 'rel_ant')
-async def antonyms(ctx: Context, word: of_opt):
+@endpoint(lex, 'rel_ant', 'A word.')
+async def antonyms(ctx: discord.Interaction, word: str):
     """Antonyms of the given word (per WordNet)."""
 
-@endpoint(lex, 'rel_spc')
-async def hypernyms(ctx: Context, word: of_opt):
+@endpoint(lex, 'rel_spc', 'A word.')
+async def hypernyms(ctx: discord.Interaction, word: str):
     """Hypernyms (words that are more general than the word, per WordNet)."""
 
-@endpoint(lex, 'rel_gen')
-async def hyponyms(ctx: Context, word: of_opt):
+@endpoint(lex, 'rel_gen', 'A word.')
+async def hyponyms(ctx: discord.Interaction, word: str):
     """Hyponyms (words that are more specific than the word, per WordNet)."""
 
-@endpoint(lex, 'rel_com')
-async def holonyms(ctx: Context, word: of_opt):
+@endpoint(lex, 'rel_com', 'A word.')
+async def holonyms(ctx: discord.Interaction, word: str):
     """Holonyms (words that are a part of the word, per WordNet)."""
 
-@endpoint(lex, 'rel_par')
-async def meronyms(ctx: Context, word: of_opt):
+@endpoint(lex, 'rel_par', 'A word.')
+async def meronyms(ctx: discord.Interaction, word: str):
     """Meronyms (words that the word is part of, per WordNet)."""
 
-@endpoint(lex, 'rel_hom')
-async def homophones(ctx: Context, word: of_opt):
+@endpoint(lex, 'rel_hom', 'A word.')
+async def homophones(ctx: discord.Interaction, word: str):
     """Homophones (words that sound alike)."""
 
-@endpoint(lex, 'rel_cns')
-async def homoconsonants(ctx: Context, word: of_opt):
+@endpoint(lex, 'rel_cns', 'A word.')
+async def homoconsonants(ctx: discord.Interaction, word: str):
     """Words that match consonants."""
 
 ### /define word:<word>
 
-@cmd()
-async def define(ctx: Context, word: Option('A word (or sometimes phrase).')):
+@app_commands.command()
+@app_commands.describe(word='A word (or sometimes phrase).')
+async def define(ctx: discord.Interaction, word: str):
     """Various information about a word, including its definition(s)."""
-    await ctx.respond(deferred=True)
-    result = await fetch_words(qe='sp', sp=word, md='dpsrf', ipa='1', max=1)
-    result: WordResp = result[0]
+    await ctx.response.defer()
+    results = await fetch_words(qe='sp', sp=word, md='dpsrf', ipa='1', max=1)
+    result: WordResp = results[0]
     if 'defs' not in result:
-        await ctx.respond(embed=ctx.error_embed(Msg('words/no-def', word)))
+        await ctx.edit_original_message(
+            embed=error_embed(ctx, Msg('words/no-def', word)))
         return
     tags: list[str] = result['tags']
     parts_of_speech = set()
-    pron: str = None
-    freq: str = None
+    pron: str = '(?)'
+    freq: str = '(?)'
     for tag in tags:
         if tag.startswith('ipa_pron:'):
             pron = tag.split(':', 1)[1]
@@ -228,14 +234,14 @@ async def define(ctx: Context, word: Option('A word (or sometimes phrase).')):
     syllables: int = result['numSyllables']
     defs: list[str] = result['defs']
     root_word: str = result.get('defHeadword', word)
-    await ctx.respond(embed=ctx.embed(
+    await ctx.edit_original_message(embed=mkembed(ctx,
         title=Msg('words/word-info', word),
         description=Msg('words/word-root', root_word),
         fields=(
             (Msg('words/word-pronunciation'), pron, True),
             (Msg('words/word-syllables'), str(syllables), True),
             (Msg('words/word-parts-of-speech'),
-             ctx.msg(',').join(parts_of_speech),
+             mkmsg(ctx, ',').join(parts_of_speech),
              True),
             (Msg('words/word-frequency'), str(freq), True),
             (Msg('words/word-definitions'), '\n'.join(
@@ -246,7 +252,8 @@ async def define(ctx: Context, word: Option('A word (or sometimes phrase).')):
         color=0xfffffe
     ))
 
-def setup(bot: SlashBot):
+def setup(bot: commands.Bot):
     global session
     session = aiohttp.ClientSession()
-    bot.slash.update({words, lex, define})
+    for cmd in {words, lex, define}:
+        bot.tree.add_command(cmd)
