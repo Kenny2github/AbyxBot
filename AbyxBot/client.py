@@ -64,10 +64,8 @@ class AbyxBot(commands.Bot):
         if config.debug_guild:
             debug_guild = discord.Object(config.debug_guild)
             self.tree.copy_global_to(guild=debug_guild)
-        else:
-            debug_guild = None
-        await self.tree.sync(guild=debug_guild)
-        logger.info('Synced commands')
+            await self.tree.sync(guild=debug_guild)
+            logger.info('Synced commands')
 
     async def on_ready(self) -> None:
         logger.info('Ready!')

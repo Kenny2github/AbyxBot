@@ -32,5 +32,16 @@ class Sudo(app_commands.Group):
         await ctx.response.send_message(
             mkmsg(ctx, 'sudo/r25n'), ephemeral=True)
 
+    @app_commands.command()
+    async def sync(self, ctx: discord.Interaction):
+        """Sync global commands. Run after deploying a bot version.
+
+        NOTE: Never change the signature for this command.
+        """
+        bot: commands.Bot = ctx.client # type: ignore - I know it is
+        await bot.tree.sync()
+        await ctx.response.send_message(
+            mkmsg(ctx, 'sudo/sync'), ephemeral=True)
+
 def setup(bot: commands.Bot):
     bot.tree.add_command(Sudo())
