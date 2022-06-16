@@ -48,7 +48,7 @@ class AbyxTree(app_commands.CommandTree):
         logger.info('User %s\t(%18d) in channel %s\t(%18d) running /%s',
                     ctx.user, ctx.user.id, ctx.channel,
                     ctx.channel.id if ctx.channel else '(none)',
-                    ctx.command.name if ctx.command else '(none)')
+                    ctx.command.qualified_name if ctx.command else '(none)')
         return True
 
 class AbyxBot(commands.Bot):
