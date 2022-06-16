@@ -18,7 +18,8 @@ def activate():
     queue = asyncio.Queue()
     handler = QueueHandler(queue)
     handler.setFormatter(logging.Formatter(FORMAT, style='{'))
-    logging.basicConfig(handlers=[handler], level=cmdargs.level)
+    logging.basicConfig(handlers=[handler], level=logging.WARNING)
+    logging.getLogger('AbyxBot').setLevel(cmdargs.level)
     logging.getLogger('discord').setLevel(logging.INFO)
     return asyncio.create_task(consume_logs(queue))
 
