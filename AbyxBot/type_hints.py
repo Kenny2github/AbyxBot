@@ -20,6 +20,8 @@ class NamespaceChannel(discord.abc.Snowflake, Protocol):
 
 @runtime_checkable
 class HistoriedChannel(discord.abc.Snowflake, Protocol):
+    async def purge(self, **kwargs) -> list[discord.Message]:
+        raise NotImplementedError
     def history(self, **kwargs) -> AsyncIterator[discord.Message]:
         raise NotImplementedError
     async def fetch_message(self, message_id: int) -> discord.Message:
