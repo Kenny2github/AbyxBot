@@ -11,17 +11,12 @@ from discord import app_commands
 from discord.ext import commands
 
 # 1st-party
+from .type_hints import ChannelLike, Mentionable, NamespaceChannel
 from .load_i18n import load_i18n_strings, SUPPORTED_LANGS
 from .chars import LABR, RABR
 from .database import db
 
 logger = getLogger(__name__)
-
-class Mentionable(Protocol):
-    id: int
-    @property
-    def mention(self) -> str:
-        raise NotImplementedError
 
 IDContext = Union[discord.Interaction, Mentionable]
 DBMethod = Callable[[int, Optional[str]], Coroutine[Any, Any, None]]
@@ -268,9 +263,9 @@ class ChannelI18n(app_commands.Group, _I18n):
 
     async def interaction_check(self, ctx: discord.Interaction):
         """Ensure channel configurers have permission to do so."""
-        arg: Optional[discord.abc.GuildChannel] = ctx.namespace.channel
+        arg: Optional[ChannelLike] = ctx.namespace.channel
         channel = arg or ctx.channel
-        if isinstance(channel, app_commands.AppCommandChannel):
+        if isinstance(channel, NamespaceChannel):
             channel = channel.resolve()
         if channel is None:
             return False # if we can't get a channel, assume no perms
@@ -287,7 +282,7 @@ class ChannelI18n(app_commands.Group, _I18n):
     @app_commands.command()
     @channel_opt
     async def get(self, ctx: discord.Interaction,
-                  channel: Optional[discord.abc.GuildChannel] = None):
+                  channel: Optional[ChannelLike] = None):
         """Get your command language."""
         await self.obj_get(
             ctx, channel or ctx.channel, # type: ignore - checks exclude None
@@ -298,7 +293,7 @@ class ChannelI18n(app_commands.Group, _I18n):
     @channel_opt
     @lang_opt
     async def set(self, ctx: discord.Interaction, lang: str,
-                  channel: Optional[discord.abc.GuildChannel] = None):
+                  channel: Optional[ChannelLike] = None):
         """Set your command language."""
         await self.obj_set(
             ctx, channel or ctx.channel, # type: ignore - ditto
@@ -309,7 +304,7 @@ class ChannelI18n(app_commands.Group, _I18n):
     @channel_opt
     async def channel_reset(
         self, ctx: discord.Interaction,
-        channel: Optional[discord.abc.GuildChannel] = None
+        channel: Optional[ChannelLike] = None
     ):
         """Reset your command language."""
         await self.obj_reset(
