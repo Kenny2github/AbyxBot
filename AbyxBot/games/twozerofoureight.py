@@ -9,7 +9,7 @@ from discord.ext import slash
 
 # 1st-party
 from ..chars import UP, DOWN, LEFT, RIGHT
-from ..db import db
+from ..database import db
 from ..i18n import Context, Msg
 from ..utils import str_to_emoji
 from .protocol.engine import GameEngine
