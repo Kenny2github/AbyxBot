@@ -22,7 +22,7 @@ MODULES = {
     'Miscellaneous Commands': ('misc_cmds', 'misc'),
     # 'Numguess': ('games.numguess', 'numguess'),
     'Sudo Commands': ('sudo', 'sudo'),
-    # 'Translation': ('translation', 'trans'),
+    'Translation': ('translation', 'trans'),
     # 'Unit Conversions': ('units', 'units'),
     # 'Lexical Analysis': ('words', 'words'),
     # 'Dummy Game': ('games.dummy_game', 'dummy_game'),

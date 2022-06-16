@@ -1,5 +1,5 @@
 # stdlib
-from typing import Protocol, Union, runtime_checkable
+from typing import Protocol, Union, runtime_checkable, AsyncIterator
 
 # 3rd-party
 import discord
@@ -14,6 +14,13 @@ class Mentionable(discord.abc.Snowflake, Protocol):
 ChannelLike = Union[discord.abc.GuildChannel, discord.Thread]
 
 @runtime_checkable
-class NamespaceChannel(Protocol):
+class NamespaceChannel(discord.abc.Snowflake, Protocol):
     def resolve(self) -> ChannelLike:
+        raise NotImplementedError
+
+@runtime_checkable
+class HistoriedChannel(discord.abc.Snowflake, Protocol):
+    def history(self, **kwargs) -> AsyncIterator[discord.Message]:
+        raise NotImplementedError
+    async def fetch_message(self, message_id: int) -> discord.Message:
         raise NotImplementedError

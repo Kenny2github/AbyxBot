@@ -3,20 +3,22 @@ import json
 import os
 import re
 from logging import getLogger
-from typing import Callable, Union
+from typing import Callable, Optional, Union
 from functools import partial
 import asyncio
 
 # 3rd-party
 import discord
+from discord import app_commands
+from discord.ext import commands
 from google.cloud import translate
-from discord.ext.slash import Option, SlashBot
 
 # 1st-party
 from .chars import REGU
 from .config import config
 from .discord_markdown import html_to_md, md_to_html
-from .i18n import Context, IDContext, Msg
+from .i18n import IDContext, Msg, error_embed
+from .type_hints import HistoriedChannel
 from .utils import AttrDict, asyncify
 
 logger = getLogger(__name__)
@@ -32,7 +34,7 @@ with open(os.path.join('AbyxBot', 'countrylangs.json')) as f:
     COUNTRYLANGS: dict[str, list[str]] = json.load(f)
 LANGUAGES: list[str] = [
     language.language_code for language in
-    client.get_supported_languages(parent=PARENT).languages]
+    client.get_supported_languages(parent=PARENT).languages] # type: ignore
 SPECIAL_LANGS = {
     '\N{WAVING BLACK FLAG}'
     + ''.join(chr(0xe0000 + ord(c)) for c in code)
@@ -44,7 +46,8 @@ SPECIAL_LANGS = {
 logger.info('Loaded supported translation languages')
 
 async def translate_text(text: Union[str, list[str]],
-                         dest: str, source: str = None) -> list[AttrDict]:
+                         dest: str, source: Optional[str] = None
+                         ) -> list[AttrDict]:
     """Translate text, preserving Discord formatting."""
     if isinstance(text, str):
         text = [text]
@@ -67,17 +70,15 @@ async def translate_text(text: Union[str, list[str]],
     for t in resp.translations]
 
 async def send_translation(ctx: IDContext, method: Callable, text: list[str],
-                           dest: str, source: str = None, link: str = None):
+                           dest: str, source: Optional[str] = None,
+                           link: Optional[str] = None):
     """Send the translation to the appropriate context."""
     results = await translate_text(text, dest, source)
     # assume the text is all in the same language *shrug*
     source = results[0].lang
     if dest == source:
-        # can't use ctx.embed because ctx may not be a Context
-        asyncio.create_task(method(embed=discord.Embed(
-            title=str(Msg('error', lang=ctx)),
-            description=str(Msg('translation/same-lang', lang=ctx)),
-            color=discord.Color.red()
+        asyncio.create_task(method(embed=error_embed(
+            ctx, Msg('translation/same-lang', lang=ctx)
         )))
         return
     result_text = '\n\n'.join(t.text for t in results)
@@ -87,7 +88,8 @@ async def send_translation(ctx: IDContext, method: Callable, text: list[str],
     ).set_footer(
         text=str(Msg(
             'translation/requested-by',
-            ctx.author if isinstance(ctx, Context) else ctx, lang=ctx))
+            ctx.user if isinstance(ctx, discord.Interaction)
+            else ctx, lang=ctx))
     )
     if link is not None:
         embed.set_author(
@@ -100,29 +102,43 @@ async def send_translation(ctx: IDContext, method: Callable, text: list[str],
         )
     asyncio.create_task(method(embed=embed))
 
-async def translate(
-    ctx: Context,
-    to_language: Option('The language code to translate to.') = None,
-    from_language: Option('The language code to translate from.') = None,
-    count: Option('Number of messages into the past to translate.',
-                  min_value=1) = 1,
-    text: Option('Text to translate.') = None
+@app_commands.command(name='translate')
+@app_commands.describe(
+    to_language='The language code to translate to.',
+    from_language='The language code to translate from.',
+    count='Number of messages into the past to translate.',
+    text='Text to translate.',
+)
+async def translate_command(
+    ctx: discord.Interaction,
+    to_language: Optional[str] = None,
+    from_language: Optional[str] = None,
+    count: app_commands.Range[int, 1] = 1,
+    text: Optional[str] = None
 ):
     """Translate message text. Run `/help translate`."""
-    await ctx.respond(deferred=True)
     if to_language is None:
         to_language = Msg.get_lang(ctx)
     if text:
-        text = [text]
+        await ctx.response.defer()
+        texts = [text]
         url = None
-    else:
-        msgs: list[discord.Message] = (await ctx.channel.history(
-            limit=count+1).flatten())[:0:-1]
+    elif isinstance(ctx.channel, HistoriedChannel):
+        await ctx.response.defer()
+        msgs: list[discord.Message] = [m async for m in ctx.channel.history(
+            limit=count+1)][:0:-1]
         url = msgs[0].jump_url
-        text = [m.content for m in msgs]
-    await send_translation(ctx, ctx.respond, text, to_language, from_language, url)
+        texts = [m.content for m in msgs]
+    else:
+        await ctx.response.send_message(
+            '\N{EXCLAMATION QUESTION MARK}', ephemeral=True)
+        raise RuntimeError('Slash command run in non-textable channel')
+    await send_translation(ctx, ctx.edit_original_message, texts,
+                           to_language, from_language, url)
 
-def setup(bot: SlashBot):
+def setup(bot: commands.Bot):
+    bot.tree.add_command(translate_command)
+    @bot.listen()
     async def on_raw_reaction_add(event: discord.RawReactionActionEvent):
         emoji: str = str(event.emoji)
         country_code, lang = SPECIAL_LANGS.get(emoji, ('', ''))
@@ -146,9 +162,13 @@ def setup(bot: SlashBot):
             else:
                 logger.warning('No supported language for %s', country_code)
                 return # no supported language, ignore
-        user: discord.User = bot.get_user(event.user_id) # for i18n context
+        user = bot.get_user(event.user_id) # for i18n context
+        if user is None:
+            return # can't find user, ignore event
         # needed to fetch the message in question
-        channel: discord.TextChannel = bot.get_channel(event.channel_id)
+        channel = bot.get_channel(event.channel_id)
+        if not isinstance(channel, HistoriedChannel):
+            return # ditto
         message: discord.Message = await channel.fetch_message(event.message_id)
         for reaction in message.reactions:
             if str(reaction) == emoji and reaction.count > 1:
@@ -161,5 +181,3 @@ def setup(bot: SlashBot):
             'translating message %18d to %s (from %s)',
             user, user.id, channel, channel.id, message.id, lang, country_code)
         await send_translation(user, method, [message.content], lang)
-    bot.event(on_raw_reaction_add)
-    bot.add_slash(translate)
