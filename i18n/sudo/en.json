@@ -1,4 +1,5 @@
 {
+	"cant": "You are not the bot owner!",
 	"stop": "Goodbye.",
 	"r25n": "Reloaded strings.",
 	"sync": "Synced all commands."

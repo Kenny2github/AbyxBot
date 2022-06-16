@@ -7,16 +7,20 @@ from discord.ext import commands
 from discord import app_commands
 
 # 1st-party
-from .i18n import Msg, mkmsg
+from .i18n import Msg, error_embed, mkmsg
 from .utils import asyncify
 
 @app_commands.default_permissions()
 class Sudo(app_commands.Group):
     """Commands available only to the bot owner."""
 
-    def interaction_check(self, interaction: discord.Interaction) -> bool:
-        assert interaction.client.application is not None
-        return interaction.user.id == interaction.client.application.owner.id
+    def interaction_check(self, ctx: discord.Interaction) -> bool:
+        assert ctx.client.application is not None
+        if ctx.user.id == ctx.client.application.owner.id:
+            return True
+        asyncio.create_task(ctx.response.send_message(
+            embed=error_embed(ctx, Msg('sudo/cant')), ephemeral=True))
+        return False
 
     @app_commands.command()
     async def stop(self, ctx: discord.Interaction):
