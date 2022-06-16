@@ -27,7 +27,8 @@ class AbyxTree(app_commands.CommandTree):
         self, ctx: discord.Interaction, exc: Exception
     ) -> None:
         logger.error('Ignoring exception in command %s - %s: %s',
-                    ctx.command, type(exc).__name__, exc)
+                    ctx.command.qualified_name if ctx.command else 'None',
+                    type(exc).__name__, exc)
         if isinstance(exc, SIGNALLED_EXCS):
             if ctx.response.is_done():
                 method = ctx.followup.send
