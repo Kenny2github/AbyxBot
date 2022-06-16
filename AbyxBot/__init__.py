@@ -23,7 +23,7 @@ MODULES = {
     # 'Numguess': ('games.numguess', 'numguess'),
     'Sudo Commands': ('sudo', 'sudo'),
     'Translation': ('translation', 'trans'),
-    # 'Unit Conversions': ('units', 'units'),
+    'Unit Conversions': ('units', 'units'),
     # 'Lexical Analysis': ('words', 'words'),
     # 'Dummy Game': ('games.dummy_game', 'dummy_game'),
     # # NOTE: This must come after all game entries

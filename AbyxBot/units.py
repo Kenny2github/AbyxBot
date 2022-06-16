@@ -1,56 +1,57 @@
 # stdlib
 from decimal import Decimal as D, InvalidOperation
-from typing import Iterable
+from typing import Iterable, Optional, Union
 
 # 3rd-party
 import discord
-from discord.ext import slash, commands
+from discord import app_commands
+from discord.ext import commands
 
 # 1st-party
 from .chars import ZWNJ
-from .i18n import Msg, Context
+from .i18n import Msg, error_embed, mkembed, mkmsg
 from .utils import similarity
 
-UNITS: dict[str, tuple[tuple[list[str], D], ...]] = {
+UNITS: dict[str, tuple[tuple[list[str], Union[D, str]], ...]] = {
     'area': (
-        (['sqkm', 'square-kilometers', 'square-kilometres',
-         'square-kilometer', 'square-kilometre'], D('1e6')),
-        (['sqm', 'square-meters', 'square-metres',
-         'square-meter', 'square-metre'], D('1')),
-        (['sqmil', 'square-miles', 'square-mile'], D('2.59e6')),
-        (['sqyard', 'square-yards', 'square-yard'], 1 / D('1.196')),
-        (['sqft', 'square-feet', 'square-foot'], D('10.764')),
-        (['sqin', 'square-inches', 'square-inch'], D('1550.003')),
+        (['sqkm', 'square kilometers', 'square kilometres',
+         'square kilometer', 'square kilometre', 'square km'], D('1e6')),
+        (['sqm', 'square meters', 'square metres',
+         'square meter', 'square metre'], D('1')),
+        (['sqmil', 'square miles', 'square mile'], D('2.59e6')),
+        (['sqyard', 'square yards', 'square yard'], 1 / D('1.196')),
+        (['sqft', 'square feet', 'square foot'], D('10.764')),
+        (['sqin', 'square inches', 'square inch'], D('1550.003')),
         (['hectare', 'hectares'], D('10000')),
         (['acre', 'acres'], D('4046.856'))
     ),
     'data': (
-        (['bps', 'bit-per-second',
-          'bits-per-second', 'b-per-second'], D('1')),
-        (['kbps', 'kilobit-per-second',
-          'kilobits-per-second', 'kb-per-second'], D('1e3')),
-        (['KBps', 'kilobyte-per-second',
-          'kilobytes-per-second', 'KB-per-second'], D('8e3')),
-        (['kibps', 'kibibit-per-second',
-          'kibibits-per-second', 'kib-per-second'], D('1024')),
-        (['mbps', 'megabit-per-second',
-          'megabits-per-second', 'mb-per-second'], D('1e6')),
-        (['MBps', 'megabyte-per-second',
-          'megabytes-per-second', 'MB-per-second'], D('8e6')),
-        (['mibps', 'mebibit-per-second',
-          'mebibits-per-second', 'mib-per-second'], D('1048576')),
-        (['gbps', 'gigabit-per-second',
-          'gigabits-per-second', 'gb-per-second'], D('1e9')),
-        (['GBps', 'gigabyte-per-second',
-          'gigabytes-per-second', 'GB-per-second'], D('8e9')),
-        (['gibps', 'gigibit-per-second',
-          'gigibits-per-second', 'gib-per-second'], D('1073741824')),
-        (['tbps', 'terabit-per-second',
-          'terabits-per-second', 'tb-per-second'], D('1e12')),
-        (['TBps', 'terabyte-per-second',
-          'terabytes-per-second', 'TB-per-second'], D('8e12')),
-        (['tibps', 'tebibit-per-second',
-          'tebibits-per-second', 'tib-per-second'], D('1099511627776')),
+        (['bps', 'bit per second',
+          'bits per second', 'b per second'], D('1')),
+        (['kbps', 'kilobit per second',
+          'kilobits per second', 'kb per second'], D('1e3')),
+        (['KBps', 'kilobyte per second',
+          'kilobytes per second', 'KB per second'], D('8e3')),
+        (['kibps', 'kibibit per second',
+          'kibibits per second', 'kib per second'], D('1024')),
+        (['mbps', 'megabit per second',
+          'megabits per second', 'mb per second'], D('1e6')),
+        (['MBps', 'megabyte per second',
+          'megabytes per second', 'MB per second'], D('8e6')),
+        (['mibps', 'mebibit per second',
+          'mebibits per second', 'mib per second'], D('1048576')),
+        (['gbps', 'gigabit per second',
+          'gigabits per second', 'gb per second'], D('1e9')),
+        (['GBps', 'gigabyte per second',
+          'gigabytes per second', 'GB per second'], D('8e9')),
+        (['gibps', 'gigibit per second',
+          'gigibits per second', 'gib per second'], D('1073741824')),
+        (['tbps', 'terabit per second',
+          'terabits per second', 'tb per second'], D('1e12')),
+        (['TBps', 'terabyte per second',
+          'terabytes per second', 'TB per second'], D('8e12')),
+        (['tibps', 'tebibit per second',
+          'tebibits per second', 'tib per second'], D('1099511627776')),
     ),
     'storage': (
         (['b', 'bit', 'bits'], D('1')),
@@ -84,7 +85,7 @@ UNITS: dict[str, tuple[tuple[list[str], D], ...]] = {
         (['Wh', 'watt-hour', 'watt-hours'], D('3600')),
         (['kWh', 'kilowatt-hour', 'kilowatt-hours'], D('3.6e6')),
         (['eV', 'electronvolt', 'electronvolts'], 1 / D('6.242e18')),
-        (['btu', 'british-thermal-unit', 'british-thermal-units'], D('1055.06')),
+        (['btu', 'british thermal unit', 'british thermal units'], D('1055.06')),
         (['ust', 'us-therm', 'us-therms'], D('1.05506e8')),
         (['ftlb', 'foot-pound', 'foot-pounds'], D('1.35582'))
     ),
@@ -98,11 +99,12 @@ UNITS: dict[str, tuple[tuple[list[str], D], ...]] = {
           'gigacycles', 'gc', 'Gc', 'gC', 'GC'], D('1e9'))
     ),
     'fuel': (
-        (['umpg', 'us-miles-per-gallon', 'us-mile-per-gallon'], 1 / D('2.352')),
-        (['impg', 'imperial-miles-per-gallon', 'imperial-mile-per-gallon',
-         'mile-per-gallon', 'miles-per-gallon'], 1 / D('2.825')),
-        (['kmpL', 'kilometer-per-liter', 'kilometers-per-liter',
-         'kilometre-per-litre', 'kilometres-per-litre'], D('1'))
+        (['umpg', 'us miles per gallon', 'us mile per gallon'], 1 / D('2.352')),
+        (['impg', 'imperial miles per gallon', 'imperial mile per gallon',
+         'mile per gallon', 'miles per gallon'], 1 / D('2.825')),
+        (['kmpL', 'kilometer per liter', 'kilometers per liter',
+         'kilometre per litre', 'kilometres per litre',
+         'km per liter', 'km per litre'], D('1'))
     ),
     'length': (
         (['km', 'kilometer', 'kilometers', 'kilometre', 'kilometres'], D('1000')),
@@ -115,7 +117,7 @@ UNITS: dict[str, tuple[tuple[list[str], D], ...]] = {
         (['yard', 'yards'], 1 / D('1.094')),
         (['foot', 'feet'], 1 / D('3.281')),
         (['inch', 'inches'], D('2.54e-2')),
-        (['nautmil', 'nautical-mile', 'nautical-miles'], D('1852'))
+        (['nautmil', 'nautical mile', 'nautical miles'], D('1852'))
     ),
     'mass': (
         (['t', 'Mg', 'tonne', 'tonnes', 'megagram', 'megagrams'], D('1e6')),
@@ -124,7 +126,7 @@ UNITS: dict[str, tuple[tuple[list[str], D], ...]] = {
         (['mg', 'milligram', 'milligrams'], D('1e-3')),
         (['microg', 'microgram', 'micrograms'], D('1e-6')),
         (['ton'], D('1.016e6')),
-        (['uston', 'us-ton', 'us-tons'], D('907184.74')),
+        (['uston', 'us ton', 'us tons'], D('907184.74')),
         (['stone'], D('6350.293')),
         (['lb', 'pound', 'pounds'], D('453.592')),
         (['oz', 'ounce', 'ounces'], D('28.3495'))
@@ -135,26 +137,27 @@ UNITS: dict[str, tuple[tuple[list[str], D], ...]] = {
         (['mrad', 'milliradian', 'milliradians'],
          # 180 / (1000 * pi)
          D('0.05729577951308232087679815482')),
-        (['arcmin', 'arc-minute', 'arc-minutes'], 1 / D('60')),
+        (['arcmin', 'arc minute', 'arc minutes'], 1 / D('60')),
         (['rad', 'radian', 'radians'],
          # 180 / pi
          D('57.29577951308232087679815482')),
-        (['arcsec', 'arc-second', 'arc-seconds'], 1 / D('3600'))
+        (['arcsec', 'arc second', 'arc seconds'], 1 / D('3600'))
     ),
     'pressure': (
         (['atm', 'atmosphere', 'atmospheres'], D('101325')),
         (['bar'], D('1e5')),
         (['Pa', 'pascal', 'pascals'], D('1')),
-        (['psi', 'pound-per-square-inch', 'pounds-per-square-inch'], D('6894.757')),
+        (['psi', 'pound per square inch', 'pounds per square inch'], D('6894.757')),
         (['torr'], D('133.322'))
     ),
     'speed': (
-        (['mph', 'mile-per-hour', 'miles-per-hour'], 1 / D('2.237')),
-        (['fps', 'foot-per-second', 'feet-per-second'], 1 / D('3.281')),
-        (['mps', 'meter-per-second', 'meters-per-second',
-         'metre-per-second', 'metres-per-second'], D('1')),
-        (['kmph', 'kilometer-per-hour', 'kilometers-per-hour',
-         'kilometre-per-hour', 'kilometres-per-hour'], 1 / D('3.6')),
+        (['mph', 'mile per hour', 'miles per hour'], 1 / D('2.237')),
+        (['fps', 'foot per second', 'feet per second'], 1 / D('3.281')),
+        (['mps', 'meter per second', 'meters per second',
+         'metre per second', 'metres per second'], D('1')),
+        (['kmph', 'kilometer per hour', 'kilometers per hour',
+         'kilometre per hour', 'kilometres per hour',
+         'km per hour'], 1 / D('3.6')),
         (['knot', 'knots'], 1 / D('1.944'))
     ),
     'temperature': (
@@ -178,62 +181,61 @@ UNITS: dict[str, tuple[tuple[list[str], D], ...]] = {
         (['century', 'centuries'], D('3.154e9'))
     ),
     'volume': (
-        (['gallon', 'gallons', 'liquid-gallon', 'liquid-gallons'], D('3.78541')),
-        (['quart', 'quarts', 'liquid-quart', 'liquid-quarts'], 1 / D('1.057')),
-        (['pint', 'pints', 'liquid-pint', 'liquid-pints'], 1 / D('4.167')),
-        (['cup', 'cups', 'us-legal-cup', 'us-legal-cups'], 1 / D('4.167')),
-        (['floz', 'fluid-ounce', 'fluid-ounces'], 1 / D('33.814')),
+        (['gallon', 'gallons', 'liquid gallon', 'liquid gallons'], D('3.78541')),
+        (['quart', 'quarts', 'liquid quart', 'liquid quarts'], 1 / D('1.057')),
+        (['pint', 'pints', 'liquid pint', 'liquid pints'], 1 / D('4.167')),
+        (['cup', 'cups', 'us legal cup', 'us legal cups'], 1 / D('4.167')),
+        (['floz', 'fluid ounce', 'fluid ounces'], 1 / D('33.814')),
         (['tbsp', 'tablespoon', 'tablespoons'], 1 / D('67.628')),
         (['tsp', 'teaspoon', 'teaspoons'], 1 / D('202.884')),
-        (['m3', 'cubic-meter', 'cubic-meters', 'cubic-metre',
-          'cubic-metres', 'cubic-m', 'm-cubed'], D('1e3')),
+        (['m3', 'cubic meter', 'cubic meters', 'cubic metre',
+          'cubic metres', 'cubic m', 'm cubed'], D('1e3')),
         (['L', 'liter', 'liters', 'litre', 'litres'], D('1')),
         (['mL', 'milliliter', 'milliliters', 'millilitre', 'millilitres'], D('1e-3')),
-        (['cm3', 'cubic-centimeter', 'cubic-centimeters', 'cubic-centimetre',
-          'cubic-centimetres', 'cubic-cm', 'cm-cubed'], D('1e-3')),
-        (['dm3', 'cubic-decimeter', 'cubic-decimeters', 'cubic-decimetre',
-          'cubic-decimetres', 'cubic-dm', 'dm-cubed'], D('1')),
-        (['ukgallon', 'ukgallons', 'imperial-gallon', 'imperial-gallons'], D('4.546')),
-        (['ukquart', 'ukquarts', 'imperial-quart', 'imperial-quarts'], D('1.3652')),
-        (['ukpint', 'ukpints', 'imperial-pint', 'imperial-pints'], 1 / D('1.76')),
-        (['ukcup', 'ukcups', 'imperial-cup', 'imperial-cups'], 1 / D('3.52')),
-        (['ukfloz', 'imperial-fluid-ounce', 'imperial-fluid-ounces'], 1 / D('35.195')),
-        (['uktbsp', 'imperial-tablespoon', 'imperial-tablespoons'], 1 / D('56.312')),
-        (['uktsp', 'imperial-teaspoon', 'imperial-teaspoons'], 1 / D('168.936')),
-        (['ft3', 'cubic-foot', 'cubic-feet'], 1 / D('28.317')),
-        (['in3', 'cubic-inch', 'cubic-inches'], 1 / D('61.024'))
+        (['cm3', 'cubic centimeter', 'cubic centimeters', 'cubic centimetre',
+          'cubic centimetres', 'cubic cm', 'cm cubed'], D('1e-3')),
+        (['dm3', 'cubic decimeter', 'cubic decimeters', 'cubic decimetre',
+          'cubic decimetres', 'cubic dm', 'dm cubed'], D('1')),
+        (['ukgallon', 'ukgallons', 'imperial gallon', 'imperial gallons'], D('4.546')),
+        (['ukquart', 'ukquarts', 'imperial quart', 'imperial quarts'], D('1.3652')),
+        (['ukpint', 'ukpints', 'imperial pint', 'imperial pints'], 1 / D('1.76')),
+        (['ukcup', 'ukcups', 'imperial cup', 'imperial cups'], 1 / D('3.52')),
+        (['ukfloz', 'imperial fluid ounce', 'imperial fluid ounces'], 1 / D('35.195')),
+        (['uktbsp', 'imperial tablespoon', 'imperial tablespoons'], 1 / D('56.312')),
+        (['uktsp', 'imperial teaspoon', 'imperial teaspoons'], 1 / D('168.936')),
+        (['ft3', 'cubic foot', 'cubic feet'], 1 / D('28.317')),
+        (['in3', 'cubic inch', 'cubic inches'], 1 / D('61.024'))
     )
 }
 
-class Units:
+class Units(commands.Cog):
     """Unit conversion cog"""
 
-    @slash.cmd()
+    @app_commands.command()
+    @app_commands.rename(value_str='value')
+    @app_commands.describe(
+        value_str='The value you are converting.',
+        source='The unit from which you are converting.',
+        dest='The unit to which you are converting.',
+        category='The category of unit you are converting. '
+        'Specify this to make unit recognition more accurate.'
+    )
     async def convert(
-        self,
-        ctx: Context,
-        value: slash.Option(
-            description='The value you are converting.'),
-        source: slash.Option(
-            description='The unit from which you are converting.'),
-        dest: slash.Option(
-            description='The unit to which you are converting.'),
-        category: slash.Option(
-            description='The category of unit you are converting. '
-            'Specify this to make unit recognition more accurate.') = None,
+        self, ctx: discord.Interaction, value_str: str, source: str,
+        dest: str, category: Optional[str] = None,
     ):
         """Convert values between units. Run `/help convert`."""
         try:
-            value = D(value)
+            value = D(value_str)
         except InvalidOperation:
             raise commands.BadArgument(
-                f'bad number: {value}') from None
+                f'bad number: {value_str}') from None
         assumptions = []
         if category is None:
             key = max(UNITS, key=lambda k: (
                 self.category_score(k, source)
                 + self.category_score(k, dest)))
-            assumptions.append((ctx.msg('units/category'), key))
+            assumptions.append((mkmsg(ctx, 'units/category'), key))
         else:
             key = self.best(UNITS, category)
             if category != key:
@@ -249,21 +251,24 @@ class Units:
             assumptions.append((repr(dest), dstkey))
         dst = dst[1]
         if src == dst:
-            await ctx.respond(embed=ctx.error_embed(Msg(
+            await ctx.response.send_message(embed=error_embed(ctx, Msg(
                 'units/same-unit',
                 self.assumptions(ctx, assumptions)
             )), ephemeral=True)
             return
         if key != 'temperature':
+            assert isinstance(src, D) and isinstance(dst, D)
             try:
                 await self.send_amount(ctx, assumptions, value * src / dst)
             except ZeroDivisionError:
                 await self.send_amount(ctx, assumptions, D('NaN'))
         else:
+            assert isinstance(src, str) and isinstance(dst, str)
             m = D('1.8')
             f = D('32')
             r = D('491.67')
             k = D('273.15')
+            amount = None
             if src == 'C':
                 if dst == 'F':
                     amount = value * m + f
@@ -292,21 +297,23 @@ class Units:
                     amount = (value - r) / m
                 elif dst == 'F':
                     amount = value - r
+            if amount is None:
+                raise RuntimeError(f'Unknown unit {src!r}')
             await self.send_amount(ctx, assumptions, amount)
 
     @staticmethod
-    def assumptions(ctx: Context, inp: list[tuple[str, str]]) -> str:
-        return ctx.msg(',').join(
-            ctx.msg('units/assumption', source, dest)
+    def assumptions(ctx: discord.Interaction, inp: list[tuple[str, str]]) -> str:
+        return mkmsg(ctx, ',').join(
+            mkmsg(ctx, 'units/assumption', source, dest)
             for source, dest in inp
-        ) or ctx.msg('units/nothing')
+        ) or mkmsg(ctx, 'units/nothing')
 
-    async def send_amount(self, ctx: Context,
+    async def send_amount(self, ctx: discord.Interaction,
                           assumptions: list[tuple[str, str]], amount: D):
         """Send the final amount, stating assumptions of input."""
-        assumptions = self.assumptions(ctx, assumptions)
-        await ctx.respond(ctx.msg('units/assumptions',
-                                  assumptions, float(amount)))
+        assumptions_str = self.assumptions(ctx, assumptions)
+        await ctx.response.send_message(mkmsg(ctx, 'units/assumptions',
+                                  assumptions_str, float(amount)))
 
     @staticmethod
     def best(iterable: Iterable[str], key: str) -> str:
@@ -314,35 +321,37 @@ class Units:
         return max(iterable, key=lambda name: similarity(name, key))
 
     @staticmethod
-    def category_best(cat: str, key: str) -> tuple[list[str], str]:
+    def category_best(cat: str, key: str) -> tuple[list[str], Union[D, str]]:
         """Get the best match of key inside cat."""
         return max(UNITS[cat], key=lambda unit: max(
             similarity(name, key) for name in unit[0]))
 
     @staticmethod
-    def category_score(cat: str, key: str) -> str:
+    def category_score(cat: str, key: str) -> float:
         """Get how well the key matches the category."""
         return max(max(similarity(name, key)
                        for name in unit[0])
                    for unit in UNITS[cat])
 
-    @slash.cmd()
+    @app_commands.command()
+    @app_commands.describe(
+        category='The category of units to list; '
+        'leave unspecified to list categories.'
+    )
     async def units(
-        self, ctx: Context,
-        category: slash.Option(
-            description='The category of units to list; '
-            'leave unspecified to list categories.') = None
+        self, ctx: discord.Interaction,
+        category: Optional[str] = None
     ):
         """List categories of units, or units in categories."""
         if category is None:
-            await ctx.respond(embed=ctx.embed(
+            await ctx.response.send_message(embed=mkembed(ctx,
                 description=Msg('units/category-list'),
                 fields=((ZWNJ, key, True) for key in UNITS),
                 color=discord.Color.blue()
             ))
         else:
             key = self.best(UNITS, category)
-            await ctx.respond(embed=ctx.embed(
+            await ctx.response.send_message(embed=mkembed(ctx,
                 description=(
                     Msg('units/unit-list', key)
                     if key == category
@@ -350,13 +359,13 @@ class Units:
                 fields=(
                     (name[0], Msg(
                         'units/aka',
-                        ctx.msg(',').join(name[1:])
-                        or ctx.msg('units/no-aka')
+                        mkmsg(ctx, ',').join(name[1:])
+                        or mkmsg(ctx, 'units/no-aka')
                     ), True)
                     for name, _ in UNITS[key]
                 ),
                 color=discord.Color.blue()
             ))
 
-def setup(bot: slash.SlashBot):
-    bot.add_slash_cog(Units())
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Units())
