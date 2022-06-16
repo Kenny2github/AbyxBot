@@ -136,8 +136,20 @@ async def translate_command(
     await send_translation(ctx, ctx.edit_original_message, texts,
                            to_language, from_language, url)
 
+@app_commands.context_menu(name='Translate')
+async def translate_context_menu(
+    ctx: discord.Interaction, msg: discord.Message
+):
+    """Translate the message to your configured language (English if unset)."""
+    lang = Msg.get_lang(ctx)
+    texts = [msg.content]
+    url = msg.jump_url
+    await send_translation(ctx, ctx.response.send_message,
+                           texts, lang, None, url)
+
 def setup(bot: commands.Bot):
     bot.tree.add_command(translate_command)
+    bot.tree.add_command(translate_context_menu)
     @bot.listen()
     async def on_raw_reaction_add(event: discord.RawReactionActionEvent):
         emoji: str = str(event.emoji)
