@@ -2,31 +2,35 @@
 import asyncio
 
 # 3rd-party
-from discord.ext.slash import SlashBot, group
+import discord
+from discord.ext import commands
+from discord import app_commands
 
 # 1st-party
-from .i18n import Context, Msg
+from .i18n import Msg, mkmsg
 from .utils import asyncify
 
-@group(default_permission=False)
-async def sudo(ctx: Context):
+@app_commands.default_permissions()
+class Sudo(app_commands.Group):
     """Commands available only to the bot owner."""
 
-@sudo.slash_cmd()
-async def stop(ctx: Context):
-    """Stop the bot."""
-    await ctx.respond(ctx.msg('sudo/stop'), ephemeral=True)
-    await ctx.bot.close()
+    def interaction_check(self, interaction: discord.Interaction) -> bool:
+        assert interaction.client.application is not None
+        return interaction.user.id == interaction.client.application.owner.id
 
-@sudo.slash_cmd()
-async def r25n(ctx: Context):
-    """Reload i18n strings immediately."""
-    asyncio.create_task(asyncify(Msg.load_strings))
-    await ctx.respond(ctx.msg('sudo/r25n'), ephemeral=True)
+    @app_commands.command()
+    async def stop(self, ctx: discord.Interaction):
+        """Stop the bot."""
+        await ctx.response.send_message(
+            mkmsg(ctx, 'sudo/stop'), ephemeral=True)
+        await ctx.client.close()
 
-def setup(bot: SlashBot):
-    bot.slash.add(sudo)
-    async def on_slash_permissions():
-        sudo.add_perm(bot.app_info.owner, True, None)
-        await bot.register_permissions()
-    bot.event(on_slash_permissions)
+    @app_commands.command()
+    async def r25n(self, ctx: discord.Interaction):
+        """Reload i18n strings immediately."""
+        asyncio.create_task(asyncify(Msg.load_strings))
+        await ctx.response.send_message(
+            mkmsg(ctx, 'sudo/r25n'), ephemeral=True)
+
+def setup(bot: commands.Bot):
+    bot.tree.add_command(Sudo())

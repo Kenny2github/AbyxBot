@@ -21,7 +21,7 @@ MODULES = {
     'Internationalization': ('i18n', 'i18n'),
     'Miscellaneous Commands': ('misc_cmds', 'misc'),
     # 'Numguess': ('games.numguess', 'numguess'),
-    # 'Sudo Commands': ('sudo', 'sudo'),
+    'Sudo Commands': ('sudo', 'sudo'),
     # 'Translation': ('translation', 'trans'),
     # 'Unit Conversions': ('units', 'units'),
     # 'Lexical Analysis': ('words', 'words'),
