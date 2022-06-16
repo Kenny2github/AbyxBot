@@ -45,6 +45,7 @@ globs: dict[str, Union[asyncio.Task, SetStatus]] = {}
 
 async def run():
     """Run the bot."""
+    globs['logger'] = activate_logging() # NOTE: Do this first
     await db.init()
     for name, (fname, cmdname) in MODULES.items():
         if cmdname in cmdargs.disable:
@@ -53,7 +54,6 @@ async def run():
             await import_cog(bot, name, fname)
     globs['status'] = SetStatus(bot)
     globs['wakeup'] = asyncio.create_task(stop_on_change(bot, 'AbyxBot'))
-    globs['logger'] = activate_logging()
     globs['status'].start()
     await bot.start(TOKEN)
 
