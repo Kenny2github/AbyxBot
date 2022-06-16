@@ -18,7 +18,7 @@ from .watcher import stop_on_change
 MODULES = {
     # '2048': ('games.twozerofoureight', '2048'),
     # 'Help': ('help', 'help'),
-    # 'Internationalization': ('i18n', 'i18n'),
+    'Internationalization': ('i18n', 'i18n'),
     'Miscellaneous Commands': ('misc_cmds', 'misc'),
     # 'Numguess': ('games.numguess', 'numguess'),
     # 'Sudo Commands': ('sudo', 'sudo'),

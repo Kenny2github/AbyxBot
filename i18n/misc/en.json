@@ -5,7 +5,7 @@
 	"purge-title": "Purged",
 	"purge": "Purged {0} message(s)",
 	"charname-not-found": "Name not found.",
-	"charinfo": "`\\U{0:>08x}`|`{3}`: {1} \u2014 \"{2}\" \u2014 <http://www.fileformat.info/info/unicode/char/{0:>04x}>",
+	"charinfo": "`{0}`|`{1}`: {2} \u2014 \"{3}\" \u2014 <http://www.fileformat.info/info/unicode/char/{4:>04x}>",
 	"charinfo-title": "Character Information",
 	"charinfo-start": "`Python Esc`|`JSON`"
 }

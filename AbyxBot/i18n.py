@@ -1,13 +1,14 @@
 # stdlib
 import time
 from logging import getLogger
-from typing import Any, Callable, Iterable, Optional, Union
+from typing import Any, Callable, Coroutine, Iterable, Optional, Protocol, TypeVar, Union, get_args
 import asyncio
 
 # 3rd-party
 import discord
 from discord.abc import Snowflake
-from discord.ext import slash
+from discord import app_commands
+from discord.ext import commands
 
 # 1st-party
 from .load_i18n import load_i18n_strings, SUPPORTED_LANGS
@@ -16,13 +17,20 @@ from .database import db
 
 logger = getLogger(__name__)
 
-IDContext = Union[slash.Context, discord.TextChannel, discord.User]
+class Mentionable(Protocol):
+    id: int
+    @property
+    def mention(self) -> str:
+        raise NotImplementedError
+
+IDContext = Union[discord.Interaction, Mentionable]
+DBMethod = Callable[[int, Optional[str]], Coroutine[Any, Any, None]]
 
 class Msg:
     """An i18n message.
 
     This can be initialized with a language code or a context from
-    which to get it, like a slash.Context or discord.User or channel.
+    which to get it, like a discord.Interaction or discord.User or channel.
 
     Or it can be lazily initialized (preferred when being directly
     instantiated) and have its language set by other functions
@@ -31,8 +39,8 @@ class Msg:
 
     # class attributes
     unformatted: dict[str, dict[str, str]] = {} # unformatted message strings
-    user_langs: dict[int, str] = {} # user language settings
-    channel_langs: dict[int, str] = {} # channel language settings
+    user_langs: dict[int, Optional[str]] = {} # user language settings
+    channel_langs: dict[int, Optional[str]] = {} # channel language settings
 
     # instance attributes
     key: str # i18n key
@@ -44,13 +52,14 @@ class Msg:
     message: Optional[str] = None
 
     @classmethod
-    def get_lang(cls, ctx: IDContext, default: str = 'en') -> str:
+    def get_lang(cls, ctx: Optional[discord.abc.Snowflake],
+                 default: str = 'en') -> str:
         """Get the correct language for the context."""
-        if isinstance(ctx, slash.Context):
-            return cls.get_lang(ctx.author, cls.get_lang(ctx.channel))
-        if isinstance(ctx, discord.User):
+        if isinstance(ctx, discord.Interaction):
+            return cls.get_lang(ctx.user, cls.get_lang(ctx.channel))
+        if isinstance(ctx, discord.abc.User):
             return cls.user_langs.get(ctx.id) or default
-        if isinstance(ctx, discord.TextChannel):
+        if isinstance(ctx, (discord.abc.GuildChannel, discord.Thread)):
             return cls.channel_langs.get(ctx.id) or default
         if isinstance(ctx, discord.abc.Snowflake): # all you have is an ID
             return cls.user_langs.get(ctx.id) or \
@@ -77,21 +86,21 @@ class Msg:
     def __init__(
         self,
         key: str,
-        *params: str,
+        *params,
         lang: Union[str, IDContext, None] = None,
-        **kwparams: str
+        **kwparams
     ):
         if lang is None:
             pass
         elif isinstance(lang, str):
             self.lang = lang
-        elif isinstance(lang, (slash.Context, discord.TextChannel, discord.User)):
+        elif isinstance(lang, get_args(IDContext)):
             self.lang = self.get_lang(lang)
         else:
             raise TypeError(f'unexpected {type(lang).__name__!r} for "lang"')
         self.key = key
-        self.params = params
-        self.kwparams = kwparams
+        self.params = tuple(map(str, params))
+        self.kwparams = {k: str(v) for k, v in kwparams.items()}
         if self.lang is not None:
             self.set_message()
 
@@ -108,10 +117,13 @@ class Msg:
             if self.lang is None:
                 return repr(self)
             self.set_message()
+            assert self.message is not None
         return self.message.format(*self.params, **self.kwparams)
 
     def set_message(self) -> None:
         """Load the unformatted message from language information."""
+        if self.lang is None:
+            raise RuntimeError('Cannot set message when lang not set')
         if self.lang == 'qqx':
             self.message = f'({self.default()})'
         else:
@@ -141,167 +153,196 @@ class Msg:
 
 Msg.load_strings()
 
-class Context(slash.Context):
+def cast(ctx: IDContext, /, msg: Any) -> str:
+    """If msg is a message object, format and return it.
+    Otherwise, cast it to a string in the usual manner.
+    """
+    if isinstance(msg, Msg):
+        msg.lang = msg.get_lang(ctx)
+    return str(msg)
 
-    def __hash__(self):
-        """More useful hash that will hopefully be part of d.e./ soon"""
-        return hash((self.author.id, self.channel.id))
+def mkmsg(ctx: IDContext, /, key: str, *params, **kwparams):
+    """Format a message in this context."""
+    if isinstance(ctx, (str, Msg)):
+        raise TypeError(f'Unexpected {type(ctx).__name__!r} for ctx. '
+                        'Did you forget to pass it?')
+    return str(Msg(key, *params, **kwparams, lang=ctx))
 
-    def cast(self, msg: Any) -> str:
-        """If msg is a message object, format and return it.
-        Otherwise, cast it to a string in the usual manner.
-        """
-        if isinstance(msg, Msg):
-            msg.lang = msg.get_lang(self)
-        return str(msg)
-
-    def msg(self, key: str, *params: str, **kwparams: str):
-        """Format a message in this context."""
-        return str(Msg(key, *params, **kwparams, lang=self))
-
-    def embed(
-        self,
-        title: Any = None,
-        description: Any = None,
-        fields: Iterable[tuple[Any, Any, bool]] = (),
-        footer: Any = None,
-        **kwargs
-    ) -> discord.Embed:
-        """Construct an Embed with messages or strings"""
-        if title:
-            kwargs['title'] = self.cast(title)
-        if description:
-            kwargs['description'] = self.cast(description)
-        embed = discord.Embed(**kwargs)
-        if footer:
-            embed.set_footer(text=self.cast(footer))
-        for name, value, inline in fields or ():
-            embed.add_field(
-                name=self.cast(name),
-                value=self.cast(value),
-                inline=inline
-            )
-        return embed
-
-    def error_embed(self, error_message: Any, **kwargs) -> discord.Embed:
-        return self.embed(
-            Msg('error'), error_message,
-            color=discord.Color.red()
+def mkembed(
+    ctx: IDContext, /,
+    title: Any = None,
+    description: Any = None,
+    fields: Iterable[tuple[Any, Any, bool]] = (),
+    footer: Any = None,
+    **kwargs
+) -> discord.Embed:
+    """Construct an Embed with messages or strings"""
+    if isinstance(ctx, (str, Msg)):
+        raise TypeError(f'Unexpected {type(ctx).__name__!r} for ctx. '
+                        'Did you forget to pass it?')
+    if title:
+        kwargs['title'] = cast(ctx, title)
+    if description:
+        kwargs['description'] = cast(ctx, description)
+    embed = discord.Embed(**kwargs)
+    if footer:
+        embed.set_footer(text=cast(ctx, footer))
+    for name, value, inline in fields or ():
+        embed.add_field(
+            name=cast(ctx, name),
+            value=cast(ctx, value),
+            inline=inline
         )
+    return embed
 
-lang_opt = slash.Option(
-    name='lang', description='The language to switch to.',
-    choices=(slash.Choice(name=str(Msg('@name', lang=key)), value=key)
-             # don't include the string documentation, but do include qqx;
-             # sort languages here so that command definition updates
-             # aren't triggered by differing choice orders
-             for key in sorted(SUPPORTED_LANGS) if key != 'qqq'))
+def error_embed(ctx: IDContext, error_message: Any, **kwargs) -> discord.Embed:
+    return mkembed(ctx,
+        Msg('error'), error_message,
+        color=discord.Color.red()
+    )
 
-channel_opt = slash.Option(
-    name='channel', description='The channel to configure languages for. \
-By default, this is the one in which this command is run.',
-    channel_type=discord.ChannelType.text)
+T = TypeVar('T', bound=Callable)
 
-class Internationalization:
-    """i18n configuration commands"""
+def lang_opt(func: T) -> T:
+    return app_commands.describe(
+        lang='The language to switch to.'
+    )(app_commands.choices(lang=[
+        app_commands.Choice(name=str(Msg('@name', lang=key)), value=key)
+        # don't include the string documentation, but do include qqx;
+        # sort languages here so that command definition updates
+        # aren't triggered by differing choice orders
+        for key in sorted(SUPPORTED_LANGS) if key != 'qqq'
+    ]))(func)
 
-    @slash.group()
-    async def lang(self, ctx: Context):
-        """Get or set your command language, or that of a channel."""
+def channel_opt(func: T) -> T:
+    return app_commands.describe(
+        channel='The channel to configure languages for. \
+By default, this is the one in which this command is run.'
+    )(func)
 
-    async def obj_get(self, ctx: Context, obj: Snowflake,
-                      repo: dict[int, str], key1: str, key2: str) -> None:
+class _I18n:
+    """Static obj_x methods."""
+
+    async def obj_get(self, ctx: discord.Interaction, obj: Mentionable,
+                      repo: dict[int, Optional[str]],
+                      key1: str, key2: str) -> None:
         """Centralized user- or channel-language getter."""
         if repo.get(obj.id) is None:
-            await ctx.respond(embed=ctx.embed(
+            await ctx.response.send_message(embed=mkembed(ctx,
                 description=Msg(key2, obj.mention),
                 color=discord.Color.red()
             ))
         else:
-            await ctx.respond(embed=ctx.embed(
+            await ctx.response.send_message(embed=mkembed(ctx,
                 description=Msg(key1, repo[obj.id], obj.mention),
                 color=discord.Color.blue()
             ))
 
-    async def obj_set(self, ctx: Context, obj: Snowflake,
-                      repo: dict[int, str], value: str, key: str,
-                      method: Callable[[int, Optional[str]], None]) -> None:
+    async def obj_set(self, ctx: discord.Interaction, obj: Mentionable,
+                      repo: dict[int, Optional[str]], value: str, key: str,
+                      method: DBMethod) -> None:
         """Centralized user- or channel-language setter."""
         repo[obj.id] = value
         asyncio.create_task(method(obj.id, value))
-        await ctx.respond(embed=ctx.embed(
+        await ctx.response.send_message(embed=mkembed(ctx,
             description=Msg(key, value, obj.mention),
             color=discord.Color.blue()
         ))
 
-    async def obj_reset(self, ctx: Context, obj: Snowflake,
-                        repo: dict[int, str], key: str,
-                        method: Callable[[int, Optional[str]], None]) -> None:
+    async def obj_reset(self, ctx: discord.Interaction, obj: Mentionable,
+                        repo: dict[int, Optional[str]], key: str,
+                        method: DBMethod) -> None:
         """Centralized user- or channel-language resetter."""
         repo[obj.id] = None
         asyncio.create_task(method(obj.id, None))
-        await ctx.respond(embed=ctx.embed(
+        await ctx.response.send_message(embed=mkembed(ctx,
             description=Msg(key, obj.mention),
             color=discord.Color.blue()
         ))
 
-    @lang.slash_cmd(name='get')
-    async def user_get(self, ctx: Context):
-        """Get your command language."""
-        await self.obj_get(ctx, ctx.author, Msg.user_langs,
-                           'i18n/lang-get', 'i18n/lang-get-null')
+class ChannelI18n(app_commands.Group, _I18n):
+    """Get or set the command language of a channel."""
 
-    @lang.slash_cmd(name='set')
-    async def user_set(self, ctx: Context, user_lang: lang_opt):
-        """Set your command language."""
-        await self.obj_set(ctx, ctx.author, Msg.user_langs, user_lang,
-                           'i18n/lang-set', db.set_user_lang)
+    def __init__(self, **kwargs):
+        super().__init__(name='channel', **kwargs)
 
-    @lang.slash_cmd(name='reset')
-    async def user_reset(self, ctx: Context):
-        """Reset your command language."""
-        await self.obj_reset(ctx, ctx.author, Msg.user_langs,
-                             'i18n/lang-reset', db.set_user_lang)
-
-    @lang.slash_group()
-    async def channel(self, ctx: Context):
-        """Get or set the command language of a channel."""
-
-    @channel.check
-    async def channel_check(self, ctx: Context):
+    async def interaction_check(self, ctx: discord.Interaction):
         """Ensure channel configurers have permission to do so."""
-        set_channel = ctx.options.get('set_channel', ctx.channel)
-        if not set_channel.permissions_for(ctx.author).manage_channels:
-            await ctx.respond(embed=ctx.error_embed(
-                Msg('i18n/lang-channel-noperms', set_channel.mention)
+        arg: Optional[discord.abc.GuildChannel] = ctx.namespace.channel
+        channel = arg or ctx.channel
+        if isinstance(channel, app_commands.AppCommandChannel):
+            channel = channel.resolve()
+        if channel is None:
+            return False # if we can't get a channel, assume no perms
+        if isinstance(channel, discord.PartialMessageable) \
+                or not isinstance(ctx.user, discord.Member):
+            return False # if we're in a DM, fail
+        if not channel.permissions_for(ctx.user).manage_channels:
+            await ctx.response.send_message(embed=error_embed(ctx,
+                Msg('i18n/lang-channel-noperms', channel.mention)
             ), ephemeral=True)
             return False
         return True
 
-    @channel.slash_cmd(name='get')
-    async def channel_get(self, ctx: Context,
-                          set_channel: channel_opt = None):
+    @app_commands.command()
+    @channel_opt
+    async def get(self, ctx: discord.Interaction,
+                  channel: Optional[discord.abc.GuildChannel] = None):
         """Get your command language."""
         await self.obj_get(
-            ctx, set_channel or ctx.channel, Msg.channel_langs,
-            'i18n/lang-channel-get', 'i18n/lang-channel-get-null')
+            ctx, channel or ctx.channel, # type: ignore - checks exclude None
+            Msg.channel_langs, 'i18n/lang-channel-get',
+            'i18n/lang-channel-get-null')
 
-    @channel.slash_cmd(name='set')
-    async def channel_set(self, ctx: Context, channel_lang: lang_opt,
-                          set_channel: channel_opt = None):
+    @app_commands.command()
+    @channel_opt
+    @lang_opt
+    async def set(self, ctx: discord.Interaction, lang: str,
+                  channel: Optional[discord.abc.GuildChannel] = None):
         """Set your command language."""
         await self.obj_set(
-            ctx, set_channel or ctx.channel, Msg.channel_langs,
-            channel_lang, 'i18n/lang-channel-set', db.set_channel_lang)
+            ctx, channel or ctx.channel, # type: ignore - ditto
+            Msg.channel_langs, lang, 'i18n/lang-channel-set',
+            db.set_channel_lang)
 
-    @channel.slash_cmd(name='reset')
-    async def channel_reset(self, ctx: Context,
-                            set_channel: channel_opt = None):
+    @app_commands.command(name='reset')
+    @channel_opt
+    async def channel_reset(
+        self, ctx: discord.Interaction,
+        channel: Optional[discord.abc.GuildChannel] = None
+    ):
         """Reset your command language."""
         await self.obj_reset(
-            ctx, set_channel or ctx.channel, Msg.channel_langs,
-            'i18n/lang-channel-reset', db.set_channel_lang)
+            ctx, channel or ctx.channel, # type: ignore - ditto
+            Msg.channel_langs, 'i18n/lang-channel-reset', db.set_channel_lang)
 
-async def setup(bot: slash.SlashBot):
-    bot.add_slash_cog(Internationalization())
+class Internationalization(app_commands.Group, _I18n):
+    """Get or set your command language, or that of a channel."""
+
+    def __init__(self, **kwargs):
+        super().__init__(name='lang', **kwargs)
+
+    @app_commands.command(name='get')
+    async def user_get(self, ctx: discord.Interaction):
+        """Get your command language."""
+        await self.obj_get(ctx, ctx.user, Msg.user_langs,
+                           'i18n/lang-get', 'i18n/lang-get-null')
+
+    @app_commands.command(name='set')
+    @lang_opt
+    async def user_set(self, ctx: discord.Interaction, lang: str):
+        """Set your command language."""
+        await self.obj_set(ctx, ctx.user, Msg.user_langs, lang,
+                           'i18n/lang-set', db.set_user_lang)
+
+    @app_commands.command(name='reset')
+    async def user_reset(self, ctx: discord.Interaction):
+        """Reset your command language."""
+        await self.obj_reset(ctx, ctx.user, Msg.user_langs,
+                             'i18n/lang-reset', db.set_user_lang)
+
+    channel_group = ChannelI18n()
+
+async def setup(bot: commands.Bot):
+    bot.tree.add_command(Internationalization())
     await Msg.load_config()
