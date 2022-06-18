@@ -51,7 +51,12 @@ class Msg:
                  default: str = 'en') -> str:
         """Get the correct language for the context."""
         if isinstance(ctx, discord.Interaction):
-            return cls.get_lang(ctx.user, cls.get_lang(ctx.channel))
+            lang = ctx.locale.value
+            if lang not in cls.unformatted:
+                lang, _ = lang.split('-')
+                if lang not in cls.unformatted:
+                    lang = default
+            return cls.get_lang(ctx.user, cls.get_lang(ctx.channel, lang))
         if isinstance(ctx, discord.abc.User):
             return cls.user_langs.get(ctx.id) or default
         if isinstance(ctx, (discord.abc.GuildChannel, discord.Thread)):
