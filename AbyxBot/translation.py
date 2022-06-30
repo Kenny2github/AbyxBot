@@ -3,7 +3,7 @@ import json
 import os
 import re
 from logging import getLogger
-from typing import Callable, Optional, Union
+from typing import Callable, Iterable, Optional, Union, cast
 from functools import partial
 import asyncio
 
@@ -34,7 +34,7 @@ with open(os.path.join('AbyxBot', 'countrylangs.json')) as f:
     COUNTRYLANGS: dict[str, list[str]] = json.load(f)
 LANGUAGES: list[str] = [
     language.language_code for language in
-    client.get_supported_languages(parent=PARENT).languages] # type: ignore
+    cast(Iterable, client.get_supported_languages(parent=PARENT).languages)]
 SPECIAL_LANGS = {
     '\N{WAVING BLACK FLAG}'
     + ''.join(chr(0xe0000 + ord(c)) for c in code)

@@ -1,5 +1,6 @@
 # stdlib
 import asyncio
+from typing import cast
 
 # 3rd-party
 import discord
@@ -42,7 +43,7 @@ class Sudo(app_commands.Group):
 
         NOTE: Never change the signature for this command.
         """
-        bot: commands.Bot = ctx.client # type: ignore - I know it is
+        bot = cast(commands.Bot, ctx.client)
         await bot.tree.sync()
         await ctx.response.send_message(
             mkmsg(ctx, 'sudo/sync'), ephemeral=True)
