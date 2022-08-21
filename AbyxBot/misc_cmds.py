@@ -27,12 +27,11 @@ def check_msg(user: Optional[discord.User] = None,
     return _check
 
 async def post_purge(ctx: discord.Interaction, deleted: int) -> None:
-    await ctx.response.send_message(embed=mkembed(ctx,
+    await ctx.edit_original_response(embed=mkembed(ctx,
         Msg('misc/purge-title'), Msg('misc/purge', deleted),
         color=discord.Color.red()
     ))
     await asyncio.sleep(2)
-    await ctx.delete_original_response()
 
 @app_commands.context_menu(name='Purge after this')
 @app_commands.checks.has_permissions(manage_messages=True)
@@ -40,6 +39,7 @@ async def post_purge(ctx: discord.Interaction, deleted: int) -> None:
 async def purge_after(ctx: discord.Interaction, msg: discord.Message):
     if not isinstance(ctx.channel, HistoriedChannel):
         return
+    await ctx.response.defer(ephemeral=True)
     deleted = len(await ctx.channel.purge(after=msg))
     await post_purge(ctx, deleted)
 
