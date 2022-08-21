@@ -2,7 +2,7 @@
 import re
 import asyncio
 import os
-from typing import TypeVar
+from typing import Optional, TypeVar
 from functools import partial
 
 # 3rd-party
@@ -21,7 +21,8 @@ class AttrDict(dict[str, T]):
         self[name] = value
 
 def recurse_mtimes(dir: str, *path: str,
-                   current: dict[str, float] = None) -> dict[str, float]:
+                   current: Optional[dict[str, float]] = None
+                   ) -> dict[str, float]:
     """Recursively get the mtimes of all files of interest."""
     if current is None:
         current = {}
@@ -48,6 +49,7 @@ def similarity(a: str, b: str) -> float:
             distance[i][0] = i
             distance[0][j] = j
 
+    row = col = 1
     for col in range(1, cols):
         for row in range(1, rows):
             if a[row-1] == b[col-1]:
@@ -75,4 +77,4 @@ def str_to_emoji(s: str) -> discord.PartialEmoji:
         raise ValueError(f'Invalid emoji string {s}')
     return discord.PartialEmoji(name=match.group(2),
                                 animated=bool(match.group(1)),
-                                id=match.group(3))
+                                id=int(match.group(3)))
