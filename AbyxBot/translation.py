@@ -133,7 +133,7 @@ async def translate_command(
         await ctx.response.send_message(
             '\N{EXCLAMATION QUESTION MARK}', ephemeral=True)
         raise RuntimeError('Slash command run in non-textable channel')
-    await send_translation(ctx, ctx.edit_original_message, texts,
+    await send_translation(ctx, ctx.edit_original_response, texts,
                            to_language, from_language, url)
 
 @app_commands.context_menu(name='Translate')

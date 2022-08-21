@@ -223,7 +223,7 @@ class ArrowView(discord.ui.View):
 
     async def on_timeout(self) -> None:
         assert self.last_ctx is not None
-        await self.last_ctx.edit_original_message(view=None)
+        await self.last_ctx.edit_original_response(view=None)
         await self.last_ctx.followup.send(embed=error_embed(
             self.last_ctx, Msg('2048/timeout')))
 

@@ -32,7 +32,7 @@ async def post_purge(ctx: discord.Interaction, deleted: int) -> None:
         color=discord.Color.red()
     ))
     await asyncio.sleep(2)
-    await ctx.delete_original_message()
+    await ctx.delete_original_response()
 
 @app_commands.context_menu(name='Purge after this')
 @app_commands.checks.has_permissions(manage_messages=True)

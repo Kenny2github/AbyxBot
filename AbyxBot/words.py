@@ -77,7 +77,7 @@ def endpoint(group: app_commands.Group, api_code: str, param_desc: str):
             word = kwargs[param_name]
             await ctx.response.defer()
             resp = await fetch_words(**{api_code: word})
-            await ctx.edit_original_message(
+            await ctx.edit_original_response(
                 embed=format_words(ctx, api_code, word, resp))
         return subcommand
     return decorator
@@ -129,7 +129,7 @@ async def rhyming(ctx: discord.Interaction, word: str):
         fields=fields,
         color=0xe67e22
     )
-    await ctx.edit_original_message(embeds=[perf_embed, near_embed])
+    await ctx.edit_original_response(embeds=[perf_embed, near_embed])
 
 @endpoint(words, 'ml', 'A phrase.')
 async def meaning(ctx: discord.Interaction, phrase: str):
@@ -217,7 +217,7 @@ async def define(ctx: discord.Interaction, word: str):
     results = await fetch_words(qe='sp', sp=word, md='dpsrf', ipa='1', max=1)
     result: WordResp = results[0]
     if 'defs' not in result:
-        await ctx.edit_original_message(
+        await ctx.edit_original_response(
             embed=error_embed(ctx, Msg('words/no-def', word)))
         return
     tags: list[str] = result['tags']
@@ -234,7 +234,7 @@ async def define(ctx: discord.Interaction, word: str):
     syllables: int = result['numSyllables']
     defs: list[str] = result['defs']
     root_word: str = result.get('defHeadword', word)
-    await ctx.edit_original_message(embed=mkembed(ctx,
+    await ctx.edit_original_response(embed=mkembed(ctx,
         title=Msg('words/word-info', word),
         description=Msg('words/word-root', root_word),
         fields=(
