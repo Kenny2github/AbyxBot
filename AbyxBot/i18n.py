@@ -1,12 +1,11 @@
 # stdlib
 import time
 from logging import getLogger
-from typing import Any, Callable, Coroutine, Iterable, Optional, Protocol, TypeVar, Union, get_args
+from typing import Any, Callable, Coroutine, Iterable, Optional, TypeVar, Union, get_args
 import asyncio
 
 # 3rd-party
 import discord
-from discord.abc import Snowflake
 from discord import app_commands
 from discord.ext import commands
 

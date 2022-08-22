@@ -3,7 +3,7 @@ from time import time
 from logging import getLogger
 from typing import Optional
 from dataclasses import dataclass
-from aiohttp import web, ClientSession
+from aiohttp import ClientSession
 from ..config import config
 from ..db import db
 
@@ -44,7 +44,7 @@ class Handler:
         for row in await db.session_cache(session_id):
             headers = None
             if row['access_token'] is not None:
-                headers = {'Authorization': f'%s %s' % (
+                headers = {'Authorization': '%s %s' % (
                     TOKEN_TYPE, row['access_token'])}
             if row['session_id'] in self.sessions:
                 await self.sessions[row['session_id']].session.close()
