@@ -1,45 +1,41 @@
 # stdlib
-from typing import Protocol
+from typing import Optional
 
 # 3rd-party
-from discord.ext import slash
+import discord
+from discord import app_commands
+import discord.ext.commands as commands
 
 # 1st-party
-from ...i18n import Context
-from .lobby import Lobby
+from .lobby import LobbyView, GameView
 
-class GameClass(Protocol):
-    name: str
-    lobby: Lobby
+games: dict[str, type[GameView]] = {}
 
-lobbier_opt = slash.Option(
-    'Join the queue started by this person, '
-    'or start (and join) a queue in their name.',
-    type=slash.ApplicationCommandOptionType.USER)
-
-games: dict[str, GameClass] = {}
-
-def add_game(game: GameClass) -> None:
+def add_game(game: type[GameView]) -> None:
+    """Register the game view type to the game name."""
     games[game.name] = game
 
-def setup(bot: slash.SlashBot):
-    game_opt = slash.Option(
-        'The game to join.',
-        choices=games.keys())
+def setup(bot: commands.Bot):
 
-    @bot.slash_cmd()
-    async def join(ctx: Context, game: game_opt,
-                   lobbier: lobbier_opt = None) -> None:
-        """Join the queue for a game!"""
-        await games[game].lobby.join(ctx, lobbier)
+    @app_commands.command()
+    @app_commands.choices(
+        game=[app_commands.Choice(name=key, value=key)
+              for key in games.keys()])
+    @app_commands.describe(
+        game='The game in question.',
+        private='If True, view a private lobby with you as host. '
+        'Overrides host if specified.',
+        host='View the lobby hosted by this person.')
+    async def game(ctx: discord.Interaction, game: str, private: bool = False,
+                   host: Optional[discord.User] = None) -> None:
+        """Get a view of the specified game lobby."""
+        await ctx.response.defer(thinking=True)
+        message = await ctx.original_response()
+        if private:
+            lobbier = ctx.user
+        else:
+            lobbier = host
+        LobbyView(message, viewer=ctx.user,
+                  game=games[game], host=lobbier)
 
-    @bot.slash_cmd()
-    async def spectate(ctx: Context, game: game_opt,
-                       lobbier: lobbier_opt = None) -> None:
-        """Spectate a game."""
-        await games[game].lobby.spectate(ctx, lobbier)
-
-    @bot.slash_cmd()
-    async def leave(ctx: Context, game: game_opt) -> None:
-        """Leave the queue for a game."""
-        await games[game].lobby.leave(ctx)
+    bot.tree.add_command(game)

@@ -1,28 +1,41 @@
+# stdlib
+from itertools import chain
+import asyncio
+
+# 3rd-party
 import discord
-from discord.ext import slash
-from ..i18n import Context
-from .protocol.lobby import Lobby
-from .protocol.main_cog import add_game
+import discord.ext.commands as commands
 
-class DummyLobby(Lobby):
-    name = 'dummy-game'
-    wait_time = 20
-    min_players = 1
-    max_players = 2
-    max_spectators = 1
+# 1st-party
+from .protocol.lobby import LobbyPlayers
+from .protocol.main_cog import add_game, GameView
 
-class DummyGame:
+class DummyGame(GameView):
 
-    name = 'dummygame'
-    lobby: DummyLobby
+    name: str = 'dummygame'
+    wait_time: int = 20
+    min_players: int = 2
+    max_players: int = 3
+    max_spectators: int = 0
 
-    def __init__(self) -> None:
-        self.lobby = DummyLobby(self.game_callback)
+    players: LobbyPlayers
+    spectators: LobbyPlayers
 
-    async def game_callback(self, players: set[Context],
-                            spectators: set[Context]) -> None:
+    def __init__(self, *, players: LobbyPlayers, spectators: LobbyPlayers):
+        super(GameView, self).__init__(timeout=None)
+        self.players = players
+        self.spectators = spectators
+        asyncio.create_task(self.game_callback())
+
+    async def game_callback(self) -> None:
         """Play the game"""
-        await list(players)[0].webhook.send(f'Players: {players}; Spectators: {spectators}')
+        players = '\n'.join(player.mention for player in self.players.keys())
+        spectators = '\n'.join(spectator.mention for spectator in self.spectators.keys())
+        await asyncio.gather(*(
+            msg.edit(embed=discord.Embed(
+                description=f'Players:\n{players}\n\nSpectators:\n{spectators}'))
+            for msg in chain(self.players.values(), self.spectators.values())
+        ))
 
-def setup(bot: slash.SlashBot):
-    add_game(DummyGame())
+def setup(bot: commands.Bot):
+    add_game(DummyGame)
