@@ -1,4 +1,6 @@
 {
-  "stop": "`/sudo stop` success message",
-  "r25n": "`/sudo r25n` success message"
+	"cant": "Error for non-bot-owners",
+	"stop": "`/sudo stop` success message",
+	"r25n": "`/sudo r25n` success message",
+	"sync": "`/sudo sync` success message"
 }

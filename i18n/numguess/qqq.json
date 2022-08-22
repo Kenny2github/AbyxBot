@@ -8,5 +8,8 @@
 	"min": "Title of smallest guess field",
 	"max": "Title of largest guess field",
 	"tries": "Title of tries field",
-	"footer": "Instructions for guessing"
+	"footer": "Instructions for guessing",
+	"ending-title": "Title of game ending embed",
+	"won": "Win message. {0} is the number of remaining tries.",
+	"lost": "Loss message. {0} is the secret number."
 }
