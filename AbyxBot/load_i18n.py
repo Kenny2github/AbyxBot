@@ -11,7 +11,7 @@ def load_i18n_strings() -> dict[str, dict[str, str]]:
     """Load translation strings."""
     unformatted: dict[str, dict[str, str]] = {}
     for lang in SUPPORTED_LANGS:
-        with open(os.path.join(ROOT, f'{lang}.json')) as f:
+        with open(os.path.join(ROOT, f'{lang}.json'), encoding='utf8') as f:
             data: dict = json.load(f)
         unformatted.setdefault(lang, {}).update(data)
     for dirname in os.listdir(ROOT):
@@ -21,7 +21,7 @@ def load_i18n_strings() -> dict[str, dict[str, str]]:
         for lang in SUPPORTED_LANGS:
             path = os.path.join(ROOT, dirname, f'{lang}.json')
             try:
-                with open(path) as f:
+                with open(path, encoding='utf8') as f:
                     data: dict = json.load(f)
             except FileNotFoundError:
                 if lang != 'qqx': # qqx only needs one file
