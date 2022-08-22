@@ -1,0 +1,17 @@
+{
+	"placeholder": "Placeholder for game UI before game starts. {0} pings the joiner.",
+	"full": "Error when joining a full private lobby.",
+	"starting": "Response message to host of lobby when they click Start.",
+	"host-title": "Title of 'Host' field for private lobbies.",
+	"players-title": "Title of 'Players' field for private lobbies.",
+	"spectators-title": "Title of 'Spectators' field for private lobbies.",
+	"queued-title": "Title of lobby view embed. {0} is the game name.",
+	"timing-out": "Message for game start timeout. {0} is the time when it starts.",
+	"can-start": "Message for host to start game. {0} pings the host.",
+	"already-joined": "Error when double-joining a lobby.",
+	"not-host": "Error when trying to start a game that the user doesn't host.",
+	"too-few-players": "Error when trying to start a game that doesn't meet the minimum number of players.",
+	"nothing-to-leave": "Error when trying to leave a lobby that the user isn't in.",
+	"left-title": "Title of embed for successful lobby leave.",
+	"left": "Description of embed for successful lobby leave. {0} pings the leaver."
+}
