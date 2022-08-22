@@ -7,7 +7,8 @@ import asyncio
 # 3rd-party
 import discord
 from discord import app_commands
-from discord.ext import commands
+import discord.ext.commands as commands
+from discord.app_commands import locale_str as _
 
 # 1st-party
 from .type_hints import ChannelLike, Mentionable, NamespaceChannel
@@ -204,7 +205,7 @@ T = TypeVar('T', bound=Callable)
 
 def lang_opt(func: T) -> T:
     return app_commands.describe(
-        lang='The language to switch to.'
+        lang=_('The language to switch to.')
     )(app_commands.choices(lang=[
         app_commands.Choice(name=str(Msg('@name', lang=key)), value=key)
         # don't include the string documentation, but do include qqx;
@@ -215,8 +216,8 @@ def lang_opt(func: T) -> T:
 
 def channel_opt(func: T) -> T:
     return app_commands.describe(
-        channel='The channel to configure languages for. \
-By default, this is the one in which this command is run.'
+        channel=_('The channel to configure languages for. \
+By default, this is the one in which this command is run.')
     )(func)
 
 class _I18n:
@@ -263,7 +264,7 @@ class ChannelI18n(app_commands.Group, _I18n):
     """Get or set the command language of a channel."""
 
     def __init__(self, **kwargs):
-        super().__init__(name='channel', **kwargs)
+        super().__init__(name=_('channel'), **kwargs)
 
     async def interaction_check(self, ctx: discord.Interaction):
         """Ensure channel configurers have permission to do so."""
@@ -304,9 +305,9 @@ class ChannelI18n(app_commands.Group, _I18n):
             Msg.channel_langs, lang, 'i18n/lang-channel-set',
             db.set_channel_lang)
 
-    @app_commands.command(name='reset')
+    @app_commands.command()
     @channel_opt
-    async def channel_reset(
+    async def reset(
         self, ctx: discord.Interaction,
         channel: Optional[ChannelLike] = None
     ):
@@ -319,29 +320,66 @@ class Internationalization(app_commands.Group, _I18n):
     """Get or set your command language, or that of a channel."""
 
     def __init__(self, **kwargs):
-        super().__init__(name='lang', **kwargs)
+        super().__init__(name=_('lang'), **kwargs)
 
-    @app_commands.command(name='get')
-    async def user_get(self, ctx: discord.Interaction):
+    @app_commands.command()
+    async def get(self, ctx: discord.Interaction):
         """Get your command language."""
         await self.obj_get(ctx, ctx.user, Msg.user_langs,
                            'i18n/lang-get', 'i18n/lang-get-null')
 
-    @app_commands.command(name='set')
+    @app_commands.command()
     @lang_opt
-    async def user_set(self, ctx: discord.Interaction, lang: str):
+    async def set(self, ctx: discord.Interaction, lang: str):
         """Set your command language."""
         await self.obj_set(ctx, ctx.user, Msg.user_langs, lang,
                            'i18n/lang-set', db.set_user_lang)
 
-    @app_commands.command(name='reset')
-    async def user_reset(self, ctx: discord.Interaction):
+    @app_commands.command()
+    async def reset(self, ctx: discord.Interaction):
         """Reset your command language."""
         await self.obj_reset(ctx, ctx.user, Msg.user_langs,
                              'i18n/lang-reset', db.set_user_lang)
 
     channel_group = ChannelI18n()
 
+class CommandTranslator(app_commands.Translator):
+    """Translator for commands."""
+
+    async def translate(
+        self, string: app_commands.locale_str, locale: discord.Locale,
+        ctx: app_commands.TranslationContextTypes
+    ) -> Optional[str]:
+        TCL = app_commands.TranslationContextLocation
+        key = 'cmd/'
+        if ctx.location == TCL.command_name or ctx.location == TCL.group_name:
+            key += f'{ctx.data.qualified_name}-name'
+        elif ctx.location == TCL.command_description or ctx.location == TCL.group_description:
+            key += f'{ctx.data.qualified_name}-desc'
+        elif ctx.location == TCL.parameter_name:
+            key += f'{ctx.data.command.qualified_name}-{ctx.data.name}-name'
+        elif ctx.location == TCL.parameter_description:
+            key += f'{ctx.data.command.qualified_name}-{ctx.data.name}-desc'
+        elif ctx.location == TCL.choice_name:
+            if 'key' not in string.extras:
+                return None
+            key += string.extras['key']
+        lang: str = locale.value
+        if lang not in Msg.unformatted:
+            lang, *_discard = lang.split('-', 1)
+            if lang not in Msg.unformatted:
+                return None
+        if lang.startswith('en'):
+            return None # defaults are in English
+        if key not in Msg.unformatted[lang]:
+            return None
+        result = str(Msg(key, lang=locale.value, **string.extras))
+        if result.startswith(LABR) and result.endswith(RABR):
+            return None
+        logger.debug('Translated %r to %r', key, lang)
+        return result
+
 async def setup(bot: commands.Bot):
     bot.tree.add_command(Internationalization())
     await Msg.load_config()
+    await bot.tree.set_translator(CommandTranslator())

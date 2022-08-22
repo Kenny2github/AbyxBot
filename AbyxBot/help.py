@@ -1,7 +1,8 @@
 # 3rd-party
 import discord
 from discord import app_commands
-from discord.ext import commands
+import discord.ext.commands as commands
+from discord.app_commands import locale_str as _
 
 # 1st-party
 from .i18n import Msg, mkembed
@@ -14,7 +15,7 @@ COMMANDS_WITH_HELP = {
 }
 
 @app_commands.command()
-@app_commands.describe(command='The name of the command to get help for.')
+@app_commands.describe(command=_('The name of the command to get help for.'))
 async def help(ctx: discord.Interaction, command: str):
     """Get help for a command."""
     command = 'help/' + command
