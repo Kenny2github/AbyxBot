@@ -78,3 +78,19 @@ def str_to_emoji(s: str) -> discord.PartialEmoji:
     return discord.PartialEmoji(name=match.group(2),
                                 animated=bool(match.group(1)),
                                 id=int(match.group(3)))
+
+KT = TypeVar('KT')
+VT = TypeVar('VT')
+def dict_pop_n(n: int, d: dict[KT, VT]) -> dict[KT, VT]:
+    """Pop at most ``n`` items from the dict and return them as a new dict.
+
+    If there are fewer than ``n`` items in the dict, it will be cleared
+    and a copy of the original will be returned.
+
+    Note that this pops in FIFO order, unlike ``dict.popitem()``.
+    """
+    result: dict[KT, VT] = {}
+    keys_to_pop = list(d.keys())[:n]
+    for key in keys_to_pop:
+        result[key] = d.pop(key)
+    return result
