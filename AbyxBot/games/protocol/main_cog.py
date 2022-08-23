@@ -5,6 +5,7 @@ from typing import Optional
 import discord
 from discord import app_commands
 import discord.ext.commands as commands
+from discord.app_commands import locale_str as _
 
 # 1st-party
 from .lobby import LobbyView, GameView
@@ -19,7 +20,7 @@ def setup(bot: commands.Bot):
 
     @app_commands.command()
     @app_commands.choices(
-        game=[app_commands.Choice(name=key, value=key)
+        game=[app_commands.Choice(name=_(key, key=f'games/{key}'), value=key)
               for key in games.keys()])
     @app_commands.describe(
         game='The game in question.',
