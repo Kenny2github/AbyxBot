@@ -369,8 +369,6 @@ class CommandTranslator(app_commands.Translator):
             lang, *_discard = lang.split('-', 1)
             if lang not in Msg.unformatted:
                 return None
-        if lang.startswith('en'):
-            return None # defaults are in English
         if key not in Msg.unformatted[lang]:
             return None
         result = str(Msg(key, lang=locale.value, **string.extras))
