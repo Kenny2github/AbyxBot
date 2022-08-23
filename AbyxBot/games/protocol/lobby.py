@@ -20,7 +20,7 @@ class GameView(discord.ui.View, metaclass=ABCMeta):
     """Base class for an interactive experience."""
 
     @abstractmethod
-    def __init__(self, *, players: LobbyPlayers, spectators: LobbyPlayers):
+    def __init__(self, *, players: LobbyPlayers, spectators: LobbyPlayers) -> None:
         """Initialize the view. This should involve a number of things:
 
         * Call ``super(GameView, self).__init__(timeout=<timeout>)``.
