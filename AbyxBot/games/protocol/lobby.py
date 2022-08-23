@@ -185,13 +185,13 @@ class LobbyView(discord.ui.View):
         # in which they are appropriate
         players = '\n'.join(player.mention for player in self.players.keys())
         fields = [(Msg('lobby/players-title'),
-                    players or Msg('none-paren'), True)]
+                   players or Msg('none-paren'), True)]
         # if spectators are allowed, display them
         if self.game.max_spectators != 0:
             spectators = '\n'.join(
                 spectator.mention for spectator in self.spectators.keys())
             fields.append((Msg('lobby/spectators-title'),
-                            spectators or Msg('none-paren'), True))
+                           spectators or Msg('none-paren'), True))
         if self.host is not None:
             fields.append((Msg('lobby/host-title'), self.host.mention, True))
         if self.timeout_task is not None:
