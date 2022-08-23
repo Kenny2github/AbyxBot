@@ -4,6 +4,7 @@ import os
 import re
 from logging import getLogger
 from typing import Callable, Iterable, Optional, Union, cast
+from collections import OrderedDict
 from functools import partial
 import asyncio
 
@@ -71,8 +72,20 @@ async def translate_text(text: Union[str, list[str]],
 
 async def send_translation(ctx: IDContext, method: Callable, text: list[str],
                            dest: str, source: Optional[str] = None,
-                           link: Optional[str] = None):
-    """Send the translation to the appropriate context."""
+                           link: Optional[str] = None) -> bool:
+    """Send the translation to the appropriate context.
+
+    Args:
+        ctx: The context calling for translation.
+        method: The method to send the translation.
+        text: The text to translate.
+        dest: The destination language.
+        source: The source language, or ``None`` to detect.
+        link: A link to the original message, if applicable.
+
+    Returns:
+        Whether translation succeeded.
+    """
     results = await translate_text(text, dest, source)
     # assume the text is all in the same language *shrug*
     source = results[0].lang
@@ -80,7 +93,7 @@ async def send_translation(ctx: IDContext, method: Callable, text: list[str],
         asyncio.create_task(method(embed=error_embed(
             ctx, Msg('translation/same-lang', lang=ctx)
         )))
-        return
+        return False
     result_text = '\n\n'.join(t.text for t in results)
     embed = discord.Embed(
         description=result_text,
@@ -100,7 +113,8 @@ async def send_translation(ctx: IDContext, method: Callable, text: list[str],
         embed.set_author(
             name=str(Msg('translation/origin', source, dest, lang=ctx))
         )
-    asyncio.create_task(method(embed=embed))
+    await method(embed=embed)
+    return True
 
 @app_commands.command(name='translate')
 @app_commands.describe(
@@ -136,16 +150,35 @@ async def translate_command(
     await send_translation(ctx, ctx.edit_original_response, texts,
                            to_language, from_language, url)
 
+# message ID => jump URL
+translated_message_cache: dict[int, str] = OrderedDict()
+MAX_TRANSLATION_CACHE_SIZE = 128
+
 @app_commands.context_menu(name='Translate')
 async def translate_context_menu(
     ctx: discord.Interaction, msg: discord.Message
 ):
     """Translate the message to your configured language (English if unset)."""
+    if msg.id in translated_message_cache:
+        logger.debug('Not re-translating message: %s', msg.jump_url)
+        # move to end (most recently used)
+        translated_message_cache.move_to_end(msg.id)
+        await ctx.response.send_message(
+            translated_message_cache[msg.id], ephemeral=True)
+        return
     lang = Msg.get_lang(ctx)
     texts = [msg.content]
     url = msg.jump_url
-    await send_translation(ctx, ctx.response.send_message,
-                           texts, lang, None, url)
+    logger.debug('Translating message: %s', url)
+    sent = await send_translation(ctx, ctx.response.send_message,
+                                  texts, lang, None, url)
+    if sent:
+        resp = await ctx.original_response()
+        # puts at end (most recently used)
+        translated_message_cache[msg.id] = resp.jump_url
+        if len(translated_message_cache) > MAX_TRANSLATION_CACHE_SIZE:
+            # pop from beginning (least recently used)
+            translated_message_cache.popitem(last=False)
 
 def setup(bot: commands.Bot):
     bot.tree.add_command(translate_command)
