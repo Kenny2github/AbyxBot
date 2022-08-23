@@ -4,11 +4,10 @@ import asyncio
 
 # 3rd-party
 import discord
-import discord.ext.commands as commands
 
 # 1st-party
-from .protocol.lobby import LobbyPlayers
-from .protocol.main_cog import add_game, GameView
+from .protocol.lobby import GameView, LobbyPlayers
+from .protocol.main_cog import add_game
 
 class DummyGame(GameView):
 
@@ -37,5 +36,5 @@ class DummyGame(GameView):
             for msg in chain(self.players.values(), self.spectators.values())
         ))
 
-def setup(bot: commands.Bot):
+def setup(bot: discord.Client):
     add_game(DummyGame)
