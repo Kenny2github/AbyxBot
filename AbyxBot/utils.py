@@ -2,7 +2,8 @@
 import re
 import asyncio
 import os
-from typing import Optional, TypeVar
+from contextlib import contextmanager
+from typing import Generic, Iterator, Optional, TypeVar
 from functools import partial
 
 # 3rd-party
@@ -94,3 +95,52 @@ def dict_pop_n(n: int, d: dict[KT, VT]) -> dict[KT, VT]:
     for key in keys_to_pop:
         result[key] = d.pop(key)
     return result
+
+class BroadcastQueue(Generic[T]):
+    """A queue that broadcasts to all waiting coroutines."""
+
+    queues: set[asyncio.Queue[T]]
+
+    def __init__(self) -> None:
+        self.queues = set()
+
+    def register(self) -> asyncio.Queue[T]:
+        """Register this coroutine to the broadcast.
+
+        Consume this queue like normal, but do not put to it.
+        """
+        q = asyncio.Queue()
+        self.queues.add(q)
+        return q
+
+    def deregister(self, queue: asyncio.Queue[T]) -> None:
+        """Deregister this queue, previously returned by register()."""
+        self.queues.remove(queue)
+
+    @contextmanager
+    def consume(self) -> Iterator[asyncio.Queue[T]]:
+        """Context manager that yields a registered queue
+        and deregisters it on exit.
+        """
+        q = self.register()
+        try:
+            yield q
+        finally:
+            self.deregister(q)
+
+    def put_nowait(self, item: T) -> None:
+        """Broadcast an item to all registered queues, without waiting."""
+        for q in self.queues:
+            q.put_nowait(item)
+
+    async def put(self, item: T) -> None:
+        """Broadcast an item to all registered queues."""
+        await asyncio.gather(*(q.put(item) for q in self.queues))
+
+    async def join(self) -> None:
+        """Join every registered queue.
+
+        Use with care - may hang if a consuming coroutine forgets to
+        deregister itself. Use consume() to avoid that.
+        """
+        await asyncio.gather(*(q.join() for q in self.queues))

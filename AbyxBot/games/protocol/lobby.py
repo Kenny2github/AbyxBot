@@ -12,7 +12,7 @@ import discord
 
 # 1st-party
 from ...i18n import Msg, error_embed, mkembed, mkmsg
-from ...utils import dict_pop_n
+from ...utils import BroadcastQueue, dict_pop_n
 
 LobbyPlayers = dict[discord.abc.User, discord.Message]
 
@@ -85,17 +85,13 @@ class Lobby:
     timeout_task: Optional[asyncio.TimerHandle] = field(
         init=False, default=None)
 
-    # host => event
-    update_events: dict[Optional[discord.abc.User], asyncio.Event] = field(
-        default_factory=lambda: defaultdict(asyncio.Event))
-    # host => update
-    update_values: dict[Optional[discord.abc.User], Optional[Update]] = field(
-        default_factory=lambda: defaultdict(lambda: None))
+    # host => updates
+    updates: dict[Optional[discord.abc.User], BroadcastQueue[Update]] = field(
+        default_factory=lambda: defaultdict(BroadcastQueue))
 
     def remove_private(self, host: discord.abc.User) -> None:
         for d in (
-            self.players, self.spectators,
-            self.update_events, self.update_values
+            self.players, self.spectators, self.updates
         ):
             del d[host]
 
@@ -150,15 +146,8 @@ class LobbyView(discord.ui.View):
             self.lobby.timeout_task = task
 
         @property
-        def update_event(self) -> asyncio.Event:
-            return self.lobby.update_events[self.host]
-
-        @property
-        def update_value(self) -> Optional[Update]:
-            return self.lobby.update_values[self.host]
-        @update_value.setter
-        def update_value(self, value: Update) -> None:
-            self.lobby.update_values[self.host] = value
+        def updates(self) -> BroadcastQueue[Update]:
+            return self.lobby.updates[self.host]
 
     # overridden methods
 
@@ -216,18 +205,22 @@ class LobbyView(discord.ui.View):
 
     async def update_state(self) -> None:
         """Continuously poll for updates."""
-        while 1:
-            await self.update_event.wait()
-            msg = self.update_value
-            if msg == Update.PLAYERS:
-                await self.display_players()
-            elif msg == Update.STARTED and self.host is not None:
-                # disable further joins
-                self.message = await self.message.edit(view=None)
-                self.stop()
-                return
-            elif msg == Update.STARTED:
-                await self.display_players() # update after removing from lobby
+        with self.updates.consume() as queue:
+            while 1:
+                msg = await queue.get()
+                try:
+                    if msg == Update.PLAYERS:
+                        await self.display_players()
+                    elif msg == Update.STARTED and self.host is not None:
+                        # disable further joins
+                        self.message = await self.message.edit(view=None)
+                        self.stop()
+                        return
+                    elif msg == Update.STARTED:
+                        # update after removing from lobby
+                        await self.display_players()
+                finally:
+                    queue.task_done()
 
     async def start_game(self) -> None:
         """Start the game."""
@@ -265,11 +258,8 @@ class LobbyView(discord.ui.View):
 
     async def update_brethren(self, msg: Update) -> None:
         """Notify other views that the lobby state has changed."""
-        self.update_value = msg
-        self.update_event.set()
-        # give a chance for other waiters to proceed
-        await asyncio.sleep(0)
-        self.update_event.clear()
+        self.updates.put_nowait(msg)
+        await self.updates.join()
 
     # actual buttons
 
