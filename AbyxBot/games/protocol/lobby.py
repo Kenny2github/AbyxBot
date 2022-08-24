@@ -160,6 +160,10 @@ class LobbyView(discord.ui.View):
         self.updater_task = asyncio.create_task(self.update_state())
         if self.host is None:
             self.remove_item(self.start)
+        self.join.label = mkmsg(self.viewer, 'lobby/join-button')
+        self.leave.label = mkmsg(self.viewer, 'lobby/leave-button')
+        self.spectate.label = mkmsg(self.viewer, 'lobby/spectate-button')
+        self.start.label = mkmsg(self.viewer, 'lobby/start-button')
 
     def __del__(self) -> None:
         self.updater_task.cancel()
@@ -266,7 +270,7 @@ class LobbyView(discord.ui.View):
 
     # actual buttons
 
-    @discord.ui.button(label='Join', style=discord.ButtonStyle.primary)
+    @discord.ui.button(style=discord.ButtonStyle.primary)
     async def join(self, ctx: discord.Interaction,
                    button: discord.ui.Button) -> None:
         if (
@@ -307,7 +311,7 @@ class LobbyView(discord.ui.View):
                 await self.schedule_start()
         await self.update_brethren(Update.PLAYERS)
 
-    @discord.ui.button(label='Leave', style=discord.ButtonStyle.danger)
+    @discord.ui.button(style=discord.ButtonStyle.danger)
     async def leave(self, ctx: discord.Interaction,
                     button: discord.ui.Button) -> None:
         if ctx.user in self.players:
@@ -340,7 +344,7 @@ class LobbyView(discord.ui.View):
         ), ephemeral=True)
         await self.update_brethren(Update.PLAYERS)
 
-    @discord.ui.button(label='Spectate', style=discord.ButtonStyle.secondary)
+    @discord.ui.button(style=discord.ButtonStyle.secondary)
     async def spectate(self, ctx: discord.Interaction,
                        button: discord.ui.Button) -> None:
         if (
@@ -373,7 +377,7 @@ class LobbyView(discord.ui.View):
                 await self.start_game()
         await self.update_brethren(Update.PLAYERS)
 
-    @discord.ui.button(label='Start', style=discord.ButtonStyle.success)
+    @discord.ui.button(style=discord.ButtonStyle.success)
     async def start(self, ctx: discord.Interaction,
                     button: discord.ui.Button) -> None:
         if ctx.user != self.host:
