@@ -348,7 +348,9 @@ class LobbyView(discord.ui.View):
             if self.game.max_spectators == 0:
                 await self.start_game()
             # if we're full on spectators AND players, start immediately
-            elif len(self.spectators) >= (self.game.max_spectators or 0):
+            elif self.game.max_spectators is None:
+                pass # always wait for timeout or host start
+            elif len(self.spectators) >= self.game.max_spectators:
                 await self.start_game()
             # otherwise, let timeout continue
         # not an elif because both may need to happen at once
@@ -415,7 +417,9 @@ class LobbyView(discord.ui.View):
         # and even then only if we're full on players too.
         if len(self.spectators) == self.game.max_spectators:
             # just reached max from below
-            if len(self.players) >= (self.game.max_players or 0):
+            if self.game.max_players is None:
+                pass # always wait for timeout or host instruction
+            elif len(self.players) >= self.game.max_players:
                 await self.start_game()
         await self.update_brethren(Update.PLAYERS)
 
