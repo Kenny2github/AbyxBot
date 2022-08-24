@@ -1,6 +1,7 @@
 # stdlib
 from datetime import timedelta
 from abc import ABCMeta, abstractmethod
+from logging import getLogger
 from collections import defaultdict
 from enum import Enum, auto
 from typing import Optional
@@ -13,6 +14,8 @@ import discord
 # 1st-party
 from ...i18n import Msg, error_embed, mkembed, mkmsg
 from ...utils import BroadcastQueue, dict_pop_n
+
+logger = getLogger(__name__)
 
 LobbyPlayers = dict[discord.abc.User, discord.Message]
 
@@ -278,6 +281,8 @@ class LobbyView(discord.ui.View):
             await ctx.response.send_message(embed=error_embed(
                 ctx, Msg('lobby/already-joined')), ephemeral=True)
             return
+        logger.info('User %s\t(%s) joining game %r',
+                    ctx.user, ctx.user.id, self.name)
         # placeholder message that will become the game UI later
         await ctx.response.send_message(embed=mkembed(
             ctx, description=Msg('lobby/placeholder', ctx.user.mention)))
@@ -306,14 +311,20 @@ class LobbyView(discord.ui.View):
     async def leave(self, ctx: discord.Interaction,
                     button: discord.ui.Button) -> None:
         if ctx.user in self.players:
+            logger.info('User %s\t(%s) leaving game %r',
+                        ctx.user, ctx.user.id, self.name)
             # remove from players
             await self.players[ctx.user].delete()
             del self.players[ctx.user]
         elif ctx.user in self.spectators:
+            logger.info('User %s\t(%s) de-spectating game %r',
+                        ctx.user, ctx.user.id, self.name)
             # remove from spectators
             await self.spectators[ctx.user].delete()
             del self.spectators[ctx.user]
         else:
+            logger.info('User %s\t(%s) not in game %r',
+                        ctx.user, ctx.user.id, self.name)
             # not in lobby
             await ctx.response.send_message(ephemeral=True, embed=error_embed(
                 ctx, Msg('lobby/nothing-to-leave')))
@@ -344,6 +355,8 @@ class LobbyView(discord.ui.View):
             await ctx.response.send_message(embed=error_embed(
                 ctx, Msg('lobby/already-joined')), ephemeral=True)
             return
+        logger.info('User %s\t(%s) spectating game %r',
+                    ctx.user, ctx.user.id, self.name)
         # placeholder message that will become the game UI later
         await ctx.response.send_message(embed=mkembed(
             ctx, description=Msg('lobby/placeholder', ctx.user.mention)))
@@ -372,6 +385,8 @@ class LobbyView(discord.ui.View):
                 ctx, Msg('lobby/too-few-players', self.game.min_players)
             ), ephemeral=True)
             return
+        logger.info('User %s\t(%s) starting game %r',
+                    ctx.user, ctx.user.id, self.name)
         await ctx.response.send_message(embed=mkembed(
             ctx, description=Msg('lobby/starting'),
             color=discord.Color.green()
