@@ -235,6 +235,9 @@ class LobbyView(discord.ui.View):
         if self.timeout_task is not None:
             self.timeout_task.cancel()
             self.timeout_task = None
+        if self.host is not None:
+            # display final player/spectator list
+            await self.update_brethren(Update.PLAYERS)
         # remove at most max players from the lobby
         if self.game.max_players is None:
             players = self.players.copy()
