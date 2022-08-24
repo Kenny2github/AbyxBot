@@ -8,11 +8,11 @@ import discord.ext.commands as commands
 from discord.app_commands import locale_str as _
 
 # 1st-party
-from .lobby import LobbyView, GameView
+from .lobby import LobbyView, GameProperties
 
-games: dict[str, type[GameView]] = {}
+games: dict[str, type[GameProperties]] = {}
 
-def add_game(game: type[GameView]) -> None:
+def add_game(game: type[GameProperties]) -> None:
     """Register the game view type to the game name."""
     games[game.name] = game
 

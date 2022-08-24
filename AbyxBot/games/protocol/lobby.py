@@ -19,17 +19,16 @@ logger = getLogger(__name__)
 
 LobbyPlayers = dict[discord.abc.User, discord.Message]
 
-class GameView(discord.ui.View, metaclass=ABCMeta):
+class GameProperties(metaclass=ABCMeta):
     """Base class for an interactive experience."""
 
     @abstractmethod
     def __init__(self, *, players: LobbyPlayers, spectators: LobbyPlayers) -> None:
-        """Initialize the view. This should involve a number of things:
+        """Initialize the game. This should involve a number of things:
 
-        * Call ``super(GameView, self).__init__(timeout=<timeout>)``.
-          By default, ``discord.ui.View``'s timeout is 180 seconds, which is
-          probably not what you want. Therefore you need to call the super
-          constructor of *this* class, not your own.
+        * Create a view instance for each player and spectator, and handle the
+          passing of data between them. Note that this is a synchronous method
+          so to call an async function, create a task for it.
         * Update the messages stored in the values of the players and
           spectators dicts. These were made for you by the lobby mechanics.
         """
@@ -109,7 +108,7 @@ class LobbyView(discord.ui.View):
     viewer: discord.abc.User # the user who requested the view, for i18n
 
     # properties of game
-    game: type[GameView]
+    game: type[GameProperties]
 
     # passed by /game
     host: Optional[discord.abc.User] = None
@@ -231,6 +230,7 @@ class LobbyView(discord.ui.View):
 
     async def start_game(self) -> None:
         """Start the game."""
+        logger.info('Starting game %r', self.name)
         # cancel the pending timeout, if any
         if self.timeout_task is not None:
             self.timeout_task.cancel()
