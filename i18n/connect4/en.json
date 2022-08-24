@@ -1,0 +1,10 @@
+{
+	"turn-spectator": "It is currently {0}'s turn.",
+	"your-turn": "It's your turn.",
+	"their-turn": "It's your opponent's turn.",
+	"select-column": "Select Column",
+	"you-are": "You are {0}.",
+	"player-color": "{0} = {1}",
+	"not-yours": "This is not your game board.",
+	"game-timeout": "There was no activity for {0} seconds; the game has been cancelled."
+}

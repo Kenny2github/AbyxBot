@@ -26,6 +26,7 @@ MODULES = {
     'Unit Conversions': ('units', 'units'),
     'Lexical Analysis': ('words', 'words'),
     'Dummy Game': ('games.dummy_game', 'dummy_game'),
+    'Connect 4': ('games.connect4', 'connect4'),
     # NOTE: This must come after all game entries
     'Games': ('games.protocol.main_cog', 'games'),
 }
