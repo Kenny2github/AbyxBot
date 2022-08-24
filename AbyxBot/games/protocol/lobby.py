@@ -259,6 +259,8 @@ class LobbyView(discord.ui.View):
         """Schedule the game to start after a timeout."""
         if self.timeout_task is not None:
             return # already scheduled
+        logger.info('Scheduling %s-second wait before starting %r',
+                    self.game.wait_time, self.name)
         loop = asyncio.get_running_loop()
         self.timeout_task = loop.call_later(
             self.game.wait_time, lambda: loop.create_task(self.start_game()))
