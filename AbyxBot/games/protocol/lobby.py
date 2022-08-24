@@ -273,6 +273,53 @@ class LobbyView(discord.ui.View):
         self.updates.put_nowait(msg)
         await self.updates.join()
 
+    async def make_message(self, ctx: discord.Interaction,
+                           players: LobbyPlayers) -> None:
+        thread_name = f"{mkmsg(ctx, 'games/' + self.name)} - {ctx.user.id}"
+        msg = None
+        thread = None
+        try:
+            await ctx.response.send_message(embed=mkembed(
+                ctx, description=Msg('lobby/thread-placeholder', ctx.user.mention)))
+            msg = await (await ctx.original_response()).fetch()
+            thread = await msg.create_thread(name=thread_name)
+        except discord.Forbidden: # can't create threads
+            pass
+        # placeholder message that will become the game UI later
+        embed = mkembed(
+            ctx, description=Msg('lobby/placeholder', ctx.user.mention))
+        if thread is not None: # successfully created thread
+            msg = await thread.send(embed=embed)
+        elif msg is not None: # responded, couldn't make thread
+            msg = await msg.edit(embed=embed)
+        else: # didn't respond, couldn't make thread
+            await ctx.response.send_message(embed=embed)
+            msg = await (await ctx.original_response()).fetch()
+        # map player user to game message
+        players[ctx.user] = msg
+
+    async def unmake_message(self, ctx: discord.Interaction,
+                             players: LobbyPlayers) -> None:
+        msg = players[ctx.user]
+        if isinstance(msg.channel, discord.Thread):
+            thread = msg.channel
+            starter = thread.starter_message
+            if starter is None:
+                starter = await thread.fetch_message(thread.id)
+            try:
+                await thread.delete()
+            except discord.Forbidden:
+                pass
+            try:
+                await starter.delete()
+            except discord.Forbidden:
+                pass
+        try:
+            await msg.delete()
+        except discord.Forbidden:
+            pass
+        del players[ctx.user]
+
     # actual buttons
 
     @discord.ui.button(style=discord.ButtonStyle.primary)
@@ -292,11 +339,7 @@ class LobbyView(discord.ui.View):
             return
         logger.info('User %s\t(%s) joining game %r',
                     ctx.user, ctx.user.id, self.name)
-        # placeholder message that will become the game UI later
-        await ctx.response.send_message(embed=mkembed(
-            ctx, description=Msg('lobby/placeholder', ctx.user.mention)))
-        # map player user to game message
-        self.players[ctx.user] = await (await ctx.original_response()).fetch()
+        await self.make_message(ctx, self.players)
         # update state
         if len(self.players) == self.game.max_players:
             # just reached max from below
@@ -323,14 +366,12 @@ class LobbyView(discord.ui.View):
             logger.info('User %s\t(%s) leaving game %r',
                         ctx.user, ctx.user.id, self.name)
             # remove from players
-            await self.players[ctx.user].delete()
-            del self.players[ctx.user]
+            await self.unmake_message(ctx, self.players)
         elif ctx.user in self.spectators:
             logger.info('User %s\t(%s) de-spectating game %r',
                         ctx.user, ctx.user.id, self.name)
             # remove from spectators
-            await self.spectators[ctx.user].delete()
-            del self.spectators[ctx.user]
+            await self.unmake_message(ctx, self.spectators)
         else:
             logger.info('User %s\t(%s) not in game %r',
                         ctx.user, ctx.user.id, self.name)
@@ -366,11 +407,7 @@ class LobbyView(discord.ui.View):
             return
         logger.info('User %s\t(%s) spectating game %r',
                     ctx.user, ctx.user.id, self.name)
-        # placeholder message that will become the game UI later
-        await ctx.response.send_message(embed=mkembed(
-            ctx, description=Msg('lobby/placeholder', ctx.user.mention)))
-        # map spectator user to game message
-        self.spectators[ctx.user] = await (await ctx.original_response()).fetch()
+        await self.make_message(ctx, self.spectators)
         # update state
         # Unlike join(), we check for spectators here
         # and don't check the min_players at all.
