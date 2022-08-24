@@ -16,8 +16,12 @@ class GameEngine(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def won(self) -> Optional[bool]:
+    def won(self, *args, **kwargs) -> Optional[bool]:
         """Has the game ended by winning?
+
+        This may take whatever arguments are useful.
+        Usually for a singleplayer game this is none,
+        or for a multiplayer game it is the player to check for.
 
         Returns:
         * ``True`` for yes
