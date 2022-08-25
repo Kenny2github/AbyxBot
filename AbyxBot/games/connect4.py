@@ -48,6 +48,12 @@ class Connect4Engine(GameEngine):
         self.next_turn = Player.BLUE
 
     def update(self, column: int):
+        for row in range(DIM):
+            if self.board[row][column] != Player.NONE:
+                self.board[row - 1][column] = self.next_turn
+                break
+        else:
+            self.board[-1][column] = self.next_turn
         self.next_turn = self.after(self.next_turn)
 
     def won(self, player: Player, check_other: bool = True) -> Optional[bool]:
