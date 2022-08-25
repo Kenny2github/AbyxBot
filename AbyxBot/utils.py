@@ -125,6 +125,12 @@ class BroadcastQueue(Generic[T]):
         q = self.register()
         try:
             yield q
+        except asyncio.CancelledError:
+            raise # don't print traceback
+        except:
+            import traceback
+            traceback.print_exc()
+            raise
         finally:
             self.deregister(q)
 
