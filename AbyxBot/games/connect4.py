@@ -1,3 +1,4 @@
+from __future__ import annotations
 # stdlib
 from itertools import chain
 from logging import getLogger
@@ -101,7 +102,7 @@ class Connect4View(discord.ui.View):
 
     viewer: discord.abc.User
     game: Connect4Engine
-    events: BroadcastQueue[Event]
+    events: BroadcastQueue[EventWithSender]
 
     red_player: discord.abc.User
     red_message: discord.Message
@@ -144,7 +145,7 @@ class Connect4View(discord.ui.View):
         }[color]
 
     def __init__(self, *, viewer: discord.abc.User, game: Connect4Engine,
-                 events: BroadcastQueue[Event],
+                 events: BroadcastQueue[EventWithSender],
                  players: LobbyPlayers, spectators: LobbyPlayers) -> None:
         super().__init__(timeout=600) # 10 minutes
         # set instance variables
@@ -173,12 +174,16 @@ class Connect4View(discord.ui.View):
         return True
 
     async def on_timeout(self) -> None:
-        self.events.put_nowait(Event.TIMEOUT) # including ourselves
+        self.events.put_nowait((self, Event.TIMEOUT))
 
     async def consume_events(self) -> None:
         with self.events.consume() as queue:
             while 1:
-                event = await queue.get()
+                sender, event = await queue.get()
+                logger.debug(
+                    'Game %x: view for %s received %s from game view for %s',
+                    id(self.game), self.viewer_color.name,
+                    event.name, sender.viewer_color.name)
                 if event == Event.TIMEOUT:
                     logger.info('Game %x timed out', id(self.game))
                     await self.viewer_msg.edit(embed=mkembed(
@@ -188,8 +193,7 @@ class Connect4View(discord.ui.View):
                     ), view=None)
                     self.stop()
                     return
-                elif event == Event.MOVE_MADE:
-                    logger.debug('Game view %x updating from move', id(self))
+                elif event == Event.MOVE_MADE and sender is not self:
                     await self.display_board()
 
     async def display_board(self, ctx: Optional[discord.Interaction] = None
@@ -238,8 +242,12 @@ class Connect4View(discord.ui.View):
     async def play(self, ctx: discord.Interaction,
                    select: discord.ui.Select) -> None:
         self.game.update(int(select.values[0]) - 1)
-        self.events.put_nowait(Event.MOVE_MADE)
-        await self.display_board(ctx)
+        if self.game.won(Player.BLUE) is False:
+            self.events.put_nowait((self, Event.MOVE_MADE))
+            # False = game not ended, regardless of who's being checked
+            await self.display_board(ctx)
+
+EventWithSender = tuple[Connect4View, Event]
 
 class Connect4(GameProperties):
 
