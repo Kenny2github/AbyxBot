@@ -3,6 +3,7 @@
 	"hello": "Hello World!",
 	"hmmst": "hmmst",
 	"error": "Error",
+	"success": "Success",
 	"description": "The greatest bot to walk(?) the earth.",
 	",": ", ",
 	"none-paren": "(None)"
