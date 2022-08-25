@@ -128,8 +128,9 @@ class Connect4View(discord.ui.View):
         if color == Player.NONE:
             color = self.game.next_turn
         return {
-            Player.RED: discord.Color.red(),
-            Player.BLUE: discord.Color.blue(),
+            # taken from red and blue circle emojis
+            Player.RED: discord.Color.from_str('#DD2E44'),
+            Player.BLUE: discord.Color.from_str('#55ACEE'),
         }[color]
 
     def __init__(self, *, viewer: discord.abc.User, game: Connect4Engine,
