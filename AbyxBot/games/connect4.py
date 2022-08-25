@@ -51,23 +51,33 @@ class Connect4Engine(GameEngine):
         self.next_turn = self.after(self.next_turn)
 
     def won(self, player: Player, check_other: bool = True) -> Optional[bool]:
-        for d_row, d_col in (
-            (+1, +0), # |
-            (+1, +1), # \
-            (+0, +1), # -
-            (-1, +1), # /
-        ):
-            for row in range(DIM):
-                for col in range(DIM):
-                    try:
-                        fourinarow = [
-                            self.board[row + d_row * i][col + d_col * i]
-                            for i in range(4)]
-                    except IndexError:
-                        # part of the 4inarow goes off board
-                        continue
-                    if fourinarow == [player] * 4:
-                        return True # won, in favor of player
+        if player == Player.NONE:
+            return False
+        winning_run = [player] * 4
+        # check -
+        for row in range(DIM):
+            for col in range(DIM - 3):
+                run = [self.board[row][col + i] for i in range(4)]
+                if run == winning_run:
+                    return True
+        # check |
+        for row in range(DIM - 3):
+            for col in range(DIM):
+                run = [self.board[row + i][col] for i in range(4)]
+                if run == winning_run:
+                    return True
+        # check \
+        for row in range(3, DIM):
+            for col in range(DIM - 3):
+                run = [self.board[row - i][col + i] for i in range(4)]
+                if run == winning_run:
+                    return True
+        # check /
+        for row in range(DIM - 3):
+            for col in range(DIM - 3):
+                run = [self.board[row + i][col + i] for i in range(4)]
+                if run == winning_run:
+                    return True
         if check_other:
             if self.won(self.after(player), check_other=False):
                 return None # ended, but not by winning
