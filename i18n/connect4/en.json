@@ -6,5 +6,9 @@
 	"you-are": "You are {0}.",
 	"player-color": "{0} = {1}",
 	"not-yours": "This is not your game board.",
+	"you-win": "You are the victor!",
+	"they-win": "Your opponent has won.",
+	"someone-wins": "{0} is the victor!",
+	"nobody-wins": "No more moves are possible! Nobody wins.",
 	"game-timeout": "There was no activity for {0} seconds; the game has been cancelled."
 }

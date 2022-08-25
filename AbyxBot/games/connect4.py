@@ -29,6 +29,7 @@ class Player(Enum):
 
 class Event(Enum):
     MOVE_MADE = auto()
+    GAME_OVER = auto()
     TIMEOUT = auto()
 
 class Connect4Engine(GameEngine):
@@ -195,6 +196,13 @@ class Connect4View(discord.ui.View):
                     return
                 elif event == Event.MOVE_MADE and sender is not self:
                     await self.display_board()
+                elif event == Event.GAME_OVER and sender is not self:
+                    await self.finalize()
+                    self.stop()
+                    return
+                elif event == Event.GAME_OVER: # and sender is self
+                    self.stop()
+                    return
 
     async def display_board(self, ctx: Optional[discord.Interaction] = None
                             ) -> None:
@@ -210,6 +218,49 @@ class Connect4View(discord.ui.View):
                 description=self.constructboard(),
                 color=self.viewer_discord_color),
             'view': self,
+        }
+        if ctx is None:
+            self.viewer_msg = await self.viewer_msg.edit(**kwargs)
+        else:
+            await ctx.response.edit_message(**kwargs)
+            self.viewer_msg = await ctx.original_response()
+
+    async def finalize(self, ctx: Optional[discord.Interaction] = None,
+                       ) -> None:
+        if self.viewer in self.players:
+            if self.game.won(self.viewer_color, check_other=False):
+                key = 'connect4/you-win'
+                winner = self.viewer
+            elif self.game.won(self.game.after(self.viewer_color),
+                            check_other=False):
+                key = 'connect4/they-win'
+                if self.viewer == self.blue_player:
+                    winner = self.red_player
+                else:
+                    winner = self.blue_player
+            else:
+                key = 'connect4/nobody-wins'
+                winner = None
+        else:
+            if self.game.won(Player.BLUE, check_other=False):
+                key = 'connect4/someone-wins'
+                winner = self.blue_player
+            elif self.game.won(Player.RED, check_other=False):
+                key = 'connect4/someone-wins'
+                winner = self.red_player
+            else:
+                key = 'connect4/nobody-wins'
+                winner = None
+
+        lines = self.constructboard().splitlines()
+        # replace your/their-turn line with winner line
+        lines[-1] = mkmsg(ctx or self.viewer, key, winner)
+
+        kwargs = {
+            'embed': discord.Embed(
+                description='\n'.join(lines),
+                color=discord.Color.green()),
+            'view': None,
         }
         if ctx is None:
             self.viewer_msg = await self.viewer_msg.edit(**kwargs)
@@ -246,6 +297,9 @@ class Connect4View(discord.ui.View):
             self.events.put_nowait((self, Event.MOVE_MADE))
             # False = game not ended, regardless of who's being checked
             await self.display_board(ctx)
+        else:
+            self.events.put_nowait((self, Event.GAME_OVER))
+            await self.finalize(ctx)
 
 EventWithSender = tuple[Connect4View, Event]
 
