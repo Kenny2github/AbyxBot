@@ -31,6 +31,7 @@ class GameProperties(metaclass=ABCMeta):
           so to call an async function, create a task for it.
         * Update the messages stored in the values of the players and
           spectators dicts. These were made for you by the lobby mechanics.
+          Note that those messages have content, which you will need to clear.
         """
         raise NotImplementedError
 
@@ -279,21 +280,22 @@ class LobbyView(discord.ui.View):
         msg = None
         thread = None
         try:
-            await ctx.response.send_message(embed=mkembed(
-                ctx, description=Msg('lobby/thread-placeholder', ctx.user.mention)))
+            await ctx.response.send_message(content=mkmsg(
+                ctx, 'lobby/thread-placeholder', ctx.user.mention))
             msg = await (await ctx.original_response()).fetch()
             thread = await msg.create_thread(name=thread_name)
         except discord.Forbidden: # can't create threads
             pass
         # placeholder message that will become the game UI later
-        embed = mkembed(
-            ctx, description=Msg('lobby/placeholder', ctx.user.mention))
         if thread is not None: # successfully created thread
-            msg = await thread.send(embed=embed)
+            msg = await thread.send(content=mkmsg(
+                ctx, 'lobby/thread-msg-placeholder', ctx.user.mention))
         elif msg is not None: # responded, couldn't make thread
-            msg = await msg.edit(embed=embed)
+            msg = await msg.edit(content=mkmsg(
+                ctx, 'lobby/placeholder', ctx.user.mention))
         else: # didn't respond, couldn't make thread
-            await ctx.response.send_message(embed=embed)
+            await ctx.response.send_message(content=mkmsg(
+                ctx, 'lobby/placeholder', ctx.user.mention))
             msg = await (await ctx.original_response()).fetch()
         # map player user to game message
         players[ctx.user] = msg

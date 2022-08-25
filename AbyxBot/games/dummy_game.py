@@ -35,7 +35,7 @@ class DummyGameView(discord.ui.View):
             raise RuntimeError(f'Unreachable - viewer: {self.viewer}, '
                                f'players: {self.players}, '
                                f'spectators: {self.spectators}')
-        await msg.edit(embed=discord.Embed(
+        await msg.edit(content=None, embed=discord.Embed(
             description=f'Players:\n{players}\n'
             f'\nSpectators:\n{spectators}\n'
             f'\nViewer: {self.viewer.mention}'))
