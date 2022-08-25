@@ -277,21 +277,28 @@ class LobbyView(discord.ui.View):
     async def make_message(self, ctx: discord.Interaction,
                            players: LobbyPlayers) -> None:
         thread_name = f"{mkmsg(ctx, 'games/' + self.name)} - {ctx.user.id}"
-        msg = None
+        resp = None
         thread = None
-        try:
-            await ctx.response.send_message(content=mkmsg(
-                ctx, 'lobby/thread-placeholder', ctx.user.mention))
-            msg = await (await ctx.original_response()).fetch()
-            thread = await msg.create_thread(name=thread_name)
-        except discord.Forbidden: # can't create threads
-            pass
+        if isinstance(ctx.channel, discord.TextChannel):
+            thread = discord.utils.find(lambda t: t.name == thread_name,
+                                        ctx.channel.threads)
+        if thread is None:
+            try:
+                await ctx.response.send_message(content=mkmsg(
+                    ctx, 'lobby/thread-placeholder', ctx.user.mention))
+                resp = await (await ctx.original_response()).fetch()
+                thread = await resp.create_thread(name=thread_name)
+            except discord.Forbidden: # can't create threads
+                pass
         # placeholder message that will become the game UI later
-        if thread is not None: # successfully created thread
+        if thread is not None: # successfully created/found thread
             msg = await thread.send(content=mkmsg(
                 ctx, 'lobby/thread-msg-placeholder', ctx.user.mention))
-        elif msg is not None: # responded, couldn't make thread
-            msg = await msg.edit(content=mkmsg(
+            if resp is None: # found, not created
+                await ctx.response.send_message(
+                    content=msg.jump_url, ephemeral=True)
+        elif resp is not None: # responded, couldn't make thread
+            msg = await resp.edit(content=mkmsg(
                 ctx, 'lobby/placeholder', ctx.user.mention))
         else: # didn't respond, couldn't make thread
             await ctx.response.send_message(content=mkmsg(
