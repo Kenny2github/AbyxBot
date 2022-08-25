@@ -9,7 +9,7 @@ from enum import Enum, auto
 import discord
 
 # 1st-party
-from ..chars import BLUE_CIRCLE, NUMS, RED_CIRCLE, BLACK_SQUARE
+from ..chars import BLUE_CIRCLE, NUMS, RED_CIRCLE, BLACK_SQUARE, RED_X
 from ..i18n import Msg, error_embed, mkembed, mkmsg
 from ..utils import BroadcastQueue
 from .protocol.engine import GameEngine
@@ -86,6 +86,10 @@ class Connect4Engine(GameEngine):
                 if tile == Player.NONE:
                     return False # not yet ended, free space left
         return None # ended, everyone lost
+
+    def legal_columns(self) -> list[int]:
+        return [col for col in range(DIM)
+                if self.board[0][col] == Player.NONE]
 
 class Connect4View(discord.ui.View):
 
@@ -184,6 +188,10 @@ class Connect4View(discord.ui.View):
 
     async def display_board(self, ctx: Optional[discord.Interaction] = None
                             ) -> None:
+        self.play.options = [
+            discord.SelectOption(label=str(i + 1), emoji=NUMS[i])
+            for i in self.game.legal_columns()
+        ]
         self.play.disabled = self.game.next_turn != self.viewer_color
 
         kwargs = {
@@ -205,7 +213,9 @@ class Connect4View(discord.ui.View):
                            RED_CIRCLE, self.red_player.mention))
         lines.append(mkmsg(self.viewer, 'connect4/player-color',
                            BLUE_CIRCLE, self.blue_player.mention))
-        lines.append(''.join(NUMS))
+        legal = self.game.legal_columns()
+        lines.append(''.join(num if i in legal else RED_X
+                             for i, num in enumerate(NUMS)))
         lines.extend(''.join(cell.value for cell in row)
                      for row in self.game.board)
         lines.append(mkmsg(self.viewer, 'connect4/you-are', self.viewer.mention))
@@ -218,10 +228,7 @@ class Connect4View(discord.ui.View):
             lines.append(mkmsg(self.viewer, 'connect4/their-turn'))
         return '\n'.join(lines)
 
-    @discord.ui.select(options=[
-        discord.SelectOption(label=str(i + 1), emoji=NUMS[i])
-        for i in range(7)
-    ])
+    @discord.ui.select()
     async def play(self, ctx: discord.Interaction,
                    select: discord.ui.Select) -> None:
         self.game.update(int(select.values[0]) - 1)
