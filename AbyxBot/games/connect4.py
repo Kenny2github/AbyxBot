@@ -306,7 +306,7 @@ EventWithSender = tuple[Connect4View, Event]
 class Connect4(GameProperties):
 
     name: str = 'connect4'
-    wait_time: int = 0
+    wait_time: int = 30
     min_players: int = 2
     max_players: int = 2
     max_spectators: None = None
