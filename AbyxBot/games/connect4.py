@@ -187,6 +187,7 @@ class Connect4View(discord.ui.View):
         self.play.disabled = self.game.next_turn != self.viewer_color
 
         kwargs = {
+            'content': None,
             'embed': discord.Embed(
                 description=self.constructboard(),
                 color=self.viewer_discord_color),
