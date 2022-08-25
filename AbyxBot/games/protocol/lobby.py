@@ -158,6 +158,8 @@ class LobbyView(discord.ui.View):
         super().__init__(timeout=None)
         asyncio.create_task(self.display_players())
         self.updater_task = asyncio.create_task(self.update_state())
+        if self.game.max_spectators == 0:
+            self.remove_item(self.spectate)
         if self.host is None:
             self.remove_item(self.start)
         self.join.label = mkmsg(self.viewer, 'lobby/join-button')
