@@ -316,15 +316,24 @@ class LobbyView(discord.ui.View):
             thread = msg.channel
             starter = thread.starter_message
             if starter is None:
-                starter = await thread.fetch_message(thread.id)
+                try:
+                    starter = await thread.fetch_message(thread.id)
+                except discord.NotFound:
+                    _parent = thread.parent
+                    if isinstance(_parent, discord.TextChannel):
+                        try:
+                            starter = await _parent.fetch_message(thread.id)
+                        except discord.NotFound:
+                            pass
             try:
                 await thread.delete()
             except discord.Forbidden:
                 pass
-            try:
-                await starter.delete()
-            except discord.Forbidden:
-                pass
+            if starter is not None:
+                try:
+                    await starter.delete()
+                except discord.Forbidden:
+                    pass
         try:
             await msg.delete()
         except discord.Forbidden:
