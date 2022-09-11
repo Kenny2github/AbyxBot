@@ -363,7 +363,7 @@ class CommandTranslator(app_commands.Translator):
         elif ctx.location == TCL.choice_name:
             if 'key' not in string.extras:
                 return None
-            key += string.extras['key']
+            key = string.extras.pop('key')
         lang: str = locale.value
         if lang not in Msg.unformatted:
             lang, *_discard = lang.split('-', 1)
