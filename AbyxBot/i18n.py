@@ -92,12 +92,8 @@ class Msg:
     ):
         if lang is None:
             pass
-        elif isinstance(lang, str):
-            self.lang = lang
-        elif isinstance(lang, get_args(IDContext)):
-            self.lang = self.get_lang(lang)
         else:
-            raise TypeError(f'unexpected {type(lang).__name__!r} for "lang"')
+            self.set_lang(lang)
         self.key = key
         self.params = tuple(map(str, params))
         self.kwparams = {k: str(v) for k, v in kwparams.items()}
@@ -119,6 +115,14 @@ class Msg:
             self.set_message()
             assert self.message is not None
         return self.message.format(*self.params, **self.kwparams)
+
+    def set_lang(self, lang: Union[str, IDContext]) -> None:
+        if isinstance(lang, str):
+            self.lang = lang
+        elif isinstance(lang, get_args(IDContext)):
+            self.lang = self.get_lang(lang)
+        else:
+            raise TypeError(f'unexpected {type(lang).__name__!r} for "lang"')
 
     def set_message(self) -> None:
         """Load the unformatted message from language information."""
