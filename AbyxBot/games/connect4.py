@@ -191,6 +191,7 @@ class Connect4View(discord.ui.View):
         with self.events.consume() as queue:
             while 1:
                 sender, event = await queue.get()
+                self.timeout = self.timeout # reset timeout
                 logger.debug(
                     'Game %x: view for %s received %s from game view for %s',
                     id(self.game), self.viewer, event.name, sender.viewer)
