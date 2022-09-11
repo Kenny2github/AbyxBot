@@ -131,7 +131,7 @@ class Msg:
         if self.lang == 'qqx':
             self.message = f'({self.default()})'
         else:
-            self.message = self.unformatted[self.lang].get(self.key)
+            self.message = self.unformatted.get(self.lang, {}).get(self.key)
             if self.message is None:
                 logger.debug('no %s string set for %r', self.lang, self.key)
                 self.message = self.unformatted['en'].get(self.key)
