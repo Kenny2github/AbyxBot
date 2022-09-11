@@ -54,8 +54,7 @@ class Engine2048(GameEngine):
         self.add_random_tile()
         self.add_random_tile()
 
-    def game_done(self) -> bool:
-        """Has the game ended?"""
+    def ended(self) -> bool:
         return self.won() is not False
 
     def has_legal_move(self) -> bool:
@@ -204,7 +203,7 @@ class Engine2048(GameEngine):
             changed_once = changed_once or changed
         if changed_once:
             self.add_random_tile()
-        return self.game_done()
+        return self.ended()
 
 class ArrowView(discord.ui.View):
     def __init__(self, author_id: int, highscore: int, game: Engine2048):

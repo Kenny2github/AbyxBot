@@ -58,7 +58,17 @@ class Connect4Engine(GameEngine):
             self.board[-1][column] = self.next_turn
         self.next_turn = self.after(self.next_turn)
 
+    def ended(self) -> bool:
+        return self.won(Player.BLUE) is not False
+
     def won(self, player: Player, check_other: bool = True) -> Optional[bool]:
+        """Has the game ended by winning?
+
+        Returns:
+        * ``True`` for yes
+        * ``None`` if the game has ended, but not by winning
+        * ``False`` if the game has not yet ended
+        """
         if player == Player.NONE:
             return False
         winning_run = [player] * 4
