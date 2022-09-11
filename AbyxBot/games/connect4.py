@@ -193,8 +193,7 @@ class Connect4View(discord.ui.View):
                 sender, event = await queue.get()
                 logger.debug(
                     'Game %x: view for %s received %s from game view for %s',
-                    id(self.game), self.viewer_color.name,
-                    event.name, sender.viewer_color.name)
+                    id(self.game), self.viewer, event.name, sender.viewer)
                 if event == Event.TIMEOUT:
                     logger.info('Game %x timed out', id(self.game))
                     await self.viewer_msg.edit(embed=mkembed(
