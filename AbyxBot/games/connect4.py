@@ -10,7 +10,7 @@ from enum import Enum, auto
 import discord
 
 # 1st-party
-from ..chars import BLUE_CIRCLE, NUMS, RED_CIRCLE, BLACK_SQUARE, RED_X
+from ..chars import BLUE_CIRCLE, BLACK_NUMS, RED_CIRCLE, BLACK_SQUARE, RED_X
 from ..i18n import Msg, error_embed, mkembed, mkmsg
 from ..utils import BroadcastQueue
 from .protocol.engine import GameEngine
@@ -19,7 +19,7 @@ from .protocol.main_cog import add_game
 
 logger = getLogger(__name__)
 
-NUMS = NUMS[1:8] # column numbers
+NUMS = BLACK_NUMS[1:8] # column numbers
 DIM = 7 # dimension of board
 
 class Player(Enum):
