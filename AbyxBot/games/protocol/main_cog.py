@@ -8,6 +8,7 @@ import discord.ext.commands as commands
 from discord.app_commands import locale_str as _
 
 # 1st-party
+from ...i18n import Msg, error_embed
 from .lobby import LobbyView, GameProperties
 
 games: dict[str, type[GameProperties]] = {}
@@ -39,4 +40,14 @@ def setup(bot: commands.Bot):
         LobbyView(message, viewer=ctx.user,
                   game=games[game], host=lobbier)
 
+    async def check_game(ctx: discord.Interaction) -> bool:
+        if ctx.guild is None:
+            return True # always allowed in DMs
+        if games[ctx.namespace.game].dm_only:
+            await ctx.response.send_message(embed=error_embed(
+                ctx, Msg('lobby/dm-only-error')), ephemeral=True)
+            return False
+        return True
+
+    game.add_check(check_game)
     bot.tree.add_command(game)

@@ -3,6 +3,7 @@
 	"thread-placeholder": "{0}, this thread will contain the game UI once it starts.",
 	"thread-msg-placeholder": "{0}, waiting for game to start...",
 	"full": "This lobby is full.",
+	"dm-only-error": "This game can only be played in DMs.",
 	"starting": "Starting the game.",
 	"join-button": "Join",
 	"leave-button": "Leave",

@@ -71,6 +71,12 @@ class GameProperties(metaclass=ABCMeta):
         """
         return 0
 
+    @classmethod
+    @property
+    def dm_only(cls) -> bool:
+        """Whether this game can only be played in DMs."""
+        return False
+
 class Update(Enum):
     """The type of update being broadcast."""
     PLAYERS = auto()
