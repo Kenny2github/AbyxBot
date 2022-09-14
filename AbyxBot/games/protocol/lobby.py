@@ -296,7 +296,8 @@ class LobbyView(discord.ui.View):
                     ctx, 'lobby/thread-placeholder', ctx.user.mention))
                 resp = await (await ctx.original_response()).fetch()
                 thread = await resp.create_thread(name=thread_name)
-            except discord.Forbidden: # can't create threads
+            except (discord.Forbidden, discord.HTTPException):
+                # can't create threads
                 pass
         # placeholder message that will become the game UI later
         if thread is not None: # successfully created/found thread
