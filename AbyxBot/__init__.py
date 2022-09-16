@@ -27,6 +27,7 @@ MODULES = {
     'Lexical Analysis': ('words', 'words'),
     'Dummy Game': ('games.dummy_game', 'dummy_game'),
     'Connect 4': ('games.connect4', 'connect4'),
+    'Go Fish': ('games.card_games.go_fish', 'go_fish'),
     # NOTE: This must come after all game entries
     'Games': ('games.protocol.main_cog', 'games'),
 }
