@@ -1,8 +1,9 @@
 # stdlib
 import os
 from logging import getLogger
-from typing import Optional
+from typing import Any, Optional
 import asyncio
+from typing_extensions import LiteralString
 
 # 3rd-party
 import aiofiles
@@ -24,7 +25,7 @@ class Database:
     SQL_DIR = os.path.join('AbyxBot', 'sql')
 
     conn: Optional[aiosqlite.Connection] = None
-    cur: Optional[aiosqlite.Cursor] = None
+    cur: aiosqlite.Cursor
     lock = asyncio.Lock()
 
     def __new__(cls):
@@ -42,7 +43,7 @@ class Database:
         self.cur = await self.conn.cursor()
         async with self.lock:
             await self.cur.execute('PRAGMA user_version')
-            current_version = (await self.cur.fetchone())[0]
+            current_version = (await self.cur.fetchone() or [-1])[0]
         if current_version == self.DB_VERSION:
             logger.info('Latest database version (%s) matches current (%s)',
                         current_version, self.DB_VERSION)
@@ -74,14 +75,17 @@ class Database:
         """Commit and close the connection to the database.
         The Database is unusable from this point forward.
         """
+        if self.conn is None:
+            raise RuntimeError('Cannot stop an unconnected database')
         await self.conn.commit()
         await self.conn.close()
-        self.conn = self.cur = None
+        self.conn = None
+        del self.cur
 
     ## helper methods
 
     async def _obj_settings(
-        self, obj_type: str, setting: str = 'lang', table: str = None
+        self, obj_type: str, setting: str = 'lang', table: Optional[str] = None
     ) -> dict[int, Optional[str]]:
         """Internal use generic [obj]_id->[setting] fetcher."""
         settings: dict[int, Optional[str]] = {}
@@ -93,9 +97,9 @@ class Database:
         return settings
 
     async def _obj_get(
-        self, obj_type: str, obj_id: int,
-        setting: str = 'lang', table: str = None
-    ):
+        self, obj_type: LiteralString, obj_id: int,
+        setting: LiteralString, table: Optional[LiteralString] = None
+    ) -> Any:
         """Internal use generic [obj]_id->[setting] fetcher."""
         query = f'SELECT {obj_type}_id, {setting} FROM {table or obj_type+"s"}'
         query += f' WHERE {obj_type}_id=?'
@@ -107,8 +111,8 @@ class Database:
             return row[setting]
 
     async def _obj_set(
-        self, obj_type: str, obj_id: int, value,
-        setting: str = 'lang', table: str = None
+        self, obj_type: LiteralString, obj_id: int, setting: LiteralString,
+        value: Any, table: Optional[LiteralString] = None
     ) -> None:
         """Internal use generic upsert [obj][obj_id].[setting] = [value]."""
         query = \
@@ -117,7 +121,7 @@ class Database:
             f'UPDATE SET {setting}=excluded.{setting}'
         await self.cur.execute(query, (obj_id, value))
 
-    async def _touch(self, obj_type: str, obj_id: int) -> None:
+    async def _touch(self, obj_type: LiteralString, obj_id: int) -> None:
         """Internal use generic create row if not exists."""
         query = f'INSERT INTO {obj_type}s ({obj_type}_id) VALUES (?)' \
             f'ON CONFLICT({obj_type}_id) DO NOTHING'
@@ -141,7 +145,7 @@ class Database:
 
     async def set_user_lang(self, user_id: int, lang: Optional[str]) -> None:
         """Change a user's language setting."""
-        await self._obj_set('user', user_id, lang)
+        await self._obj_set('user', user_id, 'lang', lang)
 
     ## channel-related methods
 
@@ -157,7 +161,7 @@ class Database:
         self, channel_id: int, lang: Optional[str]
     ) -> None:
         """Change a channel's language setting."""
-        await self._obj_set('channel', channel_id, lang)
+        await self._obj_set('channel', channel_id, 'lang', lang)
 
     ## methods for 2048
 
@@ -170,7 +174,7 @@ class Database:
 
     async def set_2048_highscore(self, user_id: int, score: int) -> None:
         """Set the highscore for a user in 2048."""
-        await self._obj_set('user', user_id, score, 'score',
+        await self._obj_set('user', user_id, 'score', score,
                             'pow211_highscores')
 
 db: Database = Database()
