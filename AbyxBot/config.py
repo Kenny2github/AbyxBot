@@ -16,6 +16,7 @@ class Config(NamedTuple):
     web_root: str
     gcloud_project_id: str
     gcloud_auth_json: str
+    file_root: Optional[str] = None
     debug_guild: Optional[int] = None
 
 with open('config.json') as f:

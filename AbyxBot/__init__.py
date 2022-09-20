@@ -2,7 +2,7 @@
 import importlib
 import asyncio
 from logging import getLogger
-from typing import Union
+from typing import TypedDict
 
 # 3rd-party
 from discord.ext import commands
@@ -12,6 +12,7 @@ from .client import bot
 from .config import TOKEN, cmdargs
 from .database import db
 from .logs import activate as activate_logging
+from .server import Handler
 from .status import SetStatus
 from .watcher import stop_on_change
 
@@ -43,12 +44,19 @@ async def import_cog(bot: commands.Bot, name: str, fname: str):
         module.setup(bot)
     logger.info('Loaded %s', name)
 
-globs: dict[str, Union[asyncio.Task, SetStatus]] = {}
+class Globs(TypedDict, total=False):
+    logger: asyncio.Task[None]
+    server: Handler
+    status: SetStatus
+    wakeup: asyncio.Task[None]
+
+globs: Globs = {}
 
 async def run():
     """Run the bot."""
     globs['logger'] = activate_logging() # NOTE: Do this first
     await db.init()
+    globs['server'] = Handler()
     for name, (fname, cmdname) in MODULES.items():
         if cmdname in cmdargs.disable:
             logger.info('Not loading %s', name)
@@ -56,8 +64,10 @@ async def run():
             await import_cog(bot, name, fname)
     globs['status'] = SetStatus(bot)
     globs['wakeup'] = asyncio.create_task(stop_on_change(bot, 'AbyxBot'))
+    await globs['server'].start()
+    await bot.login(TOKEN)
     globs['status'].start()
-    await bot.start(TOKEN)
+    await bot.connect()
 
 async def cleanup_tasks():
     for task in asyncio.all_tasks():
@@ -72,6 +82,8 @@ async def cleanup_tasks():
 async def done():
     """Cleanup and shutdown the bot."""
     try:
+        if 'server' in globs:
+            await globs['server'].stop()
         if 'wakeup' in globs:
             globs['wakeup'].cancel()
         if 'status' in globs:
