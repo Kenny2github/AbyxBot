@@ -26,10 +26,12 @@ class Handler:
     def __init__(self) -> None:
         self.app = web.Application()
         self.app.add_routes([
-            web.get('/api/oauth2_url', self.oauth2_url)
+            web.get('/api/oauth2_url', self.oauth2_url),
+            web.post('/api/oauth2_token', self.oauth2_token),
         ])
         if FILE_ROOT is not None:
             self.app.add_routes([web.static('/', FILE_ROOT)])
+        self.session = ClientSession()
         self.runner = web.AppRunner(self.app)
 
     async def start(self) -> None:
@@ -40,6 +42,7 @@ class Handler:
 
     async def stop(self) -> None:
         await self.runner.cleanup()
+        await self.session.close()
 
     @asynccontextmanager
     async def run(self) -> AsyncIterator[None]:
@@ -59,3 +62,21 @@ class Handler:
             'state': state,
             'prompt': 'none',
         }), 'state': state})
+
+    async def oauth2_token(self, request: web.Request) -> web.Response:
+        # we are assuming that the client has validated the state
+        code: str = request.query['code']
+        async with self.session.post(DISCORD_API + '/oauth2/token', data={
+            'client_id': CLIENT_ID,
+            'client_secret': CLIENT_SECRET,
+            'grant_type': 'authorization_code',
+            'code': code,
+            'redirect_uri': REDIRECT_URI,
+        }) as response:
+            if not response.ok:
+                return web.Response(
+                    status=response.status, text=await response.text(),
+                    content_type=response.content_type or None
+                )
+            data = await response.json()
+        return web.json_response(data)
