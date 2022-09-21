@@ -19,8 +19,8 @@ class Config(NamedTuple):
     file_root: Optional[str] = None
     debug_guild: Optional[int] = None
 
-with open('config.json') as f:
-    config = Config(**json.load(f))
+with open('public-config.json') as public, open('private-config.json') as private:
+    config = Config(**json.load(public), **json.load(private))
 
 parser = argparse.ArgumentParser(description='Run AbyxBot.')
 parser.add_argument('-d', '--disable', nargs='*', metavar='disable',
