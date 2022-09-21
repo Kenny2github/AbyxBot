@@ -3,3 +3,4 @@ aiofiles
 aiosqlite
 google-cloud-translate
 aiohttp
+aiohttp_cors

@@ -5,6 +5,7 @@ from logging import getLogger
 from typing import AsyncIterator, Optional
 from urllib.parse import urlencode, urlparse
 from aiohttp import ClientSession, web
+import aiohttp_cors
 from ..config import config
 from ..database import db
 
@@ -25,10 +26,21 @@ class Handler:
 
     def __init__(self) -> None:
         self.app = web.Application()
-        self.app.add_routes([
+        cors = aiohttp_cors.setup(self.app, defaults={
+            "https://bot.abyx.dev": aiohttp_cors.ResourceOptions(
+                allow_methods='*',
+                allow_headers='*'),
+            "http://localhost:3000": aiohttp_cors.ResourceOptions(
+                allow_methods='*',
+                allow_headers='*'),
+        })
+
+        for route in self.app.add_routes([
             web.get('/api/oauth2_url', self.oauth2_url),
             web.post('/api/oauth2_token', self.oauth2_token),
-        ])
+            web.post('/api/oauth2_refresh', self.oauth2_refresh),
+        ]):
+            cors.add(route)
         if FILE_ROOT is not None:
             self.app.add_routes([web.static('/', FILE_ROOT)])
         self.session = ClientSession()
