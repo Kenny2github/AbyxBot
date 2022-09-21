@@ -13,7 +13,6 @@ logger = getLogger(__name__)
 
 async def stop_on_change(bot: commands.Bot, path: str):
     mtimes = recurse_mtimes(path)
-    await bot.wait_until_ready()
     while 1:
         for fn, mtime in mtimes.items():
             try:
