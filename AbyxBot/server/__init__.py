@@ -4,7 +4,7 @@ import time
 from secrets import token_bytes, token_hex
 from logging import getLogger
 from pathlib import Path
-from typing import AsyncIterator, TypedDict, NoReturn, Callable
+from typing import AsyncIterator, TypedDict, NoReturn, Callable, Optional
 from urllib.parse import urlencode, urlparse
 
 # 3rd-party
@@ -208,7 +208,7 @@ class Handler:
         session['user_id'] = user['id']
 
     async def ensure_logged_in(self, request: web.Request,
-                               return_to: str) -> None:
+                               return_to: Optional[str]) -> None:
         """Ensure that the user is logged in.
 
         This refreshes tokens if possible and necessary,
@@ -218,6 +218,10 @@ class Handler:
 
         # redirect to login if never logged in
         if 'refresh_token' not in session:
+            if return_to is None:
+                logger.getChild('ensure_logged_in').debug(
+                    'No refresh token, refusing to redirect')
+                raise web.HTTPUnauthorized
             session['return_to'] = return_to
             location = '/api/oauth2/auth'
             logger.getChild('ensure_logged_in').debug(
