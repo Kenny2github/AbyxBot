@@ -76,31 +76,9 @@ CREATE TABLE IF NOT EXISTS pow211_highscores (
 CREATE TABLE IF NOT EXISTS guild_disabled_commands (
 	-- guild ID
 	guild_id integer NOT NULL,
-	-- entry type, 1 for command, 2 for cog
-	entry_type integer NOT NULL,
 	-- the object itself
-	obj_name text NOT NULL,
+	cmd_name text NOT NULL,
 	-- keys
-	PRIMARY KEY(guild_id, entry_type, obj_name),
+	PRIMARY KEY(guild_id, cmd_name),
 	FOREIGN KEY(guild_id) REFERENCES guilds(guild_id)
-);
-
--- server sessions
-CREATE TABLE IF NOT EXISTS web_sessions (
-	-- session ID
-	session_id text PRIMARY KEY NOT NULL,
-	-- last login unix timestamp, or NULL if not logged in
-	logged_in real,
-	-- OAuth state
-	auth_state text NOT NULL,
-	-- Discord access token
-	access_token text,
-	-- Discord refresh token
-	refresh_token text,
-	-- how many seconds until token expires
-	token_expiry integer,
-	-- Discord user ID of logged in user, or NULL if not logged in
-	user_id integer,
-	-- keys
-	FOREIGN KEY(user_id) REFERENCES users(user_id)
 );
