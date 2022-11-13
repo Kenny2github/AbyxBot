@@ -18,7 +18,7 @@ from .database import db
 
 logger = getLogger(__name__)
 
-IDContext = Union[discord.Interaction, Mentionable]
+IDContext = Union[discord.Interaction, Mentionable, discord.abc.Snowflake]
 DBMethod = Callable[[int, Optional[str]], Coroutine[Any, Any, None]]
 
 class Msg:
