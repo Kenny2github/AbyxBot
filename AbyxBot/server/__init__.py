@@ -2,7 +2,6 @@
 from contextlib import asynccontextmanager
 import time
 from secrets import token_bytes, token_hex
-from functools import partial
 from logging import getLogger
 from pathlib import Path
 from typing import AsyncIterator, TypedDict, NoReturn, Callable
@@ -248,11 +247,13 @@ class Handler:
         msg = await self.msgmaker(request)
         return msg(key, **kwparams)
 
-    async def msgmaker(self, request: web.Request) -> Callable[..., str]:
+    async def msgmaker(self, request: web.Request,
+                       prefix: str = '') -> Callable[..., str]:
         """Returns ``mkmsg`` with the context pre-filled."""
         session = await get_session(request)
         user_object = discord.Object(session['user_id'])
-        return partial(mkmsg, user_object)
+        return lambda key, **kwparams: mkmsg(
+            user_object, prefix + key, **kwparams)
 
     ### View routes ###
 
@@ -261,11 +262,11 @@ class Handler:
         """The homepage."""
         await self.ensure_logged_in(request, '/')
 
-        _ = await self.msgmaker(request)
+        _ = await self.msgmaker(request, 'server/index/')
         username = (await self.get_user(request))['username']
         logger.getChild('index').debug('Logged in username is %r', username)
         return {
-            'hello': _('server/index/hello', username=username),
-            'settings': _('server/index/settings'),
-            'servers': _('server/index/servers'),
+            'hello': _('hello', username=username),
+            'settings': _('settings'),
+            'servers': _('servers'),
         }
