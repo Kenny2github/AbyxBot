@@ -3,4 +3,5 @@ aiofiles
 aiosqlite
 google-cloud-translate
 aiohttp
-aiohttp_cors
+aiohttp_jinja2
+aiohttp-session[secure]
