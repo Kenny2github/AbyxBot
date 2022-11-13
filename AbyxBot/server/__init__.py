@@ -122,6 +122,8 @@ class Handler:
             'redirect_uri': REDIRECT_URI,
             'prompt': 'consent', # 'none',
         })
+        logger.getChild('api.oauth2.auth').debug(
+            'Redirecting %s to %s', request.remote, url)
         raise web.HTTPSeeOther(url)
 
     async def oauth2_callback(self, request: web.Request) -> NoReturn:
@@ -154,7 +156,10 @@ class Handler:
         # update session and redirect
         await self.set_oauth2(request, data)
         session = await get_session(request)
-        raise web.HTTPTemporaryRedirect(session.get('return_to', '/'))
+        return_to = session.get('return_to', '/')
+        logger.getChild('api.oauth2.callback').debug(
+            'Redirecting %s to %s', request.remote, return_to)
+        raise web.HTTPTemporaryRedirect(return_to)
 
     ### discord API helpers ###
 
@@ -162,6 +167,8 @@ class Handler:
         """Get the logged in user from cache, or fetch if not cached."""
         session = await get_session(request)
         if session['user_id'] not in self.user_cache:
+            logger.getChild('get_user').debug('User %s not cached, fetching',
+                                              session['user_id'])
             return await self.fetch_user(request)
         return self.user_cache[session['user_id']]
 
@@ -213,10 +220,17 @@ class Handler:
         # redirect to login if never logged in
         if 'refresh_token' not in session:
             session['return_to'] = return_to
-            raise web.HTTPTemporaryRedirect('/api/oauth2/auth')
+            location = '/api/oauth2/auth'
+            logger.getChild('ensure_logged_in').debug(
+                'No refresh token; set return_to = %r and redirecting to %s',
+                return_to, location)
+            raise web.HTTPTemporaryRedirect(location)
 
         # refresh token if expired
         if session['expiry'] < time.time():
+            logger.getChild('ensure_logged_in').debug(
+                'Token expired %.3f seconds ago, refreshing',
+                time.time() - session['expiry'])
             async with self.session.post(DISCORD_TOKEN, data={
                 'client_id': config.client_id,
                 'client_secret': config.client_secret,
