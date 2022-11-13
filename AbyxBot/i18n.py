@@ -1,7 +1,10 @@
 # stdlib
 import time
 from logging import getLogger
-from typing import Any, Callable, Coroutine, Iterable, Optional, TypeVar, Union, get_args
+from typing import (
+    Any, Callable, Coroutine, Iterable,
+    Optional, TypeVar, Union, get_args,
+)
 import asyncio
 
 # 3rd-party
@@ -20,6 +23,8 @@ logger = getLogger(__name__)
 
 IDContext = Union[discord.Interaction, Mentionable, discord.abc.Snowflake]
 DBMethod = Callable[[int, Optional[str]], Coroutine[Any, Any, None]]
+
+LT = TypeVar('LT')
 
 class Msg:
     """An i18n message.
@@ -48,7 +53,7 @@ class Msg:
 
     @classmethod
     def get_lang(cls, ctx: Optional[discord.abc.Snowflake],
-                 default: str = 'en') -> str:
+                 default: LT = 'en') -> Union[str, LT]:
         """Get the correct language for the context."""
         if isinstance(ctx, discord.Interaction):
             lang = ctx.locale.value
