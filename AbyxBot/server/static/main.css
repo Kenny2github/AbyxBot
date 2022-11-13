@@ -19,6 +19,14 @@ body {
 	height: 100vh;
 }
 
+/* spread elements horizontally */
+.spread {
+	display: flex;
+	justify-content: space-evenly;
+	align-items: center;
+	flex-direction: row;
+}
+
 /* button-style link */
 a.button {
 	display: inline-block;
