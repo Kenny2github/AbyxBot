@@ -1,4 +1,6 @@
 {
 	"index/hello": "Hi, {username}!",
+	"index/settings": "Change your settings",
+	"index/servers": "Change server settings",
 	"hello": "Hello!"
 }

@@ -261,7 +261,11 @@ class Handler:
         """The homepage."""
         await self.ensure_logged_in(request, '/')
 
-        session = await get_session(request)
+        _ = await self.msgmaker(request)
         username = (await self.get_user(request))['username']
-        return {'hello': await self.mkmsg(
-            request, 'server/index/hello', username=username)}
+        logger.getChild('index').debug('Logged in username is %r', username)
+        return {
+            'hello': _('server/index/hello', username=username),
+            'settings': _('server/index/settings'),
+            'servers': _('server/index/servers'),
+        }

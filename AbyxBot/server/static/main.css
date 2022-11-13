@@ -16,3 +16,14 @@ body {
 .center.fill {
 	height: 100vh;
 }
+
+a.button {
+	display: inline-block;
+	background-color: #62d3f5;
+	outline: none;
+	padding: 15px 25px;
+	color: #000;
+	font-size: 1.2rem;
+	border-radius: 5px;
+	text-decoration: none;
+}
