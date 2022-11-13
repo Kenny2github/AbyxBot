@@ -6,6 +6,17 @@ body {
 	margin: 0;
 }
 
+h1 {
+	font-size: 3em;
+}
+
+.align-right {
+	text-align: right;
+}
+.align-left {
+	text-align: left;
+}
+
 /* class for centering */
 .center {
 	width: 100%;
@@ -25,6 +36,9 @@ body {
 	justify-content: space-evenly;
 	align-items: center;
 	flex-direction: row;
+}
+.spread * {
+	margin: 0 1em;
 }
 
 /* button styling */
