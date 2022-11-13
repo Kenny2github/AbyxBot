@@ -2,9 +2,10 @@
 from contextlib import asynccontextmanager
 import time
 from secrets import token_bytes, token_hex
+from functools import partial
 from logging import getLogger
 from pathlib import Path
-from typing import AsyncIterator, TypedDict, NoReturn
+from typing import AsyncIterator, TypedDict, NoReturn, Callable
 from urllib.parse import urlencode, urlparse
 
 # 3rd-party
@@ -230,9 +231,14 @@ class Handler:
 
     async def mkmsg(self, request: web.Request, key: str, **kwparams) -> str:
         """Make an i18n message with request context."""
+        msg = await self.msgmaker(request)
+        return msg(key, **kwparams)
+
+    async def msgmaker(self, request: web.Request) -> Callable[..., str]:
+        """Returns ``mkmsg`` with the context pre-filled."""
         session = await get_session(request)
         user_object = discord.Object(session['user_id'])
-        return mkmsg(user_object, key, **kwparams)
+        return partial(mkmsg, user_object)
 
     ### View routes ###
 
