@@ -17,7 +17,7 @@ import discord
 
 # 1st-party
 from ..config import config
-from ..i18n import mkmsg
+from ..i18n import mkmsg, Msg, SUPPORTED_LANGS
 from ..database import db
 
 DISCORD_API = 'https://discord.com/api/v10'
@@ -80,7 +80,8 @@ class Handler:
         # set up view routes
         self.app.add_routes([
             web.static('/static/', Path(__file__).parent / 'static'),
-            web.get('/', self.index)
+            web.get('/', self.index),
+            web.get('/settings', self.get_settings),
         ])
 
         self.user_cache: dict[int, dict] = {}
@@ -273,4 +274,25 @@ class Handler:
             'hello': _('hello', username=username),
             'settings': _('settings'),
             'servers': _('servers'),
+        }
+
+    @template('settings.jinja2')
+    async def get_settings(self, request: web.Request):
+        """The personal settings page."""
+        await self.ensure_logged_in(request, '/settings')
+
+        session = await get_session(request)
+        _ = await self.msgmaker(request, 'server/settings/')
+        langs = {
+            code: str(Msg('@name', lang=code))
+            for code in sorted(SUPPORTED_LANGS) if code != 'qqq'
+        }
+        selected_lang = Msg.get_lang(discord.Object(session['user_id']), default='')
+        return {
+            'title': _('title'),
+            'language': _('language'),
+            'langs': {'': _('lang-auto'), **langs},
+            'lang': selected_lang,
+            'save': _('save'),
+            'back': _('back'),
         }

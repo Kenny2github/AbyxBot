@@ -110,3 +110,28 @@ label.switch > input:checked + span::before {
 	transform: translateX(26px);
 }
 /* /fancy switch */
+
+/* input styling */
+input[type=text], textarea, select {
+	color: #fff;
+	border: 1px solid #1a1a1a;
+	background-color: #2b2f33;
+	border-radius: 5px;
+	padding: 8px;
+	outline: none;
+	transition: border 250ms ease-out;
+}
+input[type=text], textarea {
+	width: 100%;
+}
+textarea {
+	resize: vertical;
+}
+input[type=text]:hover,
+textarea:hover,
+select:hover,
+input[type=text]:focus,
+textarea:focus,
+select:focus {
+	border-color: #000;
+}

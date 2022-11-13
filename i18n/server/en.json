@@ -2,5 +2,10 @@
 	"index/hello": "Hi, {username}!",
 	"index/settings": "Change your settings",
 	"index/servers": "Change server settings",
+	"settings/title": "Your Settings",
+	"settings/language": "Your language:",
+	"settings/lang-auto": "Auto",
+	"settings/save": "Save",
+	"settings/back": "Back",
 	"hello": "Hello!"
 }
