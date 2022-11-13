@@ -27,8 +27,8 @@ body {
 	flex-direction: row;
 }
 
-/* button-style link */
-a.button {
+/* button styling */
+a.button, button {
 	display: inline-block;
 	background-color: #62d3f5;
 	outline: none;
