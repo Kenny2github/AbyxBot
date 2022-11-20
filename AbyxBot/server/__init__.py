@@ -182,7 +182,7 @@ class Handler:
         ) as resp:
             resp.raise_for_status()
             user = await resp.json()
-        self.user_cache[user['id']] = user
+        self.user_cache[int(user['id'])] = user
         return user
 
     async def fetch_guilds(self, request: web.Request) -> list[dict]:
@@ -206,7 +206,7 @@ class Handler:
         session['expiry'] = time.time() + token['expires_in'] - 1
         session['refresh_token'] = token['refresh_token']
         user = await self.fetch_user(request)
-        session['user_id'] = user['id']
+        session['user_id'] = int(user['id'])
 
     async def ensure_logged_in(self, request: web.Request,
                                return_to: Optional[str]) -> None:
