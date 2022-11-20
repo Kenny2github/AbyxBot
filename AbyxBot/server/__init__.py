@@ -4,7 +4,9 @@ import time
 from secrets import token_bytes, token_hex
 from logging import getLogger
 from pathlib import Path
-from typing import AsyncIterator, TypedDict, NoReturn, Callable, Optional
+from typing import (
+    AsyncIterator, TypedDict, NoReturn, Callable, Optional, cast
+)
 from urllib.parse import urlencode, urlparse
 
 # 3rd-party
@@ -82,6 +84,7 @@ class Handler:
             web.static('/static/', Path(__file__).parent / 'static'),
             web.get('/', self.index),
             web.get('/settings', self.get_settings),
+            web.post('/settings', self.post_settings),
         ])
 
         self.user_cache: dict[int, dict] = {}
@@ -93,6 +96,7 @@ class Handler:
         await self.runner.setup()
         web_root = urlparse(WEB_ROOT)
         site = web.TCPSite(self.runner, web_root.hostname, web_root.port)
+        logger.info('Starting on %s', WEB_ROOT)
         await site.start()
 
     async def stop(self) -> None:
@@ -296,3 +300,24 @@ class Handler:
             'save': _('save'),
             'back': _('back'),
         }
+
+    async def post_settings(self, request: web.Request):
+        """Save your settings."""
+        await self.ensure_logged_in(request, '/settings')
+
+        # request data validation
+        data = await request.post()
+        if not data:
+            raise web.HTTPBadRequest(text='Invalid POST body')
+        if 'lang' not in data:
+            raise web.HTTPBadRequest(text='Missing language setting')
+        lang = cast(str, data.get('lang', '')) or None
+
+        # save settings
+        session = await get_session(request)
+        user_id = session['user_id']
+        Msg.user_langs[user_id] = lang
+        await db.set_user_lang(user_id, lang)
+
+        # show settings
+        return await self.get_settings(request)
