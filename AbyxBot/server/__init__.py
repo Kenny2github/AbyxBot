@@ -303,7 +303,7 @@ class Handler:
 
     async def post_settings(self, request: web.Request):
         """Save your settings."""
-        await self.ensure_logged_in(request, '/settings')
+        await self.ensure_logged_in(request, None)
 
         # request data validation
         data = await request.post()
