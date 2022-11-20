@@ -85,6 +85,7 @@ class Handler:
             web.get('/', self.index),
             web.get('/settings', self.get_settings),
             web.post('/settings', self.post_settings),
+            web.get('/servers', self.servers),
         ])
 
         self.user_cache: dict[int, dict] = {}
@@ -292,6 +293,9 @@ class Handler:
             for code in sorted(SUPPORTED_LANGS) if code != 'qqq'
         }
         selected_lang = Msg.user_langs.get(session['user_id'], '')
+        logger.getChild('get_settings').debug(
+            'Loaded %s user lang: %r',
+            session['user_id'], selected_lang)
         return {
             'title': _('title'),
             'language': _('language'),
@@ -316,8 +320,30 @@ class Handler:
         # save settings
         session = await get_session(request)
         user_id = session['user_id']
+        logger.getChild('post_settings').debug(
+            'Setting %s user lang to %r', user_id, lang)
         Msg.user_langs[user_id] = lang
         await db.set_user_lang(user_id, lang)
 
         # show settings
         return await self.get_settings(request)
+
+    @template('servers.jinja2')
+    async def servers(self, request: web.Request):
+        """List managed guilds."""
+        await self.ensure_logged_in(request, '/servers')
+
+        session = await get_session(request)
+        _ = await self.msgmaker(request, 'server/servers/')
+        servers = {
+            int(guild['id']): (guild['icon'], guild['name'])
+            for guild in await self.fetch_guilds(request)
+            if discord.Permissions(
+                int(guild['permissions'])).administrator
+        }
+        logger.getChild('servers').debug(
+            'Fetched %s guilds', len(servers))
+        return {
+            'title': _('title'),
+            'servers': servers,
+        }

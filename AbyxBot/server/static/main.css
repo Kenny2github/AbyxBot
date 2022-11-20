@@ -40,6 +40,10 @@ h1 {
 .spread > * {
 	margin: 0 1em;
 }
+.spread.wrap {
+	flex-wrap: wrap;
+	row-gap: 1.5em;
+}
 
 /* button styling */
 a.button, button {
@@ -134,4 +138,34 @@ input[type=text]:focus,
 textarea:focus,
 select:focus {
 	border-color: #000;
+}
+
+/* guild icon */
+a.guild {
+	text-decoration: none;
+	color: #fff;
+}
+.guild > span {
+	display: flex;
+	max-width: 128px;
+	flex-direction: column;
+	justify-content: start;
+	align-items: center;
+	text-align: center;
+}
+.guild img {
+	border-radius: 50%;
+	box-shadow: 0 0 16px #fff;
+	width: 64px;
+	height: 64px;
+}
+.guild img.no-shadow {
+	box-shadow: none;
+}
+.guild span span {
+	text-decoration: none;
+	margin-top: 24px;
+}
+.guild:hover span span {
+	text-decoration: underline;
 }

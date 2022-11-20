@@ -7,5 +7,6 @@
 	"settings/lang-auto": "Auto",
 	"settings/save": "Save",
 	"settings/back": "Back",
+	"servers/title": "Server Settings",
 	"hello": "Hello!"
 }
