@@ -287,7 +287,7 @@ class Handler:
             code: str(Msg('@name', lang=code))
             for code in sorted(SUPPORTED_LANGS) if code != 'qqq'
         }
-        selected_lang = Msg.get_lang(discord.Object(session['user_id']), default='')
+        selected_lang = Msg.user_langs.get(session['user_id'], '')
         return {
             'title': _('title'),
             'language': _('language'),
