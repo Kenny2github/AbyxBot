@@ -120,7 +120,7 @@ class Handler:
             'scope': 'identify guilds',
             'state': state,
             'redirect_uri': REDIRECT_URI,
-            'prompt': 'consent', # 'none',
+            'prompt': 'none',
         })
         logger.getChild('api.oauth2.auth').debug(
             'Redirecting %s to %s', request.remote, url)
