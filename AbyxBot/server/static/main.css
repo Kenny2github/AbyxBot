@@ -28,7 +28,7 @@ h1 {
 }
 /* center and fill height */
 .center.fill {
-	height: 100vh;
+	min-height: 100vh;
 }
 
 /* spread elements horizontally */
