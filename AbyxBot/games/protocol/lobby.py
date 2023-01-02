@@ -13,7 +13,7 @@ import discord
 
 # 1st-party
 from ...i18n import Msg, error_embed, mkembed, mkmsg
-from ...utils import BroadcastQueue, dict_pop_n
+from ...lib.utils import BroadcastQueue, dict_pop_n
 
 logger = getLogger(__name__)
 

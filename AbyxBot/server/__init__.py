@@ -18,9 +18,9 @@ from aiohttp_session.cookie_storage import EncryptedCookieStorage
 import discord
 
 # 1st-party
-from ..config import config
+from ..consts.config import config
 from ..i18n import mkmsg, Msg, SUPPORTED_LANGS
-from ..database import db
+from ..lib.database import db
 
 DISCORD_API = 'https://discord.com/api/v10'
 DISCORD_OAUTH2 = 'https://discord.com/oauth2/authorize'

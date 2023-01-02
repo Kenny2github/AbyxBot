@@ -14,10 +14,10 @@ import discord.ext.commands as commands
 from discord.app_commands import locale_str as _
 
 # 1st-party
-from .type_hints import ChannelLike, Mentionable, NamespaceChannel
+from ..consts.type_hints import ChannelLike, Mentionable, NamespaceChannel
+from ..consts.chars import LABR, RABR
+from ..lib.database import db
 from .load_i18n import load_i18n_strings, SUPPORTED_LANGS
-from .chars import LABR, RABR
-from .database import db
 
 logger = getLogger(__name__)
 

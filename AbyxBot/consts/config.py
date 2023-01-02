@@ -7,7 +7,7 @@ import logging
 from typing import NamedTuple, Optional
 
 # 1st-party
-from .utils import AttrDict
+from ..lib.utils import AttrDict
 
 class Config(NamedTuple):
     token: str

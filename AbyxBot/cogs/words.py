@@ -11,7 +11,7 @@ from discord import app_commands
 from discord.ext import commands
 
 # 1st-party
-from .i18n import Msg, mkembed, mkmsg, error_embed
+from ..i18n import Msg, mkembed, mkmsg, error_embed
 
 # TODO: implement censoring
 

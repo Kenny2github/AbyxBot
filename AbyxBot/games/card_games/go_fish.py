@@ -13,9 +13,9 @@ from typing import Optional, Union
 import discord
 
 # 1st-party
-from ...chars import BLACK_NUMS, BOOK
+from ...consts.chars import BLACK_NUMS, BOOK
 from ...i18n import Msg, error_embed, mkembed, mkmsg
-from ...utils import BroadcastQueue
+from ...lib.utils import BroadcastQueue
 from ..protocol.engine import GameEngine
 from ..protocol.lobby import GameProperties, LobbyPlayers
 from ..protocol.main_cog import add_game

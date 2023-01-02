@@ -8,24 +8,24 @@ from typing import TypedDict
 from discord.ext import commands
 
 # 1st-party
-from .client import bot
-from .config import TOKEN, cmdargs
-from .database import db
-from .logs import activate as activate_logging
+from .consts.config import TOKEN, cmdargs
+from .lib.client import bot
+from .lib.database import db
+from .lib.logs import activate as activate_logging
+from .lib.status import SetStatus
+from .lib.watcher import stop_on_change
 from .server import Handler
-from .status import SetStatus
-from .watcher import stop_on_change
 
 MODULES = {
     '2048': ('games.twozerofoureight', '2048'),
-    'Help': ('help', 'help'),
+    'Help': ('cogs.help', 'help'),
     'Internationalization': ('i18n', 'i18n'),
-    'Miscellaneous Commands': ('misc_cmds', 'misc'),
+    'Miscellaneous Commands': ('cogs.misc_cmds', 'misc'),
     'Numguess': ('games.numguess', 'numguess'),
-    'Sudo Commands': ('sudo', 'sudo'),
+    'Sudo Commands': ('cogs.sudo', 'sudo'),
     'Translation': ('translation', 'trans'),
-    'Unit Conversions': ('units', 'units'),
-    'Lexical Analysis': ('words', 'words'),
+    'Unit Conversions': ('cogs.units', 'units'),
+    'Lexical Analysis': ('cogs.words', 'words'),
     'Dummy Game': ('games.dummy_game', 'dummy_game'),
     'Connect 4': ('games.connect4', 'connect4'),
     'Go Fish': ('games.card_games.go_fish', 'go_fish'),

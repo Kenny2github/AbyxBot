@@ -10,8 +10,8 @@ from discord.ext import commands
 from discord import app_commands
 
 # 1st-party
-from .type_hints import HistoriedChannel
-from .i18n import mkmsg, mkembed, error_embed, Msg
+from ..consts.type_hints import HistoriedChannel
+from ..i18n import mkmsg, mkembed, error_embed, Msg
 
 def check_msg(user: Optional[discord.User] = None,
               matches: Optional[str] = None

@@ -12,8 +12,8 @@ from discord.ext import commands
 from discord import app_commands
 
 # 1st-party
-from .i18n import Msg, error_embed, mkmsg
-from .utils import asyncify
+from ..i18n import Msg, error_embed, mkmsg
+from ..lib.utils import asyncify
 
 # eval-related stuff
 

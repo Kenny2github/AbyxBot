@@ -5,8 +5,8 @@ import discord.ext.commands as commands
 from discord.app_commands import locale_str as _
 
 # 1st-party
-from .i18n import Msg, mkembed
-from .utils import similarity
+from ..i18n import Msg, mkembed
+from ..lib.utils import similarity
 
 COMMANDS_WITH_HELP = {
     'help/convert',

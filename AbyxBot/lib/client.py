@@ -8,8 +8,8 @@ from discord import app_commands
 from discord.ext import commands
 
 # 1st-party
-from .config import config
-from .i18n import error_embed
+from ..consts.config import config
+from ..i18n import error_embed
 
 SIGNALLED_EXCS = (
     app_commands.BotMissingPermissions,

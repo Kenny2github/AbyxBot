@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 # 3rd-party
 
 # 1st-party
-from ...chars import (
+from ...consts.chars import (
     DIAMONDS, CLUBS, HEARTS, SPADES,
     REGI, NUMS
 )

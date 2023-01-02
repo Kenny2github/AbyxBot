@@ -15,12 +15,12 @@ from discord.ext import commands
 from google.cloud import translate
 
 # 1st-party
-from .chars import REGU
-from .config import config
+from ..consts.chars import REGU
+from ..consts.config import config
+from ..consts.type_hints import HistoriedChannel
+from ..i18n import IDContext, Msg, error_embed
+from ..lib.utils import AttrDict, asyncify
 from .discord_markdown import html_to_md, md_to_html
-from .i18n import IDContext, Msg, error_embed
-from .type_hints import HistoriedChannel
-from .utils import AttrDict, asyncify
 
 logger = getLogger(__name__)
 
@@ -31,7 +31,7 @@ PARENT = f'projects/{config.gcloud_project_id}/locations/global'
 ESCAPES = re.compile('(<[:@#][^>]+>|:[^:]+:)')
 UNK = r'<unk value="\1" />'
 LETTERS = {reg: letter for letter, reg in REGU.items()}
-with open(os.path.join('AbyxBot', 'countrylangs.json')) as f:
+with open(os.path.join('AbyxBot', 'translation', 'countrylangs.json')) as f:
     COUNTRYLANGS: dict[str, list[str]] = json.load(f)
 LANGUAGES: list[str] = [
     language.language_code for language in
@@ -132,7 +132,9 @@ async def translate_command(
 ):
     """Translate message text. Run `/help translate`."""
     if to_language is None:
-        to_language = Msg.get_lang(ctx)
+        to = Msg.get_lang(ctx)
+    else:
+        to = to_language
     if text:
         await ctx.response.defer()
         texts = [text]
@@ -148,7 +150,7 @@ async def translate_command(
             '\N{EXCLAMATION QUESTION MARK}', ephemeral=True)
         raise RuntimeError('Slash command run in non-textable channel')
     await send_translation(ctx, ctx.edit_original_response, texts,
-                           to_language, from_language, url)
+                           to, from_language, url)
 
 # message ID => jump URL
 translated_message_cache: dict[int, str] = OrderedDict()

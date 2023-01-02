@@ -10,9 +10,9 @@ from enum import Enum, auto
 import discord
 
 # 1st-party
-from ..chars import BLUE_CIRCLE, BLACK_NUMS, RED_CIRCLE, BLACK_SQUARE, RED_X
+from ..consts.chars import BLUE_CIRCLE, BLACK_NUMS, RED_CIRCLE, BLACK_SQUARE, RED_X
 from ..i18n import Msg, error_embed, mkembed, mkmsg
-from ..utils import BroadcastQueue
+from ..lib.utils import BroadcastQueue
 from .protocol.engine import GameEngine
 from .protocol.lobby import GameProperties, LobbyPlayers
 from .protocol.main_cog import add_game

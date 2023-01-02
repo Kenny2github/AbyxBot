@@ -8,9 +8,9 @@ from discord import app_commands
 from discord.ext import commands
 
 # 1st-party
-from .chars import ZWNJ
-from .i18n import Msg, error_embed, mkembed, mkmsg
-from .utils import similarity
+from ..consts.chars import ZWNJ
+from ..i18n import Msg, error_embed, mkembed, mkmsg
+from ..lib.utils import similarity
 
 UNITS: dict[str, tuple[tuple[list[str], Union[D, str]], ...]] = {
     'area': (

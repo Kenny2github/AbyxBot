@@ -8,10 +8,10 @@ from discord import app_commands
 from discord.ext import commands
 
 # 1st-party
-from ..chars import UP, DOWN, LEFT, RIGHT
-from ..database import db
+from ..consts.chars import UP, DOWN, LEFT, RIGHT
 from ..i18n import Msg, error_embed, mkembed
-from ..utils import str_to_emoji
+from ..lib.database import db
+from ..lib.utils import str_to_emoji
 from .protocol.engine import GameEngine
 
 TWO_CHANCE = 0.9

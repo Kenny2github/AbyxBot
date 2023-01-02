@@ -7,7 +7,7 @@ from logging.handlers import QueueHandler
 import asyncio
 
 # 1st-party
-from .config import cmdargs
+from ..consts.config import cmdargs
 
 FORMAT = '{levelname}\t{asctime} {name:19} {message}'
 TIME = '%Y-%m-%d'

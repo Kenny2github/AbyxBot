@@ -2,8 +2,8 @@ import os
 import sys
 import json
 import argparse
-from AbyxBot.utils import recurse_mtimes
-from AbyxBot.load_i18n import load_i18n_strings, SUPPORTED_LANGS, ROOT
+from AbyxBot.lib.utils import recurse_mtimes
+from AbyxBot.i18n.load_i18n import load_i18n_strings, SUPPORTED_LANGS, ROOT
 
 parser = argparse.ArgumentParser(
     description='Run i18n auditing or view/modify strings.')
