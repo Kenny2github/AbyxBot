@@ -11,15 +11,15 @@
 <body class="center fill">
 	<h1>{{ title }}</h1>
 	<p class="spread wrap" style="align-items: flex-start; row-gap: 24px;">
-		{% for id, (image, name) in servers.items() %}
+		{% for id, (image, name, acronym) in servers.items() %}
 		<a class="guild" href="/servers/{{ id }}">
 			<span>
 				{% if image -%}
 				<img src="https://cdn.discordapp.com/icons/{{ id }}/{{ image }}.png?size=64" />
 				{%- else -%}
-				<img class="no-shadow" src="https://raw.githubusercontent.com/twitter/twemoji/master/assets/svg/2753.svg" />
+				<span class="acronym" aria-hidden="true">{{ acronym }}</span>
 				{%- endif %}
-				<span>{{ name }}</span>
+				<span class="name">{{ name }}</span>
 			</span>
 		</a>
 		{% endfor %}

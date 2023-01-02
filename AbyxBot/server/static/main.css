@@ -153,7 +153,7 @@ a.guild {
 	align-items: center;
 	text-align: center;
 }
-.guild img {
+.guild img, .guild span .acronym {
 	border-radius: 50%;
 	transition: 0.1s ease;
 	/* box-shadow: 0 0 16px #fff; */
@@ -163,13 +163,18 @@ a.guild {
 .guild img.no-shadow {
 	box-shadow: none;
 }
-.guild span span {
+.guild span .name {
 	text-decoration: none;
 	margin-top: 0.5rem;
 }
-.guild:hover span span {
+.guild span .acronym {
+	display: inline-block;
+	line-height: 64px;
+	font-size: 1.5rem;
+}
+.guild:hover span .name {
 	text-decoration: underline;
 }
-.guild:hover img {
+.guild:hover img, .guild:hover span .acronym {
 	border-radius: 30%;
 }

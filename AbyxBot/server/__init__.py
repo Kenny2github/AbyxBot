@@ -56,6 +56,10 @@ async def get_session(request: web.Request) -> SessionData:
     """Passthru for type casting"""
     return await _get_session(request) # type: ignore
 
+def acronym(name: str) -> str:
+    """Turn a name into an acronym from the first character of each word."""
+    return ''.join(word[0] for word in name.split() if word)
+
 class Handler:
     """Request handler class for the server."""
 
@@ -336,10 +340,14 @@ class Handler:
         session = await get_session(request)
         _ = await self.msgmaker(request, 'server/servers/')
         servers = {
-            int(guild['id']): (guild['icon'], guild['name'])
+            int(guild['id']): (
+                guild['icon'], guild['name'],
+                acronym(guild['name'])
+            )
             for guild in await self.fetch_guilds(request)
             if discord.Permissions(
-                int(guild['permissions'])).administrator
+                int(guild['permissions'])
+            ).administrator
         }
         logger.getChild('servers').debug(
             'Fetched %s guilds', len(servers))
