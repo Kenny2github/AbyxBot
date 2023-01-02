@@ -155,7 +155,8 @@ a.guild {
 }
 .guild img {
 	border-radius: 50%;
-	box-shadow: 0 0 16px #fff;
+	transition: 0.1s ease;
+	/* box-shadow: 0 0 16px #fff; */
 	width: 64px;
 	height: 64px;
 }
@@ -164,8 +165,11 @@ a.guild {
 }
 .guild span span {
 	text-decoration: none;
-	margin-top: 24px;
+	margin-top: 0.5rem;
 }
 .guild:hover span span {
 	text-decoration: underline;
+}
+.guild:hover img {
+	border-radius: 30%;
 }
