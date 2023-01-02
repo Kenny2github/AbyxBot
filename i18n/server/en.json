@@ -8,6 +8,7 @@
 	"settings/save": "Save",
 	"settings/back": "Back",
 	"servers/title": "Server Settings",
-	"servers/back": "Home",
+	"servers/desc": "Choose a server below.",
+	"servers/back": "Back",
 	"hello": "Hello!"
 }

@@ -353,6 +353,7 @@ class Handler:
             'Fetched %s guilds', len(servers))
         return {
             'title': _('title'),
+            'desc': _('desc'),
             'back': _('back'),
             'servers': servers,
         }

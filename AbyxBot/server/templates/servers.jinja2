@@ -11,6 +11,7 @@
 </head>
 <body class="center fill">
 	<h1>{{ title }}</h1>
+	<p>{{ desc }}</p>
 	<p class="spread wrap" id="servers-list">
 		{% for id, (image, name, acronym) in servers.items() %}
 		<a class="guild" href="/servers/{{ id }}">
