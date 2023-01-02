@@ -5,12 +5,13 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="/static/main.css" />
+	<link rel="stylesheet" href="/static/servers.css" />
 	<link rel="icon" type="image/x-icon" href="https://abyx.dev/favicon.ico" />
 	<title>{{ title }} - AbyxBot</title>
 </head>
 <body class="center fill">
 	<h1>{{ title }}</h1>
-	<p class="spread wrap" style="align-items: flex-start; row-gap: 24px;">
+	<p class="spread wrap" id="servers-list">
 		{% for id, (image, name, acronym) in servers.items() %}
 		<a class="guild" href="/servers/{{ id }}">
 			<span>
