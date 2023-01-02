@@ -62,64 +62,6 @@ a.button, button {
 	text-decoration: none;
 }
 
-/**
- * fancy switch-style checkbox
- * instantiate with
- * <label class="switch">
- *     <input type="checkbox" ... />
- *     <span></span>
- * </label>
- */
-/* the surrounding label */
-label.switch {
-	position: relative;
-	display: inline-block;
-	width: 60px;
-	height: 34px;
-}
-/* hide the normal checkbox */
-label.switch > input {
-	opacity: 0;
-	width: 0;
-	height: 0;
-}
-/* the slider */
-label.switch > span {
-	position: absolute;
-	cursor: pointer;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	background-color: #ccc;
-	transition: .4s;
-	border-radius: 34px;
-}
-label.switch > span::before {
-	position: absolute;
-	content: '';
-	height: 26px;
-	width: 26px;
-	left: 4px;
-	bottom: 4px;
-	background-color: #fff;
-	transition: .4s;
-	border-radius: 50%;
-}
-label.switch > input:checked + span {
-	background-color: #2196f3;
-}
-label.switch.red > input:checked + span {
-	background-color: #f04747;
-}
-label.switch > input:focus + span {
-	box-shadow: 0 0 1px #2196f3;
-}
-label.switch > input:checked + span::before {
-	transform: translateX(26px);
-}
-/* /fancy switch */
-
 /* input styling */
 input[type=text], textarea, select {
 	color: #fff;
