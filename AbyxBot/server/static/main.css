@@ -1,5 +1,9 @@
 body {
 	background-color: #34383c;
+	background-image: url('Abyx-faded.png');
+	background-position: top right;
+	background-size: contain;
+	background-repeat: no-repeat;
 	font-family: 'Consolas', 'Courier New', 'Courier', monospace;
 	color: #dcddde;
 	text-rendering: optimizeLegibility;
