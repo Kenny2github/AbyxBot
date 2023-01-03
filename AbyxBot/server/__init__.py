@@ -70,7 +70,8 @@ class Handler:
         setup_jinja2(
             self.app, loader=jinja2.FileSystemLoader(
                 [Path(__file__).parent / 'templates']),
-            trim_blocks=True, lstrip_blocks=True)
+            trim_blocks=True, lstrip_blocks=True,
+            autoescape=jinja2.select_autoescape())
 
         # set up sessions
         if config.session_key:
