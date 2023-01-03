@@ -1,21 +1,26 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-	<meta charset="UTF-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<link rel="stylesheet" href="/static/main.css" />
+{% extends "base.jinja2" -%}
+
+{%- block title -%}
+	{{ title }} - {{ super() }}
+{%- endblock title -%}
+
+{%- block styles -%}
+	{{ super() }}
 	<link rel="stylesheet" href="/static/servers.css" />
-	<link rel="icon" type="image/x-icon" href="https://abyx.dev/favicon.ico" />
-	<title>{{ title }} - AbyxBot</title>
+{%- endblock styles -%}
+
+{%- block head -%}
+	{{ super() }}
 	<script>
-	function toggle(img, ext, set) {
+	function toggle(element, ext, set) {
+		let img = element.children[0].children[0];
 		if (set) img.src = img.src.replace('.png', ext);
 		else img.src = img.src.replace(ext, '.png');
 	}
 	</script>
-</head>
-<body class="center fill">
+{%- endblock head -%}
+
+{%- block body -%}
 	<h1>{{ title }}</h1>
 	<p>{{ desc }}</p>
 	<p class="spread wrap" id="servers-list">
@@ -25,8 +30,8 @@
 			class="guild"
 			href="/servers/{{ id }}"
 			{% if ext != '.png' -%}
-			onmouseenter="toggle(this.children[0].children[0], '{{ ext }}', true);"
-			onmouseleave="toggle(this.children[0].children[0], '{{ ext }}', false);"
+			onmouseenter="toggle(this, '{{ ext }}', true);"
+			onmouseleave="toggle(this, '{{ ext }}', false);"
 			{%- endif %}
 		>
 			<span>
@@ -43,5 +48,4 @@
 	<p class="spread">
 		<a href="/" class="button">{{ back }}</a>
 	</p>
-</body>
-</html>
+{%- endblock body -%}
