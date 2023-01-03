@@ -8,13 +8,27 @@
 	<link rel="stylesheet" href="/static/servers.css" />
 	<link rel="icon" type="image/x-icon" href="https://abyx.dev/favicon.ico" />
 	<title>{{ title }} - AbyxBot</title>
+	<script>
+	function toggle(img, ext, set) {
+		if (set) img.src = img.src.replace('.png', ext);
+		else img.src = img.src.replace(ext, '.png');
+	}
+	</script>
 </head>
 <body class="center fill">
 	<h1>{{ title }}</h1>
 	<p>{{ desc }}</p>
 	<p class="spread wrap" id="servers-list">
-		{% for id, (image, name, acronym) in servers.items() %}
-		<a class="guild" href="/servers/{{ id }}">
+		{% for id, (image, name, acronym) in servers.items() -%}
+		{%- set ext = '.gif' if image and image.startswith('a_') else '.png' -%}
+		<a
+			class="guild"
+			href="/servers/{{ id }}"
+			{% if ext != '.png' -%}
+			onmouseenter="toggle(this.children[0].children[0], '{{ ext }}', true);"
+			onmouseleave="toggle(this.children[0].children[0], '{{ ext }}', false);"
+			{%- endif %}
+		>
 			<span>
 				{% if image -%}
 				<img src="https://cdn.discordapp.com/icons/{{ id }}/{{ image }}.png?size=64" />
