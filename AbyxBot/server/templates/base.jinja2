@@ -1,19 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	{% block head -%}
+	{% block head %}
 	<meta charset="UTF-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	{% block styles -%}
+	{% block styles %}
 	<link rel="stylesheet" href="/static/main.css" />
-	{%- endblock styles %}
+	{% endblock styles %}
 	<link rel="icon" type="image/x-icon" href="https://abyx.dev/favicon.ico" />
-	<title>{%- block title -%}AbyxBot{%- endblock title -%}</title>
-	{%- endblock head %}
+	<title>{% block title %}AbyxBot{% endblock title %}</title>
+	{% endblock head %}
 </head>
 <body class="center fill">
-	{% block body -%}
-	{%- endblock body %}
+	{% block body %}
+	{% endblock body %}
 </body>
 </html>

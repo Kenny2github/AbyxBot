@@ -67,8 +67,10 @@ class Handler:
         self.app = web.Application()
 
         # set up Jinja2
-        setup_jinja2(self.app, loader=jinja2.FileSystemLoader(
-            [Path(__file__).parent / 'templates']))
+        setup_jinja2(
+            self.app, loader=jinja2.FileSystemLoader(
+                [Path(__file__).parent / 'templates']),
+            trim_blocks=True, lstrip_blocks=True)
 
         # set up sessions
         if config.session_key:

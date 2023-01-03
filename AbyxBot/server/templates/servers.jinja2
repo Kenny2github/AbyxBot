@@ -1,15 +1,15 @@
-{% extends "base.jinja2" -%}
+{% extends "base.jinja2" %}
 
-{%- block title -%}
+{% block title %}
 	{{ title }} - {{ super() }}
-{%- endblock title -%}
+{% endblock title %}
 
-{%- block styles -%}
+{% block styles %}
 	{{ super() }}
 	<link rel="stylesheet" href="/static/servers.css" />
-{%- endblock styles -%}
+{% endblock styles %}
 
-{%- block head -%}
+{% block head %}
 	{{ super() }}
 	<script>
 	function toggle(element, ext, set) {
@@ -18,28 +18,28 @@
 		else img.src = img.src.replace(ext, '.png');
 	}
 	</script>
-{%- endblock head -%}
+{% endblock head %}
 
-{%- block body -%}
+{% block body %}
 	<h1>{{ title }}</h1>
 	<p>{{ desc }}</p>
 	<p class="spread wrap" id="servers-list">
-		{% for id, (image, name, acronym) in servers.items() -%}
-		{%- set ext = '.gif' if image and image.startswith('a_') else '.png' -%}
+		{% for id, (image, name, acronym) in servers.items() %}
+		{% set ext = '.gif' if image and image.startswith('a_') else '.png' %}
 		<a
 			class="guild"
 			href="/servers/{{ id }}"
-			{% if ext != '.png' -%}
+			{% if ext != '.png' %}
 			onmouseenter="toggle(this, '{{ ext }}', true);"
 			onmouseleave="toggle(this, '{{ ext }}', false);"
-			{%- endif %}
+			{% endif %}
 		>
 			<span>
-				{% if image -%}
+				{% if image %}
 				<img src="https://cdn.discordapp.com/icons/{{ id }}/{{ image }}.png?size=64" />
-				{%- else -%}
+				{% else %}
 				<span class="acronym" aria-hidden="true">{{ acronym }}</span>
-				{%- endif %}
+				{% endif %}
 				<span class="name">{{ name|escape }}</span>
 			</span>
 		</a>
@@ -48,4 +48,4 @@
 	<p class="spread">
 		<a href="/" class="button">{{ back }}</a>
 	</p>
-{%- endblock body -%}
+{% endblock body %}

@@ -1,9 +1,9 @@
-{% extends "base.jinja2" -%}
+{% extends "base.jinja2" %}
 
-{%- block body -%}
+{% block body %}
 	<h1>{{ hello }}</h1>
 	<p class="spread wrap">
 		<a class="button" href="/settings">{{ settings }}</a>
 		<a class="button" href="/servers">{{ servers }}</a>
 	</p>
-{%- endblock -%}
+{% endblock %}

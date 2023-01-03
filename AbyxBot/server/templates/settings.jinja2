@@ -1,10 +1,10 @@
-{% extends "base.jinja2" -%}
+{% extends "base.jinja2" %}
 
-{%- block title -%}
+{% block title %}
 {{ title }} - {{ super() }}
-{%- endblock title -%}
+{% endblock title %}
 
-{%- block body -%}
+{% block body %}
 	<h1>{{ title }}</h1>
 	<form method="POST" autocomplete="off">
 		<p class="spread">
@@ -13,9 +13,9 @@
 				{% for code, name in langs.items() %}
 				<option
 					value="{{ code }}"
-					{% if code == lang -%}
+					{% if code == lang %}
 					selected
-					{%- endif %}
+					{% endif %}
 				>{{ name }}</option>
 				{% endfor %}
 			</select>
@@ -25,4 +25,4 @@
 			<a href="/" class="button">{{ back }}</a>
 		</p>
 	</form>
-{%- endblock body -%}
+{% endblock body %}
