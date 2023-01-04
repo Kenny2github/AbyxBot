@@ -381,6 +381,6 @@ class Handler:
         return {
             'title': _('title'),
             'desc': _('desc'),
-            'back': _('back'),
+            'back': await self.mkmsg(request, 'server/settings/back'),
             'servers': servers,
         }
