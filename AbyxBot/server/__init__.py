@@ -222,8 +222,11 @@ class Handler:
     async def fetch_guilds(self, request: web.Request) -> list[GuildDict]:
         """Fetch the logged in user's guilds."""
         session = await get_session(request)
-        return await fetch_guilds_cached( # type: ignore
+        guilds: list[GuildDict] = await fetch_guilds_cached( # type: ignore
             self.session, session['access_token'])
+        return [guild for guild in guilds
+                # only include guilds we can access
+                if self.bot.get_guild(int(guild['id'])) is not None]
 
     ### session helpers ###
 
