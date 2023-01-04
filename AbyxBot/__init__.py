@@ -56,7 +56,7 @@ async def run():
     """Run the bot."""
     globs['logger'] = activate_logging() # NOTE: Do this first
     await db.init()
-    globs['server'] = Handler()
+    globs['server'] = Handler(bot)
     for name, (fname, cmdname) in MODULES.items():
         if cmdname in cmdargs.disable:
             logger.info('Not loading %s', name)

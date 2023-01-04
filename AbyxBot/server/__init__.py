@@ -84,8 +84,9 @@ async def fetch_guilds_cached(
 class Handler:
     """Request handler class for the server."""
 
-    def __init__(self) -> None:
+    def __init__(self, bot: discord.Client) -> None:
         self.app = web.Application()
+        self.bot = bot
 
         # set up Jinja2
         setup_jinja2(
