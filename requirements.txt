@@ -2,6 +2,7 @@ discord.py
 aiofiles
 aiosqlite
 google-cloud-translate
-aiohttp
+aiohttp[speedups]
 aiohttp_jinja2
 aiohttp-session[secure]
+async_lru

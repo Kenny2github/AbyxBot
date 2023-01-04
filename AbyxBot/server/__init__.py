@@ -15,6 +15,7 @@ from aiohttp_jinja2 import setup as setup_jinja2, template
 import jinja2
 from aiohttp_session import setup as setup_session, get_session as _get_session
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
+from async_lru import alru_cache
 import discord
 
 # 1st-party
@@ -52,6 +53,14 @@ class SessionData(TypedDict):
     # cached for i18n
     user_id: int
 
+class GuildDict(TypedDict):
+    id: str
+    name: str
+    icon: str
+    owner: bool
+    permissions: str
+    features: list[str]
+
 async def get_session(request: web.Request) -> SessionData:
     """Passthru for type casting"""
     return await _get_session(request) # type: ignore
@@ -59,6 +68,18 @@ async def get_session(request: web.Request) -> SessionData:
 def acronym(name: str) -> str:
     """Turn a name into an acronym from the first character of each word."""
     return ''.join(word[0] for word in name.split() if word)
+
+@alru_cache()
+async def fetch_guilds_cached(
+    session: ClientSession, token: str,
+) -> list[GuildDict]:
+    headers = {'Authorization': f'Bearer {token}'}
+    async with session.get(
+        DISCORD_API + '/users/@me/guilds',
+        headers=headers,
+    ) as resp:
+        resp.raise_for_status()
+        return await resp.json()
 
 class Handler:
     """Request handler class for the server."""
@@ -197,16 +218,11 @@ class Handler:
         self.user_cache[int(user['id'])] = user
         return user
 
-    async def fetch_guilds(self, request: web.Request) -> list[dict]:
+    async def fetch_guilds(self, request: web.Request) -> list[GuildDict]:
         """Fetch the logged in user's guilds."""
         session = await get_session(request)
-        headers = {'Authorization': f"Bearer {session['access_token']}"}
-        async with self.session.get(
-            DISCORD_API + '/users/@me/guilds',
-            headers=headers,
-        ) as resp:
-            resp.raise_for_status()
-            return await resp.json()
+        return await fetch_guilds_cached( # type: ignore
+            self.session, session['access_token'])
 
     ### session helpers ###
 
@@ -340,7 +356,6 @@ class Handler:
         """List managed guilds."""
         await self.ensure_logged_in(request, '/servers')
 
-        session = await get_session(request)
         _ = await self.msgmaker(request, 'server/servers/')
         servers = {
             int(guild['id']): (
