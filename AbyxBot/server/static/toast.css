@@ -1,0 +1,22 @@
+.toast-notif {
+	/* positioning */
+	position: fixed;
+	top: 5vh;
+	max-width: 100vw;
+	transition: 0.5s ease;
+	/* initial attrs */
+	/* visibility: hidden; */
+	opacity: 0;
+	right: -5vw;
+	/* styling */
+	color: #fff;
+	border: 1px solid #1a1a1a;
+	border-radius: 5px;
+	background-color: #2b2f33;
+	padding: 1em;
+}
+.toast-notif.show {
+	/* visibility: visible; */
+	opacity: 100%;
+	right: 1em;
+}
