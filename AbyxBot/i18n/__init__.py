@@ -64,7 +64,10 @@ class Msg:
             return cls.get_lang(ctx.user, cls.get_lang(ctx.channel, lang))
         if isinstance(ctx, discord.abc.User):
             return cls.user_langs.get(ctx.id) or default
-        if isinstance(ctx, (discord.abc.GuildChannel, discord.Thread)):
+        if isinstance(ctx, discord.Thread):
+            return cls.channel_langs.get(ctx.id) or \
+                cls.channel_langs.get(ctx.parent_id) or default
+        if isinstance(ctx, discord.abc.GuildChannel):
             return cls.channel_langs.get(ctx.id) or default
         if isinstance(ctx, discord.abc.Snowflake): # all you have is an ID
             return cls.user_langs.get(ctx.id) or \
