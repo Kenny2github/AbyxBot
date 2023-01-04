@@ -342,7 +342,12 @@ class Handler:
             raise web.HTTPBadRequest(text='Invalid POST body')
         if 'lang' not in data:
             raise web.HTTPBadRequest(text='Missing language setting')
-        lang = cast(str, data.get('lang', '')) or None
+        lang = data.get('lang', '')
+        if not isinstance(lang, str):
+            raise web.HTTPBadRequest(text='Invalid language setting')
+        if lang and lang not in SUPPORTED_LANGS:
+            raise web.HTTPBadRequest(text='Unsupported language')
+        lang = lang or None # cast '' to None
 
         # save settings
         session = await get_session(request)
