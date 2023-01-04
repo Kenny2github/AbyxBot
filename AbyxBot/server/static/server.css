@@ -1,0 +1,7 @@
+.channel-name img {
+	vertical-align: middle;
+	height: 1em;
+}
+select {
+	width: max-content;
+}

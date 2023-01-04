@@ -9,5 +9,15 @@
 	"settings/back": "Back",
 	"servers/title": "Server Settings",
 	"servers/desc": "Choose a server below.",
+	"server/title": "Settings for {guild_name}",
+	"server/channel-th": "Channel",
+	"server/lang-th": "Language",
+	"server/censor-th": "Censor regex for <code>/words</code> and ilk",
+	"server/censor-set": "Updated word censor",
+	"server/channel-lang-set": "Set #{channel} language to {language}",
+	"server/error/censor-data": "Invalid word censor data given",
+	"server/error/channel-data": "Invalid channel data given",
+	"server/error/channel-missing": "No such channel. Try refreshing.",
+	"server/error/channel-lang": "Invalid/unsupported language",
 	"hello": "Hello!"
 }

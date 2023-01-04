@@ -71,7 +71,7 @@ code {
 }
 
 /* input styling */
-input[type=text], textarea, select {
+input[type=text], textarea, select, .channel-name {
 	color: #fff;
 	border: 1px solid #1a1a1a;
 	background-color: #2b2f33;
@@ -89,6 +89,7 @@ textarea {
 input[type=text]:hover,
 textarea:hover,
 select:hover,
+.channel-name:hover,
 input[type=text]:focus,
 textarea:focus,
 select:focus {

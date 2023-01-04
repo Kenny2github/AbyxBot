@@ -5,9 +5,10 @@ from secrets import token_bytes, token_hex
 from logging import getLogger
 from pathlib import Path
 from typing import (
-    AsyncIterator, TypedDict, NoReturn, Callable, Optional, cast
+    AsyncIterator, TypedDict, NoReturn, Callable, Optional
 )
 from urllib.parse import urlencode, urlparse
+import asyncio
 
 # 3rd-party
 from aiohttp import ClientSession, web
@@ -60,6 +61,13 @@ class GuildDict(TypedDict):
     owner: bool
     permissions: str
     features: list[str]
+
+class ChannelSettings(TypedDict, total=False):
+    lang: str
+
+class GuildSettings(TypedDict, total=False):
+    words_censor: str
+    channels: dict[str, ChannelSettings]
 
 async def get_session(request: web.Request) -> SessionData:
     """Passthru for type casting"""
@@ -115,6 +123,8 @@ class Handler:
             web.get('/settings', self.get_settings),
             web.post('/settings', self.post_settings),
             web.get('/servers', self.servers),
+            web.get(r'/servers/{id:\d+}', self.get_server),
+            web.patch(r'/servers/{id:\d+}', self.patch_server),
         ])
 
         self.user_cache: dict[int, dict] = {}
@@ -228,6 +238,21 @@ class Handler:
                 # only include guilds we can access
                 if self.bot.get_guild(int(guild['id'])) is not None]
 
+    async def fetch_guild(self, request: web.Request) -> discord.Guild:
+        """Fetch the guild being requested from the bot's guilds."""
+        log = logger.getChild('fetch_guild')
+        guild_id = int(request.match_info['id']) # route guarantees validity
+        guild = self.bot.get_guild(guild_id)
+        if guild is None:
+            log.warning('Guild %s cache miss', guild_id)
+            try:
+                guild = await self.bot.fetch_guild(guild_id)
+            except discord.HTTPException as exc:
+                log.exception('Failed to fetch guild %s', guild_id)
+                raise web.HTTPNotFound from exc
+        log.debug('Fetched guild %s', guild.id)
+        return guild
+
     ### session helpers ###
 
     async def set_oauth2(self, request: web.Request,
@@ -276,6 +301,18 @@ class Handler:
                 resp.raise_for_status()
                 data: TokenResponse = await resp.json()
             await self.set_oauth2(request, data)
+
+    async def ensure_guild_admin(self, request: web.Request) -> discord.Guild:
+        """Ensure that the user is an admin in the specified guild.
+        Returns the guild if so; raises an HTTP exception if not.
+        """
+        session = await get_session(request)
+        guild = await self.fetch_guild(request)
+        if (member := guild.get_member(session['user_id'])) is None \
+                or not member.guild_permissions.administrator:
+            # not in guild or not admin of guild
+            raise web.HTTPForbidden
+        return guild
 
     ### i18n helpers ###
 
@@ -384,3 +421,121 @@ class Handler:
             'back': await self.mkmsg(request, 'server/settings/back'),
             'servers': servers,
         }
+
+    @template('server.jinja2')
+    async def get_server(self, request: web.Request):
+        """The server settings page."""
+        await self.ensure_logged_in(request, request.path)
+
+        guild = await self.ensure_guild_admin(request)
+
+        _ = await self.msgmaker(request, 'server/server/')
+        s_maker = await self.msgmaker(request, 'server/settings/')
+
+        channels = [(cat, [
+            {
+                'id': channel.id,
+                'name': channel.name,
+                'lang': Msg.channel_langs.get(channel.id, ''),
+                'voice': hasattr(channel, 'connect'),
+            }
+            for channel in channels
+            if isinstance(channel, discord.abc.Messageable)
+        ]) for cat, channels in guild.by_category() if channels]
+
+        langs = {
+            code: str(Msg('@name', lang=code))
+            for code in sorted(SUPPORTED_LANGS) if code != 'qqq'
+        }
+
+        censor = await db.guild_words_censor(guild.id)
+
+        return {
+            'title': _('title', guild_name=guild.name),
+            'save': s_maker('save'),
+            'back': s_maker('back'),
+            'channel_th': _('channel-th'),
+            'lang_th': _('lang-th'),
+            'censor_th': _('censor-th'),
+            'channels': channels,
+            'langs': {'': s_maker('lang-auto') , **langs},
+            'censor': censor,
+        }
+
+    async def patch_server(self, request: web.Request):
+        """Save server settings."""
+        await self.ensure_logged_in(request, None)
+        guild = await self.ensure_guild_admin(request)
+
+        _ = await self.msgmaker(request, 'server/server/')
+        err = await self.msgmaker(request, 'server/server/error/')
+
+        log = logger.getChild('patch_server')
+        results: list[str] = []
+        tasks: list[asyncio.Task] = []
+
+        data: GuildSettings = await request.json()
+        if not isinstance(data, dict) or not data:
+            raise web.HTTPBadRequest(text='Invalid POST body')
+
+        # set censor
+        if 'words_censor' in data:
+            censor = data['words_censor']
+            if not isinstance(censor, str):
+                raise web.HTTPBadRequest(text=err('censor-data'))
+            log.debug('Setting %s guild words censor to %r', guild.id, censor)
+            tasks.append(asyncio.create_task(
+                db.set_guild_words_censor(guild.id, censor)))
+            results.append(_('censor-set'))
+
+        # set channel data
+        if 'channels' in data:
+            if not isinstance(data['channels'], dict):
+                raise web.HTTPBadRequest(text=err('channel-data'))
+            for channel_id, channel_data in data['channels'].items():
+                try:
+                    channel_id = int(channel_id)
+                except ValueError:
+                    log.error('Bad channel ID: %r', channel_id)
+                    raise web.HTTPBadRequest(text=err('channel-data'))
+                channel = guild.get_channel(channel_id)
+                if channel is None:
+                    log.warning('Channel cache miss: %s', channel_id)
+                    try:
+                        channel = await guild.fetch_channel(channel_id)
+                    except discord.HTTPException:
+                        log.exception('No such channel: %s', channel_id)
+                        raise web.HTTPNotFound(text=err('channel-missing'))
+                if not isinstance(channel, discord.abc.Messageable):
+                    # NOTE: remove this if we ever do something
+                    # with non-messageable channels
+                    log.error('Channel %s is non-messageable', channel.id)
+                    # pretend missing to client
+                    raise web.HTTPForbidden(text=err('channel-missing'))
+                if not isinstance(channel_data, dict):
+                    log.error('Invalid channel data for %s', channel.id)
+                    raise web.HTTPBadRequest(text=err('channel-data'))
+
+                # actual data time! first up - channel language
+                if 'lang' in channel_data:
+                    lang = channel_data['lang']
+                    if not isinstance(lang, str):
+                        log.error('Invalid language for %s: %r',
+                                  channel.id, lang)
+                        raise web.HTTPBadRequest(text=err('channel-lang'))
+                    if lang and lang not in SUPPORTED_LANGS:
+                        log.error('Unsupported language for %s: %r',
+                                  channel.id, lang)
+                        raise web.HTTPBadRequest(text=err('channel-lang'))
+
+                    lang = lang or None # cast '' to None
+                    log.debug('Setting %s channel lang to %r',
+                              channel.id, lang)
+                    Msg.channel_langs[channel.id] = lang
+                    tasks.append(asyncio.create_task(
+                        db.set_channel_lang(channel.id, lang)))
+                    results.append(_('channel-lang-set', channel=channel.name,
+                                     language=repr(lang)))
+
+        await asyncio.gather(*tasks)
+        raise web.HTTPOk(text='\n'.join(results))

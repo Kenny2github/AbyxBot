@@ -1,0 +1,83 @@
+{% extends "base.jinja2" %}
+
+{% block title %}
+	{{ title }} - {{ super() }}
+{% endblock title %}
+
+{% block styles %}
+	{{ super() }}
+	<link rel="stylesheet" href="/static/toggle.css" />
+	<link rel="stylesheet" href="/static/toast.css" />
+	<link rel="stylesheet" href="/static/server.css" />
+{% endblock styles %}
+
+{% block head %}
+	{{ super() }}
+	<script src="/static/toast.js"></script>
+	<script>
+	async function save(body = {}) {
+		let resp;
+		try {
+			resp = await fetch(location.href, {
+				method: 'PATCH',
+				body: JSON.stringify(body),
+				headers: {'Content-Type': 'application/json'}
+			});
+		} catch (err) {
+			showToast(err);
+			return;
+		}
+		showToast(await resp.text());
+	}
+	</script>
+{% endblock head %}
+
+{% block body %}
+	<h1>{{ title }}</h1>
+	<p class="spread">
+		<a href="/servers" class="button">{{ back }}</a>
+	</p>
+	<div class="spread" style="align-items: flex-start;">
+		<table>
+			<tr><th style="text-align: left;">{{ channel_th }}</th><th>{{ lang_th }}</th></tr>
+			{% for cat, tchannels in channels %}
+			{% if cat %}
+			<tr><th colspan="2">{{ cat.name }}</th></tr>
+			{% endif %}
+			{% for channel in tchannels %}
+			<tr>
+				<td><div class="channel-name">
+					{% if channel.voice %}
+					<img src="/static/voice.svg" />
+					{% else %}
+					<img src="/static/text.svg" />
+					{% endif %}
+					<span>{{ channel.name }}</span>
+				</div></td>
+				<td><select
+					onchange="save({ channels: { '{{ channel.id }}': { lang: this.value } } })"
+				>
+					{% for code, lang in langs.items() %}
+					<option
+						value="{{ code }}"
+						{% if channel.lang == code %}
+						selected
+						{% endif %}
+					>{{ lang }}</option>
+					{% endfor %}
+				</select></td>
+			</tr>
+			{% endfor %}
+			{% endfor %}
+		</table>
+		<table>
+			<tr><th colspan="2">{{ censor_th|safe }}</th></tr>
+			<tr>
+				<td><textarea id="censor">{{ censor }}</textarea></td>
+				<td><button
+					onclick="save({ 'words_censor': document.querySelector('#censor').value })"
+				>{{ save }}</button></td>
+			</tr>
+		</table>
+	</div>
+{% endblock body %}
