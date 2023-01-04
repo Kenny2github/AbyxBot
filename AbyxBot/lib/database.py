@@ -133,6 +133,14 @@ class Database:
         """Create a guild database row if it does not exist."""
         await self._touch('guild', guild_id)
 
+    async def guild_words_censor(self, guild_id: int) -> str:
+        """Fetch the guild /words censor."""
+        return await self._obj_get('guild', guild_id, 'words_censor')
+
+    async def set_guild_words_censor(self, guild_id: int, censor: str) -> None:
+        """Change a guild's /words censor."""
+        await self._obj_set('guild', guild_id, 'words_censor', censor)
+
     ## user-related methods
 
     async def touch_user(self, user_id: int) -> None:
