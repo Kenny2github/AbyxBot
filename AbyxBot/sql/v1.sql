@@ -71,14 +71,3 @@ CREATE TABLE IF NOT EXISTS pow211_highscores (
 	-- keys
 	FOREIGN KEY(user_id) REFERENCES users(user_id)
 );
-
--- disabled commands, by name or cog, per guild
-CREATE TABLE IF NOT EXISTS guild_disabled_commands (
-	-- guild ID
-	guild_id integer NOT NULL,
-	-- the object itself
-	cmd_name text NOT NULL,
-	-- keys
-	PRIMARY KEY(guild_id, cmd_name),
-	FOREIGN KEY(guild_id) REFERENCES guilds(guild_id)
-);
