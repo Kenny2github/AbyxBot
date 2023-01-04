@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS guilds (
 	-- guild ID
 	guild_id integer PRIMARY KEY NOT NULL,
 	-- bad words (regex)
-	words_censor text
+	words_censor text NOT NULL DEFAULT ''
 );
 
 -- one entry for every game to ping every channel for
