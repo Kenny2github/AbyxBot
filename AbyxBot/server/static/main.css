@@ -62,6 +62,14 @@ a.button, button {
 	text-decoration: none;
 }
 
+code {
+	color: #fff;
+	background-color: #2f3136;
+	border-radius: 3px;
+	padding: .2em;
+	margin: -.2em 0;
+}
+
 /* input styling */
 input[type=text], textarea, select {
 	color: #fff;
