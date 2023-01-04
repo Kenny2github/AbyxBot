@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS users (
 	-- user ID
 	user_id integer PRIMARY KEY NOT NULL,
 	-- i18n language
-	lang text DEFAULT 'en'
+	lang text
 );
 
 -- main channels table
@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS channels (
 	-- channel ID
 	channel_id integer PRIMARY KEY NOT NULL,
 	-- i18n language
-	lang text DEFAULT 'en'
+	lang text
 );
 
 -- main guilds table
