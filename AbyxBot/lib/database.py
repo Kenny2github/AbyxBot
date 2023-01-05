@@ -1,7 +1,7 @@
 # stdlib
 import os
 from logging import getLogger
-from typing import Any, Optional
+from typing import Any, Optional, Union, overload
 import asyncio
 from typing_extensions import LiteralString
 
@@ -222,6 +222,34 @@ class Database:
     ) -> None:
         """Change a channel's language setting."""
         await self._obj_set('channel', channel_id, 'lang', lang)
+
+    @overload
+    async def channel_game_pings(self) -> dict[int, list[str]]: ...
+    @overload
+    async def channel_game_pings(self, channel_id: int) -> list[str]: ...
+
+    async def channel_game_pings(
+        self, channel_id: Optional[int] = None
+    ) -> Union[dict[int, list[str]], list[str]]:
+        """Get the games to ping the channel for."""
+        if channel_id is None:
+            data = await self._obj_settings_multiple(
+                'channel', 'game', 'channel_game_pings')
+            return {channel_id: [id_to_game[game] for game in games]
+                    for channel_id, games in data.items()}
+        data = await self._obj_get_multiple(
+            'channel', channel_id, 'game', 'channel_game_pings')
+        return [id_to_game[game] for game in data]
+
+    async def add_channel_game_ping(self, channel_id: int, game: str) -> None:
+        """Enable pings for this game in this channel."""
+        await self._obj_set_multiple('channel', channel_id, 'game',
+                                     game_to_id[game], 'channel_game_pings')
+
+    async def del_channel_game_ping(self, channel_id: int, game: str) -> None:
+        """Disable pings for this game in this channel."""
+        await self._obj_del_multiple('channel', channel_id, 'game',
+                                     game_to_id[game], 'channel_game_pings')
 
     ## methods for 2048
 
