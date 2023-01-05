@@ -34,6 +34,9 @@ class NumguessEngine(GameEngine):
             return None
         return False
 
+    def ended(self) -> bool:
+        return self.won() is not None
+
     def update(self, guess: int) -> int:
         """Update the game state.
 
