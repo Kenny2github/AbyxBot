@@ -541,4 +541,6 @@ class Handler:
                                      language=repr(lang)))
 
         await asyncio.gather(*tasks)
+        if not results:
+            raise web.HTTPOk(text=_('did-nothing'))
         raise web.HTTPOk(text='\n'.join(results))

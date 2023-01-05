@@ -13,6 +13,7 @@
 	"server/channel-th": "Channel",
 	"server/lang-th": "Language",
 	"server/censor-th": "Censor regex for <code>/words</code> and ilk",
+	"server/did-nothing": "Did nothing",
 	"server/censor-set": "Updated word censor",
 	"server/channel-lang-set": "Set #{channel} language to {language}",
 	"server/error/censor-data": "Invalid word censor data given",
