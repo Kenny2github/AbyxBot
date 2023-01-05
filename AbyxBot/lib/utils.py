@@ -3,7 +3,8 @@ import re
 import asyncio
 import os
 from contextlib import contextmanager
-from typing import Generic, Iterator, Optional, TypeVar
+from typing import Generic, Iterator, Optional, TypeVar, Union
+from typing_extensions import TypeGuard
 from functools import partial
 
 # 3rd-party
@@ -148,3 +149,10 @@ class BroadcastQueue(Generic[T]):
         deregister itself. Use consume() to avoid that.
         """
         await asyncio.gather(*(q.join() for q in self.queues))
+
+def all_isinstance(
+    items: list,
+    kind: Union[type[T], tuple[type[T], ...]]
+) -> TypeGuard[list[T]]:
+    """Type guard for all items being the same type (or one of types)."""
+    return all(isinstance(item, kind) for item in items)
