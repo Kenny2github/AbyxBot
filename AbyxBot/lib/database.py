@@ -102,6 +102,20 @@ class Database:
                 settings[row[f'{obj_type}_id']] = row[setting]
         return settings
 
+    async def _obj_settings_multiple(
+        self, obj_type: LiteralString, setting: LiteralString,
+        table: Optional[LiteralString] = None
+    ) -> dict[int, list[Any]]:
+        """Internal use generic [obj]_id->[setting, ...] fetcher."""
+        settings: dict[int, list[Any]] = {}
+        query = f'SELECT {obj_type}_id, {setting} FROM {table or obj_type+"s"}'
+        async with self.lock:
+            await self.cur.execute(query)
+            async for row in self.cur:
+                settings.setdefault(
+                    row[f'{obj_type}_id'], []).append(row[setting])
+        return settings
+
     async def _obj_get(
         self, obj_type: LiteralString, obj_id: int,
         setting: LiteralString, table: Optional[LiteralString] = None
@@ -115,6 +129,17 @@ class Database:
             if row is None:
                 return None
             return row[setting]
+
+    async def _obj_get_multiple(
+        self, obj_type: LiteralString, obj_id: int,
+        setting: LiteralString, table: Optional[LiteralString] = None
+    ) -> list[Any]:
+        """Internal use generic [obj]_id->[setting, ...] fetcher."""
+        query = f'SELECT {obj_type}_id, {setting} FROM {table or obj_type+"s"}'
+        query += f' WHERE {obj_type}_id=?'
+        async with self.lock:
+            await self.cur.execute(query, (obj_id,))
+            return [row[setting] async for row in self.cur]
 
     async def _obj_set(
         self, obj_type: LiteralString, obj_id: int, setting: LiteralString,
