@@ -313,7 +313,7 @@ class Connect4View(discord.ui.View):
 
 EventWithSender = tuple[Connect4View, Event]
 
-class Connect4(GameProperties):
+class Connect4(GameProperties, game_id=10):
 
     name: str = 'connect4'
     wait_time: int = 30

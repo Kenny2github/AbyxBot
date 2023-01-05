@@ -40,7 +40,7 @@ class DummyGameView(discord.ui.View):
             f'\nSpectators:\n{spectators}\n'
             f'\nViewer: {self.viewer.mention}'))
 
-class DummyGame(GameProperties):
+class DummyGame(GameProperties, game_id=00):
 
     name: str = 'dummygame'
     wait_time: int = 20

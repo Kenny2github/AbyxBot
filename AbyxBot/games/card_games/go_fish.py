@@ -451,7 +451,7 @@ class GoFishView(discord.ui.View):
             self.game.update(self.victim_selection, self.number_selection)
             await self.render_game(ctx)
 
-class GoFish(GameProperties):
+class GoFish(GameProperties, game_id=20):
 
     name: str = 'go_fish'
     wait_time: int = 30

@@ -11,10 +11,15 @@ import aiosqlite
 
 __all__ = [
     'db',
-    'Database'
+    'Database',
+    'id_to_game',
+    'game_to_id',
 ]
 
 logger = getLogger(__name__)
+
+id_to_game: dict[int, str] = {}
+game_to_id: dict[str, int] = {}
 
 class Database:
     """Represents the database connection."""

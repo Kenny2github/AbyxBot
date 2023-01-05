@@ -13,6 +13,7 @@ import discord
 
 # 1st-party
 from ...i18n import Msg, error_embed, mkembed, mkmsg
+from ...lib.database import id_to_game, game_to_id
 from ...lib.utils import BroadcastQueue, dict_pop_n
 
 logger = getLogger(__name__)
@@ -34,6 +35,11 @@ class GameProperties(metaclass=ABCMeta):
           Note that those messages have content, which you will need to clear.
         """
         raise NotImplementedError
+
+    def __init_subclass__(cls, game_id: int) -> None:
+        """Register this game with its enum ID."""
+        id_to_game[game_id] = cls.name
+        game_to_id[cls.name] = game_id
 
     @classmethod
     @property
