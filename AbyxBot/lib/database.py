@@ -187,7 +187,7 @@ class Database:
 
     async def guild_words_censor(self, guild_id: int) -> str:
         """Fetch the guild /words censor."""
-        return await self._obj_get('guild', guild_id, 'words_censor')
+        return (await self._obj_get('guild', guild_id, 'words_censor')) or ''
 
     async def set_guild_words_censor(self, guild_id: int, censor: str) -> None:
         """Change a guild's /words censor."""
