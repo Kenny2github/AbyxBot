@@ -8,51 +8,79 @@
 	{{ super() }}
 	<link rel="stylesheet" href="/static/toggle.css" />
 {% endblock styles %}
+{% block head %}
+	{{ super() }}
+	<script src="/static/toast.js"></script>
+	<script>
+	function promptSave(event) {
+		event.preventDefault();
+		// browsers don't respect prompts
+		// and the default one is fine anyway
+		event.returnValue = null;
+	}
+	function enableSave() {
+		const element = document.querySelector('[type=submit][disabled]');
+		if (element) {
+			element.disabled = false;
+			// only add event listener now
+			window.addEventListener('beforeunload', promptSave);
+		}
+	}
+	</script>
+{% endblock head%}
 
 {% block body %}
 	<h1>{{ title }}</h1>
-	<form
-		method="POST" autocomplete="off"
-		class="spread" style="align-items: flex-start;"
-	>
+	<form method="POST" autocomplete="off">
+		<div class="spread" style="align-items: flex-start;">
 		<div>
-		<p class="spread">
-			<label for="lang">{{ language }}</label>
-			<select id="lang" name="lang">
-				{% for code, name in langs.items() %}
-				<option
-					value="{{ code }}"
-					{% if code == lang %}
-					selected
-					{% endif %}
-				>{{ name }}</option>
+			<table>
+				<tr>
+					<td><label for="lang">{{ language }}</label></td>
+					<td><select id="lang" name="lang" onchange="enableSave()">
+						{% for code, name in langs.items() %}
+						<option
+							value="{{ code }}"
+							{% if code == lang %}
+							selected
+							{% endif %}
+						>{{ name }}</option>
+						{% endfor %}
+					</select></td>
+				</tr>
+			</table>
+		</div>
+		<div>
+			<table>
+				<caption>{{ ping_caption }}</caption>
+				<tr><th>{{ game_th }}</th><th>{{ ping_th }}</th></tr>
+				{% for game, game_name, do_ping in games %}
+				<tr>
+					<td>{{ game_name }}</td>
+					<td><label class="switch">
+						<input
+							type="checkbox"
+							name="games"
+							value="{{ game }}"
+							onchange="enableSave()"
+							{% if do_ping %}
+							checked
+							{% endif %}
+						/>
+						<span></span>
+					</label></td>
+				</tr>
 				{% endfor %}
-			</select>
-		</p>
+			</table>
+		</div>
+		</div>
 		<p class="spread">
-			<button type="submit">{{ save }}</button>
+			<button
+				type="submit"
+				disabled
+				onclick="window.removeEventListener('beforeunload', promptSave)"
+			>{{ save }}</button>
 			<a href="/" class="button">{{ back }}</a>
 		</p>
-		</div>
-		<div><table>
-			<caption>{{ ping_caption }}</caption>
-			<tr><th>{{ game_th }}</th><th>{{ ping_th }}</th></tr>
-			{% for game, game_name, do_ping in games %}
-			<tr>
-				<td>{{ game_name }}</td>
-				<td><label class="switch">
-					<input
-						type="checkbox"
-						name="games"
-						value="{{ game }}"
-						{% if do_ping %}
-						checked
-						{% endif %}
-					/>
-					<span></span>
-				</label></td>
-			</tr>
-			{% endfor %}
-		</table></div>
 	</form>
 {% endblock body %}

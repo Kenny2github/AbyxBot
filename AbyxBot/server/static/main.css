@@ -61,6 +61,9 @@ a.button, button {
 	border-radius: 5px;
 	text-decoration: none;
 }
+button:disabled {
+	opacity: 50%;
+}
 
 code {
 	color: #fff;
