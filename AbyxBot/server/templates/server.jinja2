@@ -70,7 +70,8 @@
 			{% endfor %}
 			{% endfor %}
 		</table>
-		<table>
+		<div>
+		<table width="100%">
 			<tr><th colspan="2">{{ censor_th|safe }}</th></tr>
 			<tr>
 				<td><textarea id="censor">{{ censor }}</textarea></td>
@@ -79,5 +80,6 @@
 				>{{ save }}</button></td>
 			</tr>
 		</table>
+		</div>
 	</div>
 {% endblock body %}
