@@ -90,10 +90,11 @@ class Database:
     ## helper methods
 
     async def _obj_settings(
-        self, obj_type: str, setting: str = 'lang', table: Optional[str] = None
-    ) -> dict[int, Optional[str]]:
+        self, obj_type: LiteralString, setting: LiteralString = 'lang',
+        table: Optional[LiteralString] = None
+    ) -> dict[int, Any]:
         """Internal use generic [obj]_id->[setting] fetcher."""
-        settings: dict[int, Optional[str]] = {}
+        settings: dict[int, Any] = {}
         query = f'SELECT {obj_type}_id, {setting} FROM {table or obj_type+"s"}'
         async with self.lock:
             await self.cur.execute(query)
