@@ -23,6 +23,7 @@ import discord
 from ..consts.config import config
 from ..i18n import mkmsg, Msg, SUPPORTED_LANGS
 from ..lib.database import db, game_to_id
+from ..lib.utils import all_isinstance
 
 DISCORD_API = 'https://discord.com/api/v10'
 DISCORD_OAUTH2 = 'https://discord.com/oauth2/authorize'
@@ -351,17 +352,22 @@ class Handler:
     async def get_settings(self, request: web.Request):
         """The personal settings page."""
         await self.ensure_logged_in(request, '/settings')
+        log = logger.getChild('get_settings')
 
         session = await get_session(request)
         _ = await self.msgmaker(request, 'server/settings/')
+        g_maker = await self.msgmaker(request, 'games/')
+
         langs = {
             code: str(Msg('@name', lang=code))
             for code in sorted(SUPPORTED_LANGS) if code != 'qqq'
         }
         selected_lang = Msg.user_langs.get(session['user_id'], '')
-        logger.getChild('get_settings').debug(
-            'Loaded %s user lang: %r',
-            session['user_id'], selected_lang)
+        log.debug('Loaded %s user lang: %r', session['user_id'], selected_lang)
+
+        games = set(await db.user_game_pings(session['user_id']))
+        log.debug('Loaded %s game pings: %r', session['user_id'], games)
+
         return {
             'title': _('title'),
             'language': _('language'),
@@ -369,32 +375,54 @@ class Handler:
             'lang': selected_lang,
             'save': _('save'),
             'back': _('back'),
+            'ping_caption': _('ping-caption'),
+            'game_th': _('game-th'),
+            'ping_th': _('ping-th'),
+            'games': [(game, g_maker(game), game in games)
+                      for game in game_to_id],
         }
 
     async def post_settings(self, request: web.Request):
         """Save your settings."""
         await self.ensure_logged_in(request, None)
+        session = await get_session(request)
+        user_id = session['user_id']
+        log = logger.getChild('post_settings')
 
         # request data validation
         data = await request.post()
         if not data:
             raise web.HTTPBadRequest(text='Invalid POST body')
+        # language
         if 'lang' not in data:
+            log.error('Missing lang for %s', user_id)
             raise web.HTTPBadRequest(text='Missing language setting')
         lang = data.get('lang', '')
         if not isinstance(lang, str):
+            log.error('Wrong type for lang for %s', user_id)
             raise web.HTTPBadRequest(text='Invalid language setting')
         if lang and lang not in SUPPORTED_LANGS:
+            log.error('Unsupported language %r for %s', lang, user_id)
             raise web.HTTPBadRequest(text='Unsupported language')
         lang = lang or None # cast '' to None
+        # game pings
+        games = data.getall('games', [])
+        if not all_isinstance(games, str):
+            log.error('At least one game not str for %s', user_id)
+            raise web.HTTPBadRequest(text='Invalid games data')
+        if extra := (set(games) - set(game_to_id.keys())): # is non-empty
+            log.error('Nonexistent games for %s: %r', user_id, extra)
+            raise web.HTTPBadRequest(text='Nonexistent games: '
+                                     + ', '.join(extra))
 
         # save settings
-        session = await get_session(request)
-        user_id = session['user_id']
-        logger.getChild('post_settings').debug(
-            'Setting %s user lang to %r', user_id, lang)
+        # language
+        log.debug('Setting %s user lang to %r', user_id, lang)
         Msg.user_langs[user_id] = lang
         await db.set_user_lang(user_id, lang)
+        # game pings
+        log.debug('Setting %s game pings to %r', user_id, games)
+        await db.set_user_game_pings(user_id, games)
 
         # show settings
         return await self.get_settings(request)

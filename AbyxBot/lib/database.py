@@ -207,6 +207,26 @@ class Database:
         """Change a user's language setting."""
         await self._obj_set('user', user_id, 'lang', lang)
 
+    async def user_game_pings(self, user_id: int) -> list[str]:
+        """Get a user's game ping settings."""
+        data = await self._obj_get_multiple(
+            'user', user_id, 'game', 'user_game_pings')
+        return [id_to_game[game] for game in data]
+
+    async def set_user_game_pings(self, user_id: int, games: list[str]) -> None:
+        """Set a user's game ping settings."""
+        await self.touch_user(user_id) # to obey foreign keys
+        remove_the_old = 'DELETE FROM user_game_pings '\
+            'WHERE user_id=? AND game NOT IN (' \
+            + ', '.join('?' * len(games)) + ')'
+        welcome_the_new = 'INSERT INTO user_game_pings (user_id, game) ' \
+            'VALUES (?, ?) ON CONFLICT DO NOTHING'
+        game_ids = [game_to_id[game] for game in games]
+        async with self.lock:
+            await self.cur.execute(remove_the_old, (user_id, *game_ids))
+            await self.cur.executemany(
+                welcome_the_new, [(user_id, game) for game in game_ids])
+
     ## channel-related methods
 
     async def touch_channel(self, channel_id: int) -> None:
@@ -243,6 +263,7 @@ class Database:
 
     async def add_channel_game_ping(self, channel_id: int, game: str) -> None:
         """Enable pings for this game in this channel."""
+        await self.touch_channel(channel_id) # to obey foreign keys
         await self._obj_set_multiple('channel', channel_id, 'game',
                                      game_to_id[game], 'channel_game_pings')
 
