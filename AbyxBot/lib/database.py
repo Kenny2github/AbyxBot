@@ -152,6 +152,27 @@ class Database:
             f'UPDATE SET {setting}=excluded.{setting}'
         await self.cur.execute(query, (obj_id, value))
 
+    async def _obj_set_multiple(
+        self, obj_type: LiteralString, obj_id: int, setting: LiteralString,
+        value: Any, table: Optional[LiteralString] = None,
+        on_conflict: LiteralString = 'DO NOTHING',
+    ) -> None:
+        """Internal use generic set(obj).add(([obj_id], [value]))."""
+        query = \
+            f'INSERT INTO {table or obj_type+"s"} ({obj_type}_id, ' \
+            f'{setting}) VALUES (?, ?) ON CONFLICT {on_conflict}'
+        await self.cur.execute(query, (obj_id, value))
+
+    async def _obj_del_multiple(
+        self, obj_type: LiteralString, obj_id: int, setting: LiteralString,
+        value: Any, table: Optional[LiteralString] = None,
+    ) -> None:
+        """Internal use generic set(obj).discard(([obj_id], [value]))."""
+        query = \
+            f'DELETE FROM {table or obj_type+"s"} ' \
+            f'WHERE {obj_type}_id=? AND {setting}=?'
+        await self.cur.execute(query, (obj_id, value))
+
     async def _touch(self, obj_type: LiteralString, obj_id: int) -> None:
         """Internal use generic create row if not exists."""
         query = f'INSERT INTO {obj_type}s ({obj_type}_id) VALUES (?)' \
