@@ -483,7 +483,8 @@ class Handler:
             censor = data['words_censor']
             if not isinstance(censor, str):
                 raise web.HTTPBadRequest(text=err('censor-data'))
-            log.debug('Setting %s guild words censor to %r', guild.id, censor)
+            log.debug('Setting %s (%s) guild words censor to %r',
+                      guild.name, guild.id, censor)
             tasks.append(asyncio.create_task(
                 db.set_guild_words_censor(guild.id, censor)))
             results.append(_('censor-set'))
@@ -509,28 +510,30 @@ class Handler:
                 if not isinstance(channel, discord.abc.Messageable):
                     # NOTE: remove this if we ever do something
                     # with non-messageable channels
-                    log.error('Channel %s is non-messageable', channel.id)
+                    log.error('#%s (%s) is non-messageable',
+                              channel.name, channel.id)
                     # pretend missing to client
                     raise web.HTTPForbidden(text=err('channel-missing'))
                 if not isinstance(channel_data, dict):
-                    log.error('Invalid channel data for %s', channel.id)
+                    log.error('Invalid channel data for #%s (%s)',
+                              channel.name, channel.id)
                     raise web.HTTPBadRequest(text=err('channel-data'))
 
                 # actual data time! first up - channel language
                 if 'lang' in channel_data:
                     lang = channel_data['lang']
                     if not isinstance(lang, str):
-                        log.error('Invalid language for %s: %r',
-                                  channel.id, lang)
+                        log.error('Invalid language for #%s (%s): %r',
+                                  channel.name, channel.id, lang)
                         raise web.HTTPBadRequest(text=err('channel-lang'))
                     if lang and lang not in SUPPORTED_LANGS:
-                        log.error('Unsupported language for %s: %r',
-                                  channel.id, lang)
+                        log.error('Unsupported language for #%s (%s): %r',
+                                  channel.name, channel.id, lang)
                         raise web.HTTPBadRequest(text=err('channel-lang'))
 
                     lang = lang or None # cast '' to None
-                    log.debug('Setting %s channel lang to %r',
-                              channel.id, lang)
+                    log.debug('Setting #%s (%s) channel lang to %r',
+                              channel.name, channel.id, lang)
                     Msg.channel_langs[channel.id] = lang
                     tasks.append(asyncio.create_task(
                         db.set_channel_lang(channel.id, lang)))
