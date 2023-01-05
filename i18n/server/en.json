@@ -13,12 +13,16 @@
 	"server/channel-th": "Channel",
 	"server/lang-th": "Language",
 	"server/censor-th": "Censor regex for <code>/words</code> and ilk",
+	"server/game-ping-th": "Ping for {game}",
 	"server/did-nothing": "Did nothing",
 	"server/censor-set": "Updated word censor",
 	"server/channel-lang-set": "Set #{channel} language to {language}",
+	"server/channel-game-added": "Enabled pings for {game} in #{channel}",
+	"server/channel-game-removed": "Disabled pings for {game} in #{channel}",
 	"server/error/censor-data": "Invalid word censor data given",
 	"server/error/channel-data": "Invalid channel data given",
 	"server/error/channel-missing": "No such channel. Try refreshing.",
 	"server/error/channel-lang": "Invalid/unsupported language",
+	"server/error/channel-game": "Invalid/nonexistent game",
 	"hello": "Hello!"
 }

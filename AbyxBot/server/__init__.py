@@ -22,7 +22,7 @@ import discord
 # 1st-party
 from ..consts.config import config
 from ..i18n import mkmsg, Msg, SUPPORTED_LANGS
-from ..lib.database import db
+from ..lib.database import db, game_to_id
 
 DISCORD_API = 'https://discord.com/api/v10'
 DISCORD_OAUTH2 = 'https://discord.com/oauth2/authorize'
@@ -64,6 +64,8 @@ class GuildDict(TypedDict):
 
 class ChannelSettings(TypedDict, total=False):
     lang: str
+    add_game: str
+    del_game: str
 
 class GuildSettings(TypedDict, total=False):
     words_censor: str
@@ -431,6 +433,7 @@ class Handler:
 
         _ = await self.msgmaker(request, 'server/server/')
         s_maker = await self.msgmaker(request, 'server/settings/')
+        g_maker = await self.msgmaker(request, 'games/')
 
         channels = [(cat, [
             {
@@ -450,6 +453,10 @@ class Handler:
 
         censor = await db.guild_words_censor(guild.id)
 
+        games = await db.channel_game_pings()
+        games = {channel_id: pings for channel_id, pings in games.items()
+                 if guild.get_channel(channel_id) is not None}
+
         return {
             'title': _('title', guild_name=guild.name),
             'save': s_maker('save'),
@@ -460,6 +467,9 @@ class Handler:
             'channels': channels,
             'langs': {'': s_maker('lang-auto') , **langs},
             'censor': censor,
+            'games': [(game, game_name := g_maker(game),
+                       _('game-ping-th', game=game_name)) for game in game_to_id],
+            'channel_games': games,
         }
 
     async def patch_server(self, request: web.Request):
@@ -469,6 +479,7 @@ class Handler:
 
         _ = await self.msgmaker(request, 'server/server/')
         err = await self.msgmaker(request, 'server/server/error/')
+        g_maker = await self.msgmaker(request, 'games/')
 
         log = logger.getChild('patch_server')
         results: list[str] = []
@@ -539,6 +550,44 @@ class Handler:
                         db.set_channel_lang(channel.id, lang)))
                     results.append(_('channel-lang-set', channel=channel.name,
                                      language=repr(lang)))
+
+                # adding channel game pings
+                if 'add_game' in channel_data:
+                    game = channel_data['add_game']
+                    if not isinstance(game, str):
+                        log.error('Invalid game for #%s (%s): %r',
+                                  channel.name, channel.id, game)
+                        raise web.HTTPBadRequest(text=err('channel-game'))
+                    if game not in game_to_id:
+                        log.error('Unsupported game for #%s (%s): %r',
+                                  channel.name, channel.id, game)
+                        raise web.HTTPBadRequest(text=err('channel-game'))
+
+                    log.debug('Enabling pings for %r in #%s (%s)',
+                              game, channel.name, channel.id)
+                    tasks.append(asyncio.create_task(
+                        db.add_channel_game_ping(channel.id, game)))
+                    results.append(_('channel-game-added',
+                                     channel=channel.name, game=g_maker(game)))
+
+                # removing channel game pings
+                if 'del_game' in channel_data:
+                    game = channel_data['del_game']
+                    if not isinstance(game, str):
+                        log.error('Invalid game for #%s (%s): %r',
+                                  channel.name, channel.id, game)
+                        raise web.HTTPBadRequest(text=err('channel-game'))
+                    if game not in game_to_id:
+                        log.error('Unsupported game for #%s (%s): %r',
+                                  channel.name, channel.id, game)
+                        raise web.HTTPBadRequest(text=err('channel-game'))
+
+                    log.debug('Disabling pings for %r in #%s (%s)',
+                              game, channel.name, channel.id)
+                    tasks.append(asyncio.create_task(
+                        db.del_channel_game_ping(channel.id, game)))
+                    results.append(_('channel-game-removed',
+                                     channel=channel.name, game=g_maker(game)))
 
         await asyncio.gather(*tasks)
         if not results:

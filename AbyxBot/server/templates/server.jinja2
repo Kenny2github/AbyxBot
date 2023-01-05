@@ -29,6 +29,20 @@
 		}
 		showToast(await resp.text());
 	}
+	function reveal_game(game) {
+		document.querySelectorAll('label[data-game]').forEach(el => {
+			el.style.display = el.dataset.game == game ? '' : 'none';
+		});
+	}
+	function channel_ping(element, game) {
+		const value = {};
+		if (element.checked) value.add_game = game;
+		else value.del_game = game;
+		save({ channels: { [element.value]: value } });
+	}
+	window.addEventListener('load', e => {
+		document.getElementById('game-select').onchange(e);
+	});
 	</script>
 {% endblock head %}
 
@@ -39,10 +53,18 @@
 	</p>
 	<div class="spread" style="align-items: flex-start; margin-bottom: 1em;">
 		<table>
-			<tr><th style="text-align: left;">{{ channel_th }}</th><th>{{ lang_th }}</th></tr>
+			<tr>
+				<th style="text-align: left;">{{ channel_th }}</th>
+				<th>{{ lang_th }}</th>
+				<th><select id="game-select" onchange="reveal_game(this.value)">
+					{% for game, game_name, game_ping_th in games %}
+					<option value="{{ game }}">{{ game_ping_th }}</option>
+					{% endfor %}
+				</select></th>
+			</tr>
 			{% for cat, tchannels in channels %}
 			{% if cat %}
-			<tr><th colspan="2">{{ cat.name }}</th></tr>
+			<tr><th colspan="2">{{ cat.name }}</th><td></td></tr>
 			{% endif %}
 			{% for channel in tchannels %}
 			<tr>
@@ -66,6 +88,26 @@
 					>{{ lang }}</option>
 					{% endfor %}
 				</select></td>
+				<td style="text-align: center">
+					{% for game, game_name, game_ping_th in games %}
+					<label
+						data-game="{{ game }}" class="switch"
+						{% if game != games[0][0] %}
+						style="display: none;"
+						{% endif %}
+					>
+						<input
+							type="checkbox"
+							value="{{ channel.id }}"
+							onchange="channel_ping(this, '{{ game }}')"
+							{% if game in channel_games[channel.id] %}
+							checked
+							{% endif %}
+						/>
+						<span></span>
+					</label>
+					{% endfor %}
+				</td>
 			</tr>
 			{% endfor %}
 			{% endfor %}
