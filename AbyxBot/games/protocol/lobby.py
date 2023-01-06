@@ -224,8 +224,7 @@ class LobbyView(discord.ui.View):
         embed = mkembed(
             self.viewer,
             description=description,
-            title=Msg('lobby/queued-title',
-                      mkmsg(self.viewer, 'games/' + self.name)),
+            title=Msg('lobby/queued-title', Msg('games/' + self.name)),
             fields=fields,
             color=discord.Color.blue(),
         )
@@ -266,6 +265,7 @@ class LobbyView(discord.ui.View):
         # static params that don't need the context object
         item = {
             'title': Msg('lobby/game-waiting-title'),
+            'description': Msg('lobby/game-waiting', Msg('games/' + self.name)),
             'footer': Msg('lobby/game-waiting-footer'),
             'color': discord.Color.blue(),
         }
@@ -274,11 +274,7 @@ class LobbyView(discord.ui.View):
         logger.debug('Pinging %s channels and %s users for %r',
                      len(channels), len(users), self.name)
         results = await asyncio.gather(*(target.send(embed=mkembed(
-            target,
-            description=Msg('lobby/game-waiting',
-                            game_name := mkmsg(target, 'games/' + self.name),
-                            f'`/game game:{game_name}`'),
-            **item
+            target, **item
         )) for target in channels + users), return_exceptions=True)
         for target, result in zip(channels + users, results):
             if isinstance(result, Exception):

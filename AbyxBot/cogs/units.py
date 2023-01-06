@@ -360,7 +360,7 @@ class Units(commands.Cog):
                     (name[0], Msg(
                         'units/aka',
                         mkmsg(ctx, ',').join(name[1:])
-                        or mkmsg(ctx, 'units/no-aka')
+                        or Msg('units/no-aka')
                     ), True)
                     for name, _ in UNITS[key]
                 ),
