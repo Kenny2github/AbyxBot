@@ -51,7 +51,7 @@ def audit(cmdargs: argparse.Namespace):
             print(fn + ':')
             lines = content.splitlines()
             for lineno, line in enumerate(lines, start=1):
-                for check in 'mkmsg(', 'Msg(':
+                for check in 'mkmsg(', 'Msg(', '_(', 'maker(':
                     if check in line:
                         break
                 else:
