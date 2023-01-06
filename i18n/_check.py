@@ -131,12 +131,16 @@ def stub(cmdargs: argparse.Namespace):
     except FileNotFoundError:
         langstrings = {}
     missing = set(enstrings.keys()) - set(langstrings.keys())
+    missing.update(key for key, value in langstrings.items()
+                   if value == '__MISSING__')
     if missing:
         print('Generating', lang, 'stubs for', end=' ')
         for key in enstrings.keys():
             if key not in langstrings:
                 print(key, end=' ')
                 langstrings[key] = '__MISSING__'
+        # reorder to match source
+        langstrings = {key: langstrings[key] for key in enstrings.keys()}
         with open(langname, 'w') as f:
             json.dump(langstrings, f, indent='\t')
 
