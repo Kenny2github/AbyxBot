@@ -4,6 +4,7 @@ from logging import getLogger
 from typing import (
     Any, Callable, Coroutine, Iterable,
     Optional, TypeVar, Union, get_args,
+    overload,
 )
 import asyncio
 
@@ -44,12 +45,21 @@ class Msg:
 
     # instance attributes
     key: str # i18n key
-    params: tuple[str] # {0}, {1}, etc
-    kwparams: dict[str, str] # {param}, {another}, etc
+    params: tuple[Union[str, 'Msg']] # {0}, {1}, etc
+    kwparams: dict[str, Union[str, 'Msg']] # {param}, {another}, etc
     lang: Optional[str] = None # can be set later
     # only set on init if lang is provided
     # otherwise, set upon str() casting
     message: Optional[str] = None
+
+    @overload
+    @classmethod
+    def get_lang(cls, ctx: Optional[discord.abc.Snowflake]
+                 ) -> str: ...
+    @overload
+    @classmethod
+    def get_lang(cls, ctx: Optional[discord.abc.Snowflake], default: LT
+                 ) -> Union[str, LT]: ...
 
     @classmethod
     def get_lang(cls, ctx: Optional[discord.abc.Snowflake],
@@ -98,14 +108,13 @@ class Msg:
         lang: Union[str, IDContext, None] = None,
         **kwparams
     ):
+        self.key = key
+        self.params = tuple(map(str_or_msg, params))
+        self.kwparams = {k: str_or_msg(v) for k, v in kwparams.items()}
         if lang is None:
             pass
         else:
             self.set_lang(lang)
-        self.key = key
-        self.params = tuple(map(str, params))
-        self.kwparams = {k: str(v) for k, v in kwparams.items()}
-        if self.lang is not None:
             self.set_message()
 
     def __repr__(self) -> str:
@@ -115,7 +124,7 @@ class Msg:
                              for kw, param in self.kwparams.items())
         return f'Msg({self.key!r}, {params}, lang={self.lang!r}, {kwparams})'
 
-    def __str__(self) -> str:
+    def __str__(self, *_) -> str:
         """Format the message and return it for use."""
         if self.message is None:
             if self.lang is None:
@@ -124,13 +133,22 @@ class Msg:
             assert self.message is not None
         return self.message.format(*self.params, **self.kwparams)
 
+    __format__ = __str__
+
     def set_lang(self, lang: Union[str, IDContext]) -> None:
         if isinstance(lang, str):
-            self.lang = lang
+            pass
         elif isinstance(lang, get_args(IDContext)):
-            self.lang = self.get_lang(lang)
+            lang = self.get_lang(lang, 'en')
         else:
             raise TypeError(f'unexpected {type(lang).__name__!r} for "lang"')
+        self.lang = lang
+        for param in self.params:
+            if isinstance(param, type(self)):
+                param.set_lang(lang)
+        for param in self.kwparams.values():
+            if isinstance(param, type(self)):
+                param.set_lang(lang)
 
     def set_message(self) -> None:
         """Load the unformatted message from language information."""
@@ -165,12 +183,18 @@ class Msg:
 
 Msg.load_strings()
 
+def str_or_msg(param: Any) -> Union[str, Msg]:
+    """Cast param to str or Msg."""
+    if isinstance(param, (str, Msg)):
+        return param
+    return str(param)
+
 def cast(ctx: IDContext, /, msg: Any) -> str:
     """If msg is a message object, format and return it.
     Otherwise, cast it to a string in the usual manner.
     """
     if isinstance(msg, Msg):
-        msg.lang = msg.get_lang(ctx)
+        msg.set_lang(ctx)
     return str(msg)
 
 def mkmsg(ctx: IDContext, /, key: str, *params, **kwparams):
