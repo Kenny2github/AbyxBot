@@ -37,7 +37,7 @@ def setup(bot: commands.Bot):
             lobbier = ctx.user
         else:
             lobbier = host
-        LobbyView(message, viewer=ctx.user,
+        LobbyView(ctx.client, message, viewer=ctx.user,
                   game=games[game], host=lobbier)
 
     async def check_game(ctx: discord.Interaction) -> bool:

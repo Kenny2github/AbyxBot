@@ -226,6 +226,11 @@ class Database:
         """Change a user's language setting."""
         await self._obj_set('user', user_id, 'lang', lang)
 
+    async def game_user_pings(self, game: str) -> list[int]:
+        """Get users to ping for the game."""
+        return await self._objs_by_setting(
+            'user', 'game', game_to_id[game], 'user_game_pings')
+
     async def user_game_pings(self, user_id: int) -> list[str]:
         """Get a user's game ping settings."""
         data = await self._obj_get_multiple(
@@ -261,6 +266,11 @@ class Database:
     ) -> None:
         """Change a channel's language setting."""
         await self._obj_set('channel', channel_id, 'lang', lang)
+
+    async def game_channel_pings(self, game: str) -> list[int]:
+        """Get channels to ping for the game."""
+        return await self._objs_by_setting(
+            'channel', 'game', game_to_id[game], 'channel_game_pings')
 
     @overload
     async def channel_game_pings(self, *, guild_id: Optional[int]

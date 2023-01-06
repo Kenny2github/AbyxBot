@@ -13,7 +13,7 @@ import discord
 
 # 1st-party
 from ...i18n import Msg, error_embed, mkembed, mkmsg
-from ...lib.database import id_to_game, game_to_id
+from ...lib.database import id_to_game, game_to_id, db
 from ...lib.utils import BroadcastQueue, dict_pop_n
 
 logger = getLogger(__name__)
@@ -117,6 +117,7 @@ class LobbyView(discord.ui.View):
     """A view for a game's lobby."""
 
     # passed by /game
+    bot: discord.Client # the bot, to get channels and users from
     message: discord.Message # the message this view is attached to
     viewer: discord.abc.User # the user who requested the view, for i18n
 
@@ -169,6 +170,12 @@ class LobbyView(discord.ui.View):
     def __post_init__(self) -> None:
         super().__init__(timeout=None)
         asyncio.create_task(self.display_players())
+        if len(self.players) == 0:
+            # notify if the lobby is new
+            asyncio.create_task(self.notify_watchers())
+        else:
+            logger.debug('Not re-pinging for %r due to %s players in lobby',
+                         self.name, len(self.players))
         self.updater_task = asyncio.create_task(self.update_state())
         if self.game.max_spectators == 0:
             self.remove_item(self.spectate)
@@ -223,6 +230,66 @@ class LobbyView(discord.ui.View):
             color=discord.Color.blue(),
         )
         self.message = await self.message.edit(embed=embed, view=self)
+
+    async def notify_watchers(self) -> None:
+        """Ping channels and users who have subscribed."""
+        channel_ids = await db.game_channel_pings(self.name)
+        channels: list[discord.abc.MessageableChannel] = []
+        for channel_id in channel_ids:
+            channel = self.bot.get_channel(channel_id)
+            if channel is None:
+                try:
+                    channel = await self.bot.fetch_channel(channel_id)
+                except discord.HTTPException:
+                    logger.exception('Failed to fetch channel %s to ping for %r',
+                                    channel_id, self.name)
+                    continue
+            if not isinstance(channel, discord.abc.Messageable):
+                logger.error('Channel %s is not messageable, something '
+                                'went wrong on config end', channel_id)
+                continue
+            channels.append(channel)
+
+        user_ids = await db.game_user_pings(self.name)
+        users: list[discord.User] = []
+        for user_id in user_ids:
+            user = self.bot.get_user(user_id)
+            if user is None:
+                try:
+                    user = await self.bot.fetch_user(user_id)
+                except discord.HTTPException:
+                    logger.exception('Failed to fetch user %s to ping for %r',
+                                     user_id, self.name)
+                    continue
+            users.append(user)
+
+        # static params that don't need the context object
+        item = {
+            'title': Msg('lobby/game-waiting-title'),
+            'footer': Msg('lobby/game-waiting-footer'),
+            'color': discord.Color.blue(),
+        }
+
+        # ping channels
+        logger.debug('Pinging %s channels and %s users for %r',
+                     len(channels), len(users), self.name)
+        results = await asyncio.gather(*(target.send(embed=mkembed(
+            target,
+            description=Msg('lobby/game-waiting',
+                            game_name := mkmsg(target, 'games/' + self.name),
+                            f'`/game game:{game_name}`'),
+            **item
+        )) for target in channels + users), return_exceptions=True)
+        for target, result in zip(channels + users, results):
+            if isinstance(result, Exception):
+                try:
+                    raise result
+                except Exception:
+                    if isinstance(target, discord.User):
+                        message = 'Failed to ping user %s (%s)'
+                    else:
+                        message = 'Failed to ping channel #%s (%s)'
+                    logger.exception(message, target, target.id)
 
     async def update_state(self) -> None:
         """Continuously poll for updates."""
