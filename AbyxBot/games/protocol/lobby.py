@@ -340,16 +340,16 @@ class LobbyView(discord.ui.View):
                             pass
             try:
                 await thread.delete()
-            except discord.Forbidden:
+            except discord.HTTPException:
                 pass
             if starter is not None:
                 try:
                     await starter.delete()
-                except discord.Forbidden:
+                except discord.HTTPException:
                     pass
         try:
             await msg.delete()
-        except discord.Forbidden:
+        except discord.HTTPException:
             pass
         del players[ctx.user]
 
