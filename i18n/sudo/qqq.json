@@ -1,4 +1,6 @@
 {
+	"code-label": "Label for text field of `/eval` modal.",
+	"eval-title": "Title of `/eval` modal.",
 	"cant": "Error for non-bot-owners",
 	"stop": "`/sudo stop` success message",
 	"r25n": "`/sudo r25n` success message",

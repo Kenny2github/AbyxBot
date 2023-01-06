@@ -1,0 +1,14 @@
+{
+	"turn-spectator": "The spectator message for whose ({0}'s) turn it is.",
+	"your-turn": "The player message for when the current player has their turn.",
+	"their-turn": "The player message for when the opponent has their turn.",
+	"select-column": "The placeholder for the column select dropdown.",
+	"you-are": "The player message for which color ({0}) they are.",
+	"player-color": "One line of the display of which color ({0}) is which player ({1}).",
+	"not-yours": "Error message to users who try to play a game that they are not a participant in.",
+	"you-win": "The player message for when the current player has won (replaces current turn line).",
+	"they-win": "The player message for when the current player's opponent has won (replaces current turn line).",
+	"someone-wins": "The spectator message for when a player ({0}) has won.",
+	"nobody-wins": "The message for when there is a tie.",
+	"game-timeout": "The message for when the game times out (after {0}) seconds)."
+}

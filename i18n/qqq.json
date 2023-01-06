@@ -1,9 +1,9 @@
 {
-	"@name": "Language name",
+	"@name": "Language name in the language, used in many places.",
 	"hello": "Message sent by /hello",
 	"hmmst": "hmmst",
 	"error": "Title of error embeds",
 	"description": "Description of the bot shown in /info and /help",
-	",": "Comma separator",
+	",": "Comma separator, used to join single-line list items.",
 	"none-paren": "Placeholder for empty results"
 }

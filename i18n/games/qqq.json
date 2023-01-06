@@ -1,3 +1,5 @@
 {
+	"go_fish": "The name for Go Fish.",
+	"connect4": "The name for Connect 4.",
 	"dummygame": "The name of the dummy game."
 }
