@@ -197,7 +197,7 @@ def cast(ctx: IDContext, /, msg: Any) -> str:
         msg.set_lang(ctx)
     return str(msg)
 
-def mkmsg(ctx: IDContext, /, key: str, *params, **kwparams):
+def mkmsg(ctx: IDContext, /, key: str, *params, **kwparams) -> str:
     """Format a message in this context."""
     if isinstance(ctx, (str, Msg)):
         raise TypeError(f'Unexpected {type(ctx).__name__!r} for ctx. '
