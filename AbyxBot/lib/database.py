@@ -104,13 +104,21 @@ class Database:
 
     async def _obj_settings_multiple(
         self, obj_type: LiteralString, setting: LiteralString,
-        table: Optional[LiteralString] = None
+        table: Optional[LiteralString] = None,
+        # dict default is dangerous, but only if modified
+        where: dict[LiteralString, Any] = {},
     ) -> dict[int, list[Any]]:
         """Internal use generic [obj]_id->[setting, ...] fetcher."""
         settings: dict[int, list[Any]] = {}
         query = f'SELECT {obj_type}_id, {setting} FROM {table or obj_type+"s"}'
+        if where:
+            query += ' WHERE '
+            query += ' AND '.join(f'{key}=:{key}' for key in where)
         async with self.lock:
-            await self.cur.execute(query)
+            if where:
+                await self.cur.execute(query, where)
+            else:
+                await self.cur.execute(query)
             async for row in self.cur:
                 settings.setdefault(
                     row[f'{obj_type}_id'], []).append(row[setting])
@@ -244,28 +252,35 @@ class Database:
         await self._obj_set('channel', channel_id, 'lang', lang)
 
     @overload
-    async def channel_game_pings(self) -> dict[int, list[str]]: ...
+    async def channel_game_pings(self, *, guild_id: Optional[int]
+                                 ) -> dict[int, list[str]]: ...
     @overload
     async def channel_game_pings(self, channel_id: int) -> list[str]: ...
 
     async def channel_game_pings(
-        self, channel_id: Optional[int] = None
+        self, channel_id: Optional[int] = None,
+        *, guild_id: Optional[int] = None,
     ) -> Union[dict[int, list[str]], list[str]]:
         """Get the games to ping the channel for."""
         if channel_id is None:
             data = await self._obj_settings_multiple(
-                'channel', 'game', 'channel_game_pings')
+                'channel', 'game', 'channel_game_pings',
+                {} if guild_id is None else {'guild_id': guild_id})
             return {channel_id: [id_to_game[game] for game in games]
                     for channel_id, games in data.items()}
         data = await self._obj_get_multiple(
             'channel', channel_id, 'game', 'channel_game_pings')
         return [id_to_game[game] for game in data]
 
-    async def add_channel_game_ping(self, channel_id: int, game: str) -> None:
+    async def add_channel_game_ping(self, guild_id: int,
+                                    channel_id: int, game: str) -> None:
         """Enable pings for this game in this channel."""
+        await self.touch_guild(guild_id)
         await self.touch_channel(channel_id) # to obey foreign keys
-        await self._obj_set_multiple('channel', channel_id, 'game',
-                                     game_to_id[game], 'channel_game_pings')
+        query = \
+            'INSERT INTO channel_game_pings (channel_id, game, guild_id) ' \
+            'VALUES (?, ?, ?) ON CONFLICT DO NOTHING'
+        await self.cur.execute(query, (channel_id, game_to_id[game], guild_id))
 
     async def del_channel_game_ping(self, channel_id: int, game: str) -> None:
         """Disable pings for this game in this channel."""

@@ -31,10 +31,15 @@ CREATE TABLE IF NOT EXISTS channel_game_pings (
 	channel_id integer NOT NULL,
 	-- game to ping for (integer enum)
 	game integer NOT NULL,
+	-- guild this channel belongs to
+	guild_id integer NOT NULL,
 	-- keys
 	PRIMARY KEY(channel_id, game),
+	FOREIGN KEY(guild_id) REFERENCES guilds(guild_id),
 	FOREIGN KEY(channel_id) REFERENCES channels(channel_id)
 );
+
+CREATE INDEX IF NOT EXISTS guild_game_pings ON channel_game_pings(guild_id);
 
 -- one entry for every game to (attempt to) ping every user for
 -- to test if a user should be pinged for a game,

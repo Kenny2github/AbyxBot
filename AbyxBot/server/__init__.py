@@ -481,9 +481,7 @@ class Handler:
 
         censor = await db.guild_words_censor(guild.id)
 
-        games = await db.channel_game_pings()
-        games = {channel_id: pings for channel_id, pings in games.items()
-                 if guild.get_channel(channel_id) is not None}
+        games = await db.channel_game_pings(guild_id=guild.id)
 
         return {
             'title': _('title', guild_name=guild.name),
@@ -594,7 +592,7 @@ class Handler:
                     log.debug('Enabling pings for %r in #%s (%s)',
                               game, channel.name, channel.id)
                     tasks.append(asyncio.create_task(
-                        db.add_channel_game_ping(channel.id, game)))
+                        db.add_channel_game_ping(guild.id, channel.id, game)))
                     results.append(_('channel-game-added',
                                      channel=channel.name, game=g_maker(game)))
 
