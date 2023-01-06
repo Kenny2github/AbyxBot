@@ -181,6 +181,17 @@ class Database:
             f'WHERE {obj_type}_id=? AND {setting}=?'
         await self.cur.execute(query, (obj_id, value))
 
+    async def _objs_by_setting(
+        self, obj_type: LiteralString, setting: LiteralString,
+        value: Any, table: Optional[LiteralString] = None,
+    ) -> list[int]:
+        """Internal use generic [obj] where [setting]=value."""
+        query = f'SELECT {obj_type}_id FROM {table or obj_type+"s"} '\
+            f'WHERE {setting}=?'
+        async with self.lock:
+            await self.cur.execute(query, (value,))
+            return [row[f'{obj_type}_id'] async for row in self.cur]
+
     async def _touch(self, obj_type: LiteralString, obj_id: int) -> None:
         """Internal use generic create row if not exists."""
         query = f'INSERT INTO {obj_type}s ({obj_type}_id) VALUES (?)' \
