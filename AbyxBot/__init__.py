@@ -16,7 +16,7 @@ from .lib.status import SetStatus
 from .lib.watcher import stop_on_change
 from .server import Handler
 
-MODULES = {
+MODULES: dict[str, tuple[str, str]] = {
     '2048': ('games.twozerofoureight', '2048'),
     'Help': ('cogs.help', 'help'),
     'Internationalization': ('i18n', 'i18n'),
@@ -27,6 +27,7 @@ MODULES = {
     'Unit Conversions': ('cogs.units', 'units'),
     'Lexical Analysis': ('cogs.words', 'words'),
     'Dictionaries': ('cogs.define', 'define'),
+    'Urban Dictionary': ('cogs.urban', 'urban'),
     'Dummy Game': ('games.dummy_game', 'dummy_game'),
     'Connect 4': ('games.connect4', 'connect4'),
     'Go Fish': ('games.card_games.go_fish', 'go_fish'),

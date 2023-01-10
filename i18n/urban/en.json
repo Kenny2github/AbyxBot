@@ -1,0 +1,7 @@
+{
+	"defn-title": "Definition #{0} (of \"{1}\")",
+	"votes-title": "Votes",
+	"votes": "{0} (+{1}/-{2})",
+	"example": "Example",
+	"src-urban": "Definitions from Urban Dictionary"
+}
