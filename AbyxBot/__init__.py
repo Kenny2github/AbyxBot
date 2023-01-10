@@ -26,6 +26,7 @@ MODULES = {
     'Translation': ('translation', 'trans'),
     'Unit Conversions': ('cogs.units', 'units'),
     'Lexical Analysis': ('cogs.words', 'words'),
+    'Dictionaries': ('cogs.define', 'define'),
     'Dummy Game': ('games.dummy_game', 'dummy_game'),
     'Connect 4': ('games.connect4', 'connect4'),
     'Go Fish': ('games.card_games.go_fish', 'go_fish'),

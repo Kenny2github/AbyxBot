@@ -207,53 +207,8 @@ async def homophones(ctx: discord.Interaction, word: str):
 async def homoconsonants(ctx: discord.Interaction, word: str):
     """Words that match consonants."""
 
-### /define word:<word>
-
-@app_commands.command()
-@app_commands.describe(word='A word (or sometimes phrase).')
-async def define(ctx: discord.Interaction, word: str):
-    """Various information about a word, including its definition(s)."""
-    await ctx.response.defer()
-    results = await fetch_words(qe='sp', sp=word, md='dpsrf', ipa='1', max=1)
-    result: WordResp = results[0]
-    if 'defs' not in result:
-        await ctx.edit_original_response(
-            embed=error_embed(ctx, Msg('words/no-def', word)))
-        return
-    tags: list[str] = result['tags']
-    parts_of_speech = set()
-    pron: str = '(?)'
-    freq: str = '(?)'
-    for tag in tags:
-        if tag.startswith('ipa_pron:'):
-            pron = tag.split(':', 1)[1]
-        elif tag.startswith('f:'):
-            freq = tag.split(':', 1)[1]
-        elif tag != 'query' and ':' not in tag:
-            parts_of_speech.add(tag)
-    syllables: int = result['numSyllables']
-    defs: list[str] = result['defs']
-    root_word: str = result.get('defHeadword', word)
-    await ctx.edit_original_response(embed=mkembed(ctx,
-        title=Msg('words/word-info', word),
-        description=Msg('words/word-root', root_word),
-        fields=(
-            (Msg('words/word-pronunciation'), pron, True),
-            (Msg('words/word-syllables'), str(syllables), True),
-            (Msg('words/word-parts-of-speech'),
-             mkmsg(ctx, ',').join(parts_of_speech),
-             True),
-            (Msg('words/word-frequency'), str(freq), True),
-            (Msg('words/word-definitions'), '\n'.join(
-                f'{i}. ' + defn.replace('\t', '\N{NO-BREAK SPACE}' * 4)
-                for i, defn in enumerate(defs, start=1)
-            ), False)
-        ),
-        color=0xfffffe
-    ))
-
 def setup(bot: commands.Bot):
     global session
     session = aiohttp.ClientSession()
-    for cmd in {words, lex, define}:
+    for cmd in {words, lex}:
         bot.tree.add_command(cmd)

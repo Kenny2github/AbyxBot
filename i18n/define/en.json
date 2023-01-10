@@ -1,0 +1,10 @@
+{
+	"pos": "Part of Speech",
+	"sound": "Pronunciation",
+	"glosses": "Definitions (sense #{0})",
+	"defn-title": "Information about \"{0}\" (meaning #{1})",
+	"src-kaikki": "Definitions from Kaikki.org",
+	"src-datamuse": "Definitions from Datamuse API",
+	"dict-wiktionary": "Wiktionary",
+	"dict-datamuse": "Datamuse"
+}
