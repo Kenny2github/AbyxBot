@@ -11,6 +11,7 @@ from discord import app_commands
 
 # 1st-party
 from ..consts.type_hints import HistoriedChannel
+from ..consts.config import config
 from ..i18n import mkmsg, mkembed, error_embed, Msg
 
 def check_msg(user: Optional[discord.User] = None,
@@ -122,6 +123,39 @@ class Miscellaneous(commands.Cog):
         await ctx.response.send_message(embed=mkembed(ctx,
             Msg('misc/charinfo-title'), msg[:2000]
         ))
+
+    @app_commands.command()
+    async def info(self, ctx: discord.Interaction):
+        """Get information about the bot."""
+        ainfo = ctx.client.application
+        assert ainfo is not None
+        assert ainfo.icon is not None
+        invite = discord.utils.oauth_url(
+            ainfo.id,
+            permissions=discord.Permissions(
+                send_messages=True,
+                embed_links=True,
+                attach_files=True,
+                read_message_history=True,
+                external_emojis=True,
+                add_reactions=True,
+            ),
+            scopes=['bot', 'applications.commands'],
+        )
+        embed = mkembed(
+            ctx, title=str(ctx.client.user),
+            description=ainfo.description,
+            fields=(
+                (Msg('misc/info-id'), ainfo.id, True),
+                (Msg('misc/info-owner'), str(ainfo.owner), True),
+                (Msg('misc/info-config-title'),
+                 Msg('misc/info-config', config.web_root), True),
+                (Msg('misc/info-invite-title'),
+                 Msg('misc/info-invite', invite), True),
+            )
+        )
+        embed.set_thumbnail(url=ainfo.icon.url)
+        await ctx.response.send_message(embed=embed)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Miscellaneous())
