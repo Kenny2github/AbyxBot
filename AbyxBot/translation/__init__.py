@@ -185,6 +185,10 @@ async def translate_context_menu(
 def setup(bot: commands.Bot):
     bot.tree.add_command(translate_command)
     bot.tree.add_command(translate_context_menu)
+
+    if not config.reaction_translations:
+        return # don't add the listener below
+
     @bot.listen()
     async def on_raw_reaction_add(event: discord.RawReactionActionEvent):
         emoji: str = str(event.emoji)

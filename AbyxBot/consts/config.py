@@ -18,6 +18,7 @@ class Config(NamedTuple):
     gcloud_auth_json: str
     session_key: Optional[list[int]] = None
     debug_guild: Optional[int] = None
+    reaction_translations: bool = True
 
 with open('config.json') as f:
     config = Config(**json.load(f))
