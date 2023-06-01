@@ -19,10 +19,11 @@ Dictionary = Literal[
 
 # NOTE: These TypedDicts only include fields we use
 
-class KaikkiSense(TypedDict):
+class KaikkiSense(TypedDict, total=False): # raw_glosses may be unset
     raw_glosses: list[str]
+    glosses: list[str] # substitutes for raw_glosses when it is not set
 
-class KaikkiSound(TypedDict, total=False):
+class KaikkiSound(TypedDict, total=False): # any of these may be unset
     text: str
     mp3_url: str
     ogg_url: str
@@ -75,7 +76,11 @@ async def wiktionary(ctx: discord.Interaction, word: str):
         # construct glosses field
         all_glosses: list[list[str]] = [[
             f'{j}. {gloss}'
-            for j, gloss in enumerate(sense['raw_glosses'], start=1)
+            for j, gloss in enumerate(
+                # raw_glosses is omitted when identical to glosses
+                sense.get('raw_glosses', sense.get('glosses', [])),
+                start=1
+            )
         ] for sense in defn['senses']]
         if all(len(glosses) == 1 for glosses in all_glosses):
             all_glosses = [[glosses[0] for glosses in all_glosses]]
