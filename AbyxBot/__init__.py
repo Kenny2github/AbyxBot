@@ -69,7 +69,10 @@ async def run():
     await globs['server'].start()
     await bot.login(TOKEN)
     globs['status'].start()
-    await bot.connect()
+    try:
+        await bot.connect()
+    except asyncio.CancelledError:
+        return
 
 async def cleanup_tasks():
     for task in asyncio.all_tasks():
