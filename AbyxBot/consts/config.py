@@ -16,6 +16,7 @@ class Config(NamedTuple):
     web_root: str
     gcloud_project_id: str
     gcloud_auth_json: str
+    host: Optional[str] = None # defers to web_root
     session_key: Optional[list[int]] = None
     debug_guild: Optional[int] = None
     reaction_translations: bool = True

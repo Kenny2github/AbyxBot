@@ -30,8 +30,8 @@ DISCORD_OAUTH2 = 'https://discord.com/oauth2/authorize'
 DISCORD_TOKEN = 'https://discord.com/api/oauth2/token'
 CLIENT_ID: int = config.client_id
 CLIENT_SECRET: str = config.client_secret
-WEB_ROOT: str = config.web_root
-REDIRECT_URI: str = WEB_ROOT + '/api/oauth2/callback'
+HOST: str = config.host or config.web_root
+REDIRECT_URI: str = config.web_root + '/api/oauth2/callback'
 SCOPES = 'identify guilds'
 TOKEN_TYPE = 'Bearer'
 
@@ -137,9 +137,13 @@ class Handler:
 
     async def start(self) -> None:
         await self.runner.setup()
-        web_root = urlparse(WEB_ROOT)
-        site = web.TCPSite(self.runner, web_root.hostname, web_root.port)
-        logger.info('Starting on %s', WEB_ROOT)
+        host = urlparse(HOST)
+        site = web.TCPSite(self.runner, host.hostname, host.port)
+        if config.web_root != HOST:
+            logger.info('Starting on %s proxied behind %s',
+                        HOST, config.web_root)
+        else:
+            logger.info('Starting on %s', HOST)
         await site.start()
 
     async def stop(self) -> None:
