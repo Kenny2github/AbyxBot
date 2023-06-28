@@ -69,8 +69,9 @@ class Miscellaneous(commands.Cog):
     @app_commands.command()
     async def ping(self, ctx: discord.Interaction):
         """Pong! Get bot latency in milliseconds."""
+        latency = f'{ctx.client.latency * 1000:.0f}'
         await ctx.response.send_message(embed=mkembed(ctx,
-            Msg('misc/pong-title'), Msg('misc/pong-ms', ctx.client.latency * 1000)
+            Msg('misc/pong-title'), Msg('misc/pong-ms', latency)
         ))
 
     @app_commands.command()
@@ -117,7 +118,7 @@ class Miscellaneous(commands.Cog):
             json_escape = json.dumps(char).strip('"')
             name = unicodedata.name(char, mkmsg(ctx, 'misc/charname-not-found'))
             return mkmsg(ctx, 'misc/charinfo', py_escape, json_escape, name,
-                         discord.utils.escape_markdown(char), num)
+                         discord.utils.escape_markdown(char), f'{num:>04x}')
         msg = '\n'.join(map(to_string, chars))
         msg = mkmsg(ctx, 'misc/charinfo-start') + '\n' + msg
         await ctx.response.send_message(embed=mkembed(ctx,
