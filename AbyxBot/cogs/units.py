@@ -127,7 +127,7 @@ UNITS: dict[str, tuple[tuple[list[str], Union[D, str]], ...]] = {
         (['microg', 'microgram', 'micrograms'], D('1e-6')),
         (['ton'], D('1.016e6')),
         (['uston', 'us ton', 'us tons'], D('907184.74')),
-        (['stone'], D('6350.293')),
+        (['stone', 'st'], D('6350.293')),
         (['lb', 'pound', 'pounds'], D('453.592')),
         (['oz', 'ounce', 'ounces'], D('28.3495'))
     ),
