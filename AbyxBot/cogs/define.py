@@ -1,6 +1,7 @@
 # stdlib
 import json
-from typing import TypedDict, Literal, AsyncIterable, get_args
+from urllib.parse import quote as urlquote
+from typing import TypedDict, Literal, AsyncIterable, Iterable, Any, get_args
 from typing_extensions import assert_never, NotRequired
 
 # 3rd-party
@@ -34,6 +35,30 @@ async def chunks_to_lines(chunks: AsyncIterable[bytes]) -> AsyncIterable[bytes]:
                 yield piece
     if buffer: # check for last line
         yield bytes(buffer)
+
+# helper to ellipsize overlong field values and replace overlong embeds
+
+def trunc_embeds(
+    ctx: discord.Interaction,
+    error_message: Any,
+    embeds: Iterable[discord.Embed],
+) -> Iterable[discord.Embed]:
+    embeds = map(
+        lambda e: e if len(e) <= 6000
+        else error_embed(ctx, error_message),
+        embeds
+    )
+    for embed in embeds:
+        for j, field in enumerate(embed.fields):
+            if field.value is None:
+                continue
+            if len(field.value) > 1024:
+                embed.set_field_at(
+                    j, name=field.name,
+                    value=field.value[:1021] + '...',
+                    inline=field.inline
+                )
+        yield embed
 
 # NOTE: These TypedDicts only include fields we use
 
@@ -106,6 +131,7 @@ async def wiktionary(ctx: discord.Interaction, word: str):
         # construct total embed
         embeds.append(mkembed(
             ctx, title=Msg('define/defn-title', defn['word'], i),
+            url='https://en.wiktionary.org/wiki/' + urlquote(defn['word']),
             fields=(
                 (Msg('define/pos'), defn['pos'], True),
                 (Msg('define/sound'), COMMA.join(sounds), True),
@@ -117,7 +143,8 @@ async def wiktionary(ctx: discord.Interaction, word: str):
             footer=Msg('define/src-kaikki'),
             color=0xfffffe,
         ))
-    await ctx.edit_original_response(embeds=embeds)
+    await ctx.edit_original_response(embeds=list(trunc_embeds(
+        ctx, Msg('define/embed-too-long-kaikki', urlquote(word)), embeds)))
 
 async def datamuse(ctx: discord.Interaction, word: str):
     """Datamuse definition of a word/phrase."""
@@ -141,7 +168,7 @@ async def datamuse(ctx: discord.Interaction, word: str):
     syllables: int = result['numSyllables']
     defs: list[str] = result['defs']
     root_word: str = result.get('defHeadword', word)
-    await ctx.edit_original_response(embed=mkembed(ctx,
+    embed = mkembed(ctx,
         title=Msg('words/word-info', word),
         description=Msg('words/word-root', root_word),
         fields=(
@@ -158,7 +185,10 @@ async def datamuse(ctx: discord.Interaction, word: str):
         ),
         footer=Msg('define/src-datamuse'),
         color=0xfffffe,
-    ))
+    )
+    await ctx.edit_original_response(embeds=list(trunc_embeds(
+        ctx, Msg('define/embed-too-long-datamuse', urlquote(word)), [embed]
+    )))
 
 @app_commands.command()
 @app_commands.describe(word='A word (or sometimes phrase).')

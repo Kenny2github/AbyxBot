@@ -1,4 +1,6 @@
 {
+	"embed-too-long-kaikki": "The definitions for this meaning are too long to display on Discord! Please [view them on Wiktionary](https://en.wiktionary.org/wiki/{0}).",
+	"embed-too-long-datamuse": "This definition is too long to display on Discord! Please [view it on Wiktionary](https://en.wiktionary.org/wiki/{0}).",
 	"pos": "Part of Speech",
 	"sound": "Pronunciation",
 	"glosses": "Definitions (sense #{0})",
