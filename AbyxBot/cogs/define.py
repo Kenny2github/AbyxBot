@@ -1,6 +1,6 @@
 # stdlib
 import json
-from typing import TypedDict, Literal, get_args
+from typing import TypedDict, Literal, AsyncIterable, get_args
 from typing_extensions import assert_never, NotRequired
 
 # 3rd-party
@@ -16,6 +16,24 @@ Dictionary = Literal[
     'wiktionary',
     'datamuse',
 ]
+
+# helper function for reading big lines from a stream
+
+async def chunks_to_lines(chunks: AsyncIterable[bytes]) -> AsyncIterable[bytes]:
+    # convoluted buffered line reading to deal with some lines
+    # being too long for stream.__anext__()
+    buffer = bytearray()
+    async for chunk in chunks:
+        first_piece, *pieces = chunk.split(b'\n')
+        buffer.extend(first_piece)
+        if pieces:
+            yield bytes(buffer)
+            *pieces, last_piece = pieces
+            buffer[:] = last_piece
+            for piece in pieces:
+                yield piece
+    if buffer: # check for last line
+        yield bytes(buffer)
 
 # NOTE: These TypedDicts only include fields we use
 
@@ -45,7 +63,7 @@ async def wiktionary(ctx: discord.Interaction, word: str):
     defns: list[KaikkiDefinition] = []
     async with session.get(KAIKKI_URL.format(word[:1], word[:2], word)) as resp:
         if resp.ok:
-            async for line in resp.content:
+            async for line in chunks_to_lines(resp.content.iter_any()):
                 defns.append(json.loads(line))
     if not defns:
         await ctx.edit_original_response(
