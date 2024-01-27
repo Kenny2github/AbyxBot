@@ -161,10 +161,10 @@ UNITS: dict[str, tuple[tuple[list[str], Union[D, str]], ...]] = {
         (['knot', 'knots'], 1 / D('1.944'))
     ),
     'temperature': (
-        (['C', 'Celsius', 'c'], 'C'),
-        (['F', 'Farenheit', 'f'], 'F'),
-        (['K', 'Kelvin', 'k'], 'K'),
-        (['R', 'Rankine', 'r'], 'R'),
+        (['C', 'Celsius', 'c', 'celsius'], 'C'),
+        (['F', 'Fahrenheit', 'f', 'fahrenheit'], 'F'),
+        (['K', 'Kelvin', 'k', 'kelvin'], 'K'),
+        (['R', 'Rankine', 'r', 'rankine'], 'R'),
     ),
     'time': (
         (['ns', 'nanosecond', 'nanoseconds'], D('1e-9')),
