@@ -23,7 +23,7 @@ UNITS: dict[str, tuple[tuple[list[str], Union[D, str]], ...]] = {
         (['sqft', 'square feet', 'square foot'], D('10.764')),
         (['sqin', 'square inches', 'square inch'], D('1550.003')),
         (['hectare', 'hectares'], D('10000')),
-        (['acre', 'acres'], D('4046.856'))
+        (['acre', 'acres'], D('4046.856')),
     ),
     'data': (
         (['bps', 'bit per second',
@@ -75,7 +75,7 @@ UNITS: dict[str, tuple[tuple[list[str], Union[D, str]], ...]] = {
         (['TB', 'terabyte', 'terabytes'], D('8e12')),
         (['TiB', 'tebibyte', 'tebibytes'], D('8796093022208')),
         (['PB', 'petabyte', 'petabytes'], D('8e15')),
-        (['PiB', 'pebibyte', 'pebibytes'], D('9007199254740992'))
+        (['PiB', 'pebibyte', 'pebibytes'], D('9007199254740992')),
     ),
     'energy': (
         (['J', 'joule', 'joules'], D('1')),
@@ -87,7 +87,7 @@ UNITS: dict[str, tuple[tuple[list[str], Union[D, str]], ...]] = {
         (['eV', 'electronvolt', 'electronvolts'], 1 / D('6.242e18')),
         (['btu', 'british thermal unit', 'british thermal units'], D('1055.06')),
         (['ust', 'us-therm', 'us-therms'], D('1.05506e8')),
-        (['ftlb', 'foot-pound', 'foot-pounds'], D('1.35582'))
+        (['ftlb', 'foot-pound', 'foot-pounds'], D('1.35582')),
     ),
     'frequency': (
         (['Hz', 'hertz', 'cycle', 'cycles', 'c', 'C'], D('1')),
@@ -96,7 +96,7 @@ UNITS: dict[str, tuple[tuple[list[str], Union[D, str]], ...]] = {
         (['MHz', 'megahertz', 'mHz', 'megacycle',
           'megacycles', 'mc', 'Mc', 'mC', 'MC'], D('1e6')),
         (['GHz', 'gigahertz', 'gHz', 'gigacycle',
-          'gigacycles', 'gc', 'Gc', 'gC', 'GC'], D('1e9'))
+          'gigacycles', 'gc', 'Gc', 'gC', 'GC'], D('1e9')),
     ),
     'fuel': (
         (['umpg', 'us miles per gallon', 'us mile per gallon'], 1 / D('2.352')),
@@ -104,7 +104,7 @@ UNITS: dict[str, tuple[tuple[list[str], Union[D, str]], ...]] = {
          'mile per gallon', 'miles per gallon'], 1 / D('2.825')),
         (['kmpL', 'kilometer per liter', 'kilometers per liter',
          'kilometre per litre', 'kilometres per litre',
-         'km per liter', 'km per litre'], D('1'))
+         'km per liter', 'km per litre'], D('1')),
     ),
     'length': (
         (['km', 'kilometer', 'kilometers', 'kilometre', 'kilometres'], D('1000')),
@@ -117,7 +117,7 @@ UNITS: dict[str, tuple[tuple[list[str], Union[D, str]], ...]] = {
         (['yard', 'yards'], 1 / D('1.094')),
         (['foot', 'feet'], 1 / D('3.281')),
         (['inch', 'inches'], D('2.54e-2')),
-        (['nautmil', 'nautical mile', 'nautical miles'], D('1852'))
+        (['nautmil', 'nautical mile', 'nautical miles'], D('1852')),
     ),
     'mass': (
         (['t', 'Mg', 'tonne', 'tonnes', 'megagram', 'megagrams'], D('1e6')),
@@ -129,7 +129,7 @@ UNITS: dict[str, tuple[tuple[list[str], Union[D, str]], ...]] = {
         (['uston', 'us ton', 'us tons'], D('907184.74')),
         (['stone', 'st'], D('6350.293')),
         (['lb', 'pound', 'pounds'], D('453.592')),
-        (['oz', 'ounce', 'ounces'], D('28.3495'))
+        (['oz', 'ounce', 'ounces'], D('28.3495')),
     ),
     'angle': (
         (['deg', 'degree', 'degrees'], D('1')),
@@ -141,14 +141,14 @@ UNITS: dict[str, tuple[tuple[list[str], Union[D, str]], ...]] = {
         (['rad', 'radian', 'radians'],
          # 180 / pi
          D('57.29577951308232087679815482')),
-        (['arcsec', 'arc second', 'arc seconds'], 1 / D('3600'))
+        (['arcsec', 'arc second', 'arc seconds'], 1 / D('3600')),
     ),
     'pressure': (
         (['atm', 'atmosphere', 'atmospheres'], D('101325')),
         (['bar'], D('1e5')),
         (['Pa', 'pascal', 'pascals'], D('1')),
         (['psi', 'pound per square inch', 'pounds per square inch'], D('6894.757')),
-        (['torr'], D('133.322'))
+        (['torr'], D('133.322')),
     ),
     'speed': (
         (['mph', 'mile per hour', 'miles per hour'], 1 / D('2.237')),
@@ -158,7 +158,7 @@ UNITS: dict[str, tuple[tuple[list[str], Union[D, str]], ...]] = {
         (['kmph', 'kilometer per hour', 'kilometers per hour',
          'kilometre per hour', 'kilometres per hour',
          'km per hour'], 1 / D('3.6')),
-        (['knot', 'knots'], 1 / D('1.944'))
+        (['knot', 'knots'], 1 / D('1.944')),
     ),
     'temperature': (
         (['C', 'Celsius', 'c', 'celsius'], 'C'),
@@ -178,7 +178,7 @@ UNITS: dict[str, tuple[tuple[list[str], Union[D, str]], ...]] = {
         (['month', 'months'], D('2.628e6')),
         (['year', 'years'], D('3.154e7')),
         (['decade', 'decades'], D('3.154e8')),
-        (['century', 'centuries'], D('3.154e9'))
+        (['century', 'centuries'], D('3.154e9')),
     ),
     'volume': (
         (['gallon', 'gallons', 'liquid gallon', 'liquid gallons'], D('3.78541')),
@@ -204,7 +204,7 @@ UNITS: dict[str, tuple[tuple[list[str], Union[D, str]], ...]] = {
         (['uktbsp', 'imperial tablespoon', 'imperial tablespoons'], 1 / D('56.312')),
         (['uktsp', 'imperial teaspoon', 'imperial teaspoons'], 1 / D('168.936')),
         (['ft3', 'cubic foot', 'cubic feet'], 1 / D('28.317')),
-        (['in3', 'cubic inch', 'cubic inches'], 1 / D('61.024'))
+        (['in3', 'cubic inch', 'cubic inches'], 1 / D('61.024')),
     )
 }
 
