@@ -83,7 +83,7 @@ class KaikkiDefinition(TypedDict):
 
 async def wiktionary(ctx: discord.Interaction, word: str):
     """Wiktionary definition of a word/phrase."""
-    KAIKKI_URL = 'https://kaikki.org/dictionary/English/meaning/{}/{}/{}.json'
+    KAIKKI_URL = 'https://kaikki.org/dictionary/English/meaning/{}/{}/{}.jsonl'
     COMMA = mkmsg(ctx, ',')
     defns: list[KaikkiDefinition] = []
     async with session.get(KAIKKI_URL.format(word[:1], word[:2], word)) as resp:
