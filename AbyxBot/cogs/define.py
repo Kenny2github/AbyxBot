@@ -12,7 +12,7 @@ from discord import app_commands
 
 # 1st-party
 from ..i18n import error_embed, Msg, mkembed, mkmsg
-from .words import fetch_words, WordResp, session
+from .words import fetch_words, WordResp
 if TYPE_CHECKING:
     from ..lib.client import AbyxBot
 
@@ -84,12 +84,12 @@ class KaikkiDefinition(TypedDict):
     sounds: NotRequired[list[KaikkiSound]]
     word: str
 
-async def wiktionary(ctx: discord.Interaction, word: str):
+async def wiktionary(ctx: discord.Interaction[AbyxBot], word: str):
     """Wiktionary definition of a word/phrase."""
     KAIKKI_URL = 'https://kaikki.org/dictionary/English/meaning/{}/{}/{}.jsonl'
     COMMA = mkmsg(ctx, ',')
     defns: list[KaikkiDefinition] = []
-    async with session.get(KAIKKI_URL.format(word[:1], word[:2], word)) as resp:
+    async with ctx.client.session.get(KAIKKI_URL.format(word[:1], word[:2], word)) as resp:
         if resp.ok:
             async for line in chunks_to_lines(resp.content.iter_any()):
                 defns.append(json.loads(line))
@@ -149,9 +149,9 @@ async def wiktionary(ctx: discord.Interaction, word: str):
     await ctx.edit_original_response(embeds=list(trunc_embeds(
         ctx, Msg('define/embed-too-long-kaikki', urlquote(word)), embeds)))
 
-async def datamuse(ctx: discord.Interaction, word: str):
+async def datamuse(ctx: discord.Interaction[AbyxBot], word: str):
     """Datamuse definition of a word/phrase."""
-    results = await fetch_words(qe='sp', sp=word, md='dpsrf', ipa='1', max=1)
+    results = await fetch_words(ctx, qe='sp', sp=word, md='dpsrf', ipa='1', max=1)
     result: WordResp = results[0]
     if 'defs' not in result:
         await ctx.edit_original_response(
@@ -201,7 +201,7 @@ async def datamuse(ctx: discord.Interaction, word: str):
     ), value=dictionary)
     for dictionary in get_args(Dictionary)
 ])
-async def define(ctx: discord.Interaction, word: str,
+async def define(ctx: discord.Interaction[AbyxBot], word: str,
                  dictionary: Dictionary = 'wiktionary'):
     """Various information about a word, including its definition(s)."""
     await ctx.response.defer()

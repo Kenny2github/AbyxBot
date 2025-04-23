@@ -3,6 +3,7 @@ from functools import partial
 from logging import getLogger
 
 # 3rd-party
+import aiohttp
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -51,6 +52,9 @@ class AbyxTree(app_commands.CommandTree):
         return True
 
 class AbyxBot(commands.Bot):
+
+    session: aiohttp.ClientSession
+
     def __init__(self) -> None:
         super().__init__(
             command_prefix='/',
@@ -60,6 +64,7 @@ class AbyxBot(commands.Bot):
         )
 
     async def setup_hook(self) -> None:
+        self.session = aiohttp.ClientSession()
         if config.debug_guild:
             debug_guild = discord.Object(config.debug_guild)
             self.tree.copy_global_to(guild=debug_guild)

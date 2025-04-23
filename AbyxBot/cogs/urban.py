@@ -11,7 +11,6 @@ from discord import app_commands
 
 # 1st-party
 from ..i18n import error_embed, Msg, mkembed
-from .words import session
 if TYPE_CHECKING:
     from ..lib.client import AbyxBot
 
@@ -46,7 +45,7 @@ def linkify(defn: str) -> str:
     min_score='Only return definitions with at least this net score.',
 )
 async def urban(
-    ctx: discord.Interaction, word: str,
+    ctx: discord.Interaction[AbyxBot], word: str,
     top_n: app_commands.Range[int, 1, 10] = 3,
     min_score: int = 0,
 ):
@@ -54,7 +53,7 @@ async def urban(
     await ctx.response.defer()
     URBAN_URL = 'https://api.urbandictionary.com/v0/define'
     defns: list[UrbanDefinition] = []
-    async with session.get(URBAN_URL, params={'term': word}) as resp:
+    async with ctx.client.session.get(URBAN_URL, params={'term': word}) as resp:
         if resp.ok:
             data: UrbanResp = await resp.json()
             defns.extend(data['list'])

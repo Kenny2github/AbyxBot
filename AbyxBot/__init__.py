@@ -97,7 +97,10 @@ async def done():
             globs['logger'].cancel()
     except RuntimeError as exc:
         print(exc)
-    await bot.close()
+    if not bot.is_closed():
+        await bot.close()
+    if not bot.session.closed:
+        await bot.session.close()
     if db.conn is not None:
         await db.stop()
     await cleanup_tasks()

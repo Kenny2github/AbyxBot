@@ -5,7 +5,6 @@ from operator import itemgetter
 from itertools import groupby
 
 # 3rd-party
-import aiohttp
 import discord
 from discord import app_commands
 
@@ -13,10 +12,6 @@ from discord import app_commands
 from ..i18n import Msg, mkembed, mkmsg, error_embed
 if TYPE_CHECKING:
     from ..lib.client import AbyxBot
-
-# TODO: implement censoring
-
-session: aiohttp.ClientSession = None # type: ignore - set on init
 
 API_URL = 'https://api.datamuse.com/words'
 
@@ -28,10 +23,11 @@ class WordResp(TypedDict):
     defs: list[str]
     defHeadword: str
 
-async def fetch_words(**kwargs) -> list[WordResp]:
+async def fetch_words(ctx: discord.Interaction[AbyxBot], /, **kwargs) -> list[WordResp]:
     """Get API data, passing kwargs."""
-    async with session.get(API_URL, params=kwargs) as resp:
-        return await resp.json()
+    async with ctx.client.session.get(API_URL, params=kwargs) as resp:
+        data: list[WordResp] = await resp.json()
+    return data
 
 @app_commands.command()
 @app_commands.describe(
@@ -64,7 +60,7 @@ async def fetch_words(**kwargs) -> list[WordResp]:
     topics='Bias words related to these words to appear first.'
 )
 async def words(
-    ctx: discord.Interaction,
+    ctx: discord.Interaction[AbyxBot],
     meaning: str | None = None,
     sounding_like: str | None = None,
     spelled_like: str | None = None,
@@ -108,7 +104,7 @@ async def words(
         await ctx.response.send_message(embed=error_embed(ctx, 'words/no-request'))
         return
     await ctx.response.defer()
-    data: list[WordResp] = await fetch_words(**kwargs)
+    data: list[WordResp] = await fetch_words(ctx, **kwargs)
     await ctx.edit_original_response(embed=mkembed(ctx,
         title=Msg('words/title'),
         description=mkmsg(ctx, ',').join(
@@ -123,11 +119,11 @@ async def words(
 @app_commands.command()
 @app_commands.rename(word='with')
 @app_commands.describe(word='The word that other words rhyme with.')
-async def rhymes(ctx: discord.Interaction, word: str):
+async def rhymes(ctx: discord.Interaction[AbyxBot], word: str):
     """Words that rhyme with a word."""
     await ctx.response.defer()
-    perf: list[WordResp] = await fetch_words(rel_rhy=word, md='s')
-    near: list[WordResp] = await fetch_words(rel_nry=word, md='s')
+    perf: list[WordResp] = await fetch_words(ctx, rel_rhy=word, md='s')
+    near: list[WordResp] = await fetch_words(ctx, rel_nry=word, md='s')
     key = itemgetter('numSyllables')
     perf.sort(key=key)
     near.sort(key=key)
@@ -163,7 +159,5 @@ async def rhymes(ctx: discord.Interaction, word: str):
     await ctx.edit_original_response(embeds=[perf_embed, near_embed])
 
 def setup(bot: AbyxBot):
-    global session
-    session = aiohttp.ClientSession()
     bot.tree.add_command(words)
     bot.tree.add_command(rhymes)
