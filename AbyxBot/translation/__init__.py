@@ -152,7 +152,7 @@ async def translate_command(
                            to, from_language, url)
 
 # message ID => jump URL
-translated_message_cache: dict[int, str] = OrderedDict()
+translated_message_cache: OrderedDict[int, str] = OrderedDict()
 MAX_TRANSLATION_CACHE_SIZE = 128
 
 @app_commands.context_menu(name='Translate')
