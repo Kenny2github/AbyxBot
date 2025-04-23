@@ -1,7 +1,7 @@
 from __future__ import annotations
 # stdlib
 import re
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING, TypedDict, Optional
 from operator import itemgetter
 from itertools import groupby
 
@@ -67,23 +67,23 @@ async def fetch_words(ctx: discord.Interaction[AbyxBot], /, **kwargs) -> list[Wo
 )
 async def words(
     ctx: discord.Interaction[AbyxBot],
-    meaning: str | None = None,
-    sounding_like: str | None = None,
-    spelled_like: str | None = None,
-    modified_by: str | None = None,
-    modifying: str | None = None,
-    associated_with: str | None = None,
-    after: str | None = None,
-    before: str | None = None,
-    synonymizing: str | None = None,
-    antonymizing: str | None = None,
-    hypernymizing: str | None = None,
-    hyponymizing: str | None = None,
-    holonymizing: str | None = None,
-    meronymizing: str | None = None,
-    homophonizing: str | None = None,
-    consonantizing: str | None = None,
-    topics: str | None = None,
+    meaning: Optional[str] = None,
+    sounding_like: Optional[str] = None,
+    spelled_like: Optional[str] = None,
+    modified_by: Optional[str] = None,
+    modifying: Optional[str] = None,
+    associated_with: Optional[str] = None,
+    after: Optional[str] = None,
+    before: Optional[str] = None,
+    synonymizing: Optional[str] = None,
+    antonymizing: Optional[str] = None,
+    hypernymizing: Optional[str] = None,
+    hyponymizing: Optional[str] = None,
+    holonymizing: Optional[str] = None,
+    meronymizing: Optional[str] = None,
+    homophonizing: Optional[str] = None,
+    consonantizing: Optional[str] = None,
+    topics: Optional[str] = None,
 ):
     """Lexical data related to words! Parameters can be combined."""
     kwargs = {
