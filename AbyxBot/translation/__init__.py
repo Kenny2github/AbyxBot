@@ -17,7 +17,6 @@ from google.cloud import translate
 # 1st-party
 from ..consts.chars import REGU
 from ..consts.config import config
-from ..consts.type_hints import HistoriedChannel
 from ..i18n import IDContext, Msg, error_embed
 from ..lib.utils import AttrDict, asyncify
 from .discord_markdown import html_to_md, md_to_html
@@ -139,7 +138,7 @@ async def translate_command(
         await ctx.response.defer()
         texts = [text]
         url = None
-    elif isinstance(ctx.channel, HistoriedChannel):
+    elif isinstance(ctx.channel, discord.abc.Messageable):
         await ctx.response.defer()
         msgs: list[discord.Message] = [m async for m in ctx.channel.history(
             limit=count+1)][:0:-1]
@@ -218,7 +217,7 @@ def setup(bot: commands.Bot):
             return # can't find user, ignore event
         # needed to fetch the message in question
         channel = bot.get_channel(event.channel_id)
-        if not isinstance(channel, HistoriedChannel):
+        if not isinstance(channel, discord.abc.Messageable):
             return # ditto
         message: discord.Message = await channel.fetch_message(event.message_id)
         for reaction in message.reactions:
