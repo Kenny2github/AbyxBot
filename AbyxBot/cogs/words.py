@@ -1,5 +1,6 @@
 from __future__ import annotations
 # stdlib
+import re
 from typing import TYPE_CHECKING, TypedDict
 from operator import itemgetter
 from itertools import groupby
@@ -9,6 +10,7 @@ import discord
 from discord import app_commands
 
 # 1st-party
+from ..lib.database import db
 from ..i18n import Msg, mkembed, mkmsg, error_embed
 if TYPE_CHECKING:
     from ..lib.client import AbyxBot
@@ -27,6 +29,10 @@ async def fetch_words(ctx: discord.Interaction[AbyxBot], /, **kwargs) -> list[Wo
     """Get API data, passing kwargs."""
     async with ctx.client.session.get(API_URL, params=kwargs) as resp:
         data: list[WordResp] = await resp.json()
+    if ctx.guild_id:
+        censor = await db.guild_words_censor(ctx.guild_id)
+        if censor:
+            data = [d for d in data if not re.search(censor, d['word'])]
     return data
 
 @app_commands.command()
