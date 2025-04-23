@@ -1,9 +1,10 @@
+from __future__ import annotations
 # stdlib
 import json
 import os
 import re
 from logging import getLogger
-from typing import Callable, Iterable, Optional, Union, cast
+from typing import TYPE_CHECKING, Callable, Iterable, Optional, Union, cast
 from collections import OrderedDict
 from functools import partial
 import asyncio
@@ -11,7 +12,6 @@ import asyncio
 # 3rd-party
 import discord
 from discord import app_commands
-from discord.ext import commands
 from google.cloud import translate
 
 # 1st-party
@@ -20,6 +20,8 @@ from ..consts.config import config
 from ..i18n import IDContext, Msg, error_embed
 from ..lib.utils import AttrDict, asyncify
 from .discord_markdown import html_to_md, md_to_html
+if TYPE_CHECKING:
+    from ..lib.client import AbyxBot
 
 logger = getLogger(__name__)
 
@@ -181,7 +183,7 @@ async def translate_context_menu(
             # pop from beginning (least recently used)
             translated_message_cache.popitem(last=False)
 
-def setup(bot: commands.Bot):
+def setup(bot: AbyxBot):
     bot.tree.add_command(translate_command)
     bot.tree.add_command(translate_context_menu)
 

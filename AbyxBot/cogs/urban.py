@@ -1,17 +1,19 @@
+from __future__ import annotations
 # stdlib
 import re
 from datetime import datetime
 from urllib.parse import urlencode
-from typing import TypedDict, Match
+from typing import TYPE_CHECKING, TypedDict, Match
 
 # 3rd-party
 import discord
 from discord import app_commands
-from discord.ext import commands
 
 # 1st-party
 from ..i18n import error_embed, Msg, mkembed
 from .words import session
+if TYPE_CHECKING:
+    from ..lib.client import AbyxBot
 
 # NOTE: These TypedDicts only include fields we use
 
@@ -90,5 +92,5 @@ async def urban(
         embeds.append(embed)
     await ctx.edit_original_response(embeds=embeds)
 
-def setup(bot: commands.Bot):
+def setup(bot: AbyxBot):
     bot.tree.add_command(urban)

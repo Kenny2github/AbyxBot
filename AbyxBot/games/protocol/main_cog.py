@@ -1,15 +1,17 @@
+from __future__ import annotations
 # stdlib
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 # 3rd-party
 import discord
 from discord import app_commands
-import discord.ext.commands as commands
 from discord.app_commands import locale_str as _
 
 # 1st-party
 from ...i18n import Msg, error_embed
 from .lobby import LobbyView, GameProperties
+if TYPE_CHECKING:
+    from ...lib.client import AbyxBot
 
 games: dict[str, type[GameProperties]] = {}
 
@@ -17,7 +19,7 @@ def add_game(game: type[GameProperties]) -> None:
     """Register the game view type to the game name."""
     games[game.name] = game
 
-def setup(bot: commands.Bot):
+def setup(bot: AbyxBot):
 
     @app_commands.command()
     @app_commands.choices(

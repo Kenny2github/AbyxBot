@@ -1,10 +1,11 @@
+from __future__ import annotations
 # stdlib
 import re
 from io import StringIO
 from contextlib import redirect_stdout
 import traceback
 import asyncio
-from typing import Any, Awaitable, Callable, cast
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, cast
 
 # 3rd-party
 import discord
@@ -14,6 +15,8 @@ from discord import app_commands
 # 1st-party
 from ..i18n import Msg, error_embed, mkmsg
 from ..lib.utils import asyncify
+if TYPE_CHECKING:
+    from ..lib.client import AbyxBot
 
 # eval-related stuff
 
@@ -132,5 +135,5 @@ class Sudo(app_commands.Group):
         """Evaluate arbitrary code."""
         await ctx.response.send_modal(EvalModal(ctx))
 
-def setup(bot: commands.Bot):
+def setup(bot: AbyxBot):
     bot.tree.add_command(Sudo())

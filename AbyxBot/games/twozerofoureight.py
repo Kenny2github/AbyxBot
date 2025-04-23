@@ -1,6 +1,7 @@
+from __future__ import annotations
 # stdlib
 import random
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 # 3rd-party
 import discord
@@ -13,6 +14,8 @@ from ..i18n import Msg, error_embed, mkembed
 from ..lib.database import db
 from ..lib.utils import str_to_emoji
 from .protocol.engine import GameEngine
+if TYPE_CHECKING:
+    from ..lib.client import AbyxBot
 
 TWO_CHANCE = 0.9
 TIMEOUT = 60.0
@@ -315,5 +318,5 @@ class Pow211(commands.Cog):
             if game.points > highscore:
                 await db.set_2048_highscore(ctx.user.id, game.points)
 
-async def setup(bot: commands.Bot):
+async def setup(bot: AbyxBot):
     await bot.add_cog(Pow211())

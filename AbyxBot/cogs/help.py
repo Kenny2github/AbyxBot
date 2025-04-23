@@ -1,12 +1,17 @@
+from __future__ import annotations
+# stdlib
+from typing import TYPE_CHECKING
+
 # 3rd-party
 import discord
 from discord import app_commands
-import discord.ext.commands as commands
 from discord.app_commands import locale_str as _
 
 # 1st-party
 from ..i18n import Msg, mkembed
 from ..lib.utils import similarity
+if TYPE_CHECKING:
+    from ..lib.client import AbyxBot
 
 COMMANDS_WITH_HELP = {
     'help/convert',
@@ -25,5 +30,5 @@ async def help(ctx: discord.Interaction, command: str):
         color=discord.Color.blue()
     ))
 
-def setup(bot: commands.Bot):
+def setup(bot: AbyxBot):
     bot.tree.add_command(help)

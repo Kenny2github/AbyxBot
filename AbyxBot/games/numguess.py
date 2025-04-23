@@ -1,7 +1,8 @@
+from __future__ import annotations
 # stdlib
 import re
 import random
-from typing import Callable, Optional
+from typing import TYPE_CHECKING, Callable, Optional
 
 # 3rd-party
 import discord
@@ -11,6 +12,8 @@ from discord.ext import commands
 # 1st-party
 from ..i18n import Msg, mkembed
 from .protocol.engine import GameEngine
+if TYPE_CHECKING:
+    from ..lib.client import AbyxBot
 
 TIMEOUT = 60.0
 NUM_RE = re.compile('^[0-9]+$')
@@ -114,5 +117,5 @@ class Numguess(commands.Cog):
             kwargs['description'] = Msg(f'numguess/cmp:{result}')
         return mkembed(ctx, **kwargs)
 
-async def setup(bot: commands.Bot):
+async def setup(bot: AbyxBot):
     await bot.add_cog(Numguess())

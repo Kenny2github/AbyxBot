@@ -1,7 +1,8 @@
+from __future__ import annotations
 # stdlib
 import asyncio
 import json
-from typing import Callable, Optional
+from typing import TYPE_CHECKING, Callable, Optional
 import unicodedata
 
 # 3rd-party
@@ -12,6 +13,8 @@ from discord import app_commands
 # 1st-party
 from ..consts.config import config
 from ..i18n import mkmsg, mkembed, error_embed, Msg
+if TYPE_CHECKING:
+    from ..lib.client import AbyxBot
 
 def check_msg(user: Optional[discord.User] = None,
               matches: Optional[str] = None
@@ -161,6 +164,6 @@ class Miscellaneous(commands.Cog):
         embed.set_thumbnail(url=ainfo.icon.url)
         await ctx.response.send_message(embed=embed)
 
-async def setup(bot: commands.Bot):
+async def setup(bot: AbyxBot):
     await bot.add_cog(Miscellaneous())
     bot.tree.add_command(purge_after)

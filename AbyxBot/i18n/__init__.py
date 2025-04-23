@@ -1,8 +1,9 @@
+from __future__ import annotations
 # stdlib
 import time
 from logging import getLogger
 from typing import (
-    Any, Callable, Coroutine, Iterable,
+    TYPE_CHECKING, Any, Callable, Coroutine, Iterable,
     Optional, TypeVar, Union, get_args,
     overload,
 )
@@ -11,7 +12,6 @@ import asyncio
 # 3rd-party
 import discord
 from discord import app_commands
-import discord.ext.commands as commands
 from discord.app_commands import locale_str as _
 
 # 1st-party
@@ -19,6 +19,8 @@ from ..consts.type_hints import ChannelLike, Mentionable, NamespaceChannel
 from ..consts.chars import LABR, RABR
 from ..lib.database import db
 from .load_i18n import load_i18n_strings, SUPPORTED_LANGS
+if TYPE_CHECKING:
+    from ..lib.client import AbyxBot
 
 logger = getLogger(__name__)
 
@@ -413,7 +415,7 @@ class CommandTranslator(app_commands.Translator):
         logger.debug('Translated %r to %r', key, lang)
         return result
 
-async def setup(bot: commands.Bot):
+async def setup(bot: AbyxBot):
     bot.tree.add_command(Internationalization())
     await Msg.load_config()
     await bot.tree.set_translator(CommandTranslator())

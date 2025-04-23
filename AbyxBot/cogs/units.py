@@ -1,6 +1,7 @@
+from __future__ import annotations
 # stdlib
 from decimal import Decimal as D, InvalidOperation
-from typing import Iterable, Optional, Union
+from typing import TYPE_CHECKING, Iterable, Optional, Union
 
 # 3rd-party
 import discord
@@ -11,6 +12,8 @@ from discord.ext import commands
 from ..consts.chars import ZWNJ
 from ..i18n import Msg, error_embed, mkembed, mkmsg
 from ..lib.utils import similarity
+if TYPE_CHECKING:
+    from ..lib.client import AbyxBot
 
 UNITS: dict[str, tuple[tuple[list[str], Union[D, str]], ...]] = {
     'area': (
@@ -421,5 +424,5 @@ class Units(commands.Cog):
                 color=discord.Color.blue()
             ))
 
-async def setup(bot: commands.Bot):
+async def setup(bot: AbyxBot):
     await bot.add_cog(Units())

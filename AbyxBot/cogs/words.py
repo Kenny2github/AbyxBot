@@ -1,5 +1,6 @@
+from __future__ import annotations
 # stdlib
-from typing import TypedDict
+from typing import TYPE_CHECKING, TypedDict
 from operator import itemgetter
 from itertools import groupby
 
@@ -7,10 +8,11 @@ from itertools import groupby
 import aiohttp
 import discord
 from discord import app_commands
-from discord.ext import commands
 
 # 1st-party
 from ..i18n import Msg, mkembed, mkmsg, error_embed
+if TYPE_CHECKING:
+    from ..lib.client import AbyxBot
 
 # TODO: implement censoring
 
@@ -160,7 +162,7 @@ async def rhymes(ctx: discord.Interaction, word: str):
     )
     await ctx.edit_original_response(embeds=[perf_embed, near_embed])
 
-def setup(bot: commands.Bot):
+def setup(bot: AbyxBot):
     global session
     session = aiohttp.ClientSession()
     bot.tree.add_command(words)

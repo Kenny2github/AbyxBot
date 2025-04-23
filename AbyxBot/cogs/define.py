@@ -1,17 +1,20 @@
+from __future__ import annotations
 # stdlib
 import json
 from urllib.parse import quote as urlquote
-from typing import TypedDict, Literal, AsyncIterable, Iterable, Any, get_args
+from typing import TYPE_CHECKING, TypedDict, Literal, AsyncIterable, Iterable, \
+    Any, get_args
 from typing_extensions import assert_never, NotRequired
 
 # 3rd-party
 import discord
 from discord import app_commands
-from discord.ext import commands
 
 # 1st-party
 from ..i18n import error_embed, Msg, mkembed, mkmsg
 from .words import fetch_words, WordResp, session
+if TYPE_CHECKING:
+    from ..lib.client import AbyxBot
 
 Dictionary = Literal[
     'wiktionary',
@@ -209,5 +212,5 @@ async def define(ctx: discord.Interaction, word: str,
     else:
         assert_never(dictionary)
 
-def setup(bot: commands.Bot):
+def setup(bot: AbyxBot):
     bot.tree.add_command(define)
