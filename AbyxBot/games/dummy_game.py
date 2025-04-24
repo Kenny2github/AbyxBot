@@ -7,7 +7,7 @@ import discord
 
 # 1st-party
 from .protocol.lobby import GameProperties, LobbyPlayers
-from .protocol.main_cog import add_game
+from .protocol.cmd import add_game
 
 class DummyGameView(discord.ui.View):
 

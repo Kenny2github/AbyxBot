@@ -15,7 +15,7 @@ from ..i18n import Msg, error_embed, mkembed, mkmsg
 from ..lib.utils import BroadcastQueue
 from .protocol.engine import GameEngine
 from .protocol.lobby import GameProperties, LobbyPlayers
-from .protocol.main_cog import add_game
+from .protocol.cmd import add_game
 
 logger = getLogger(__name__)
 

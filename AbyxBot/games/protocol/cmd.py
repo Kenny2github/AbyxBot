@@ -19,6 +19,15 @@ def add_game(game: type[GameProperties]) -> None:
     """Register the game view type to the game name."""
     games[game.name] = game
 
+async def check_game(ctx: discord.Interaction) -> bool:
+    if ctx.guild is None:
+        return True # always allowed in DMs
+    if games[ctx.namespace.game].dm_only:
+        await ctx.response.send_message(embed=error_embed(
+            ctx, Msg('lobby/dm-only-error')), ephemeral=True)
+        return False
+    return True
+
 def setup(bot: AbyxBot):
 
     @app_commands.command()
@@ -41,15 +50,6 @@ def setup(bot: AbyxBot):
             lobbier = host
         LobbyView(ctx.client, message, viewer=ctx.user,
                   game=games[game], host=lobbier)
-
-    async def check_game(ctx: discord.Interaction) -> bool:
-        if ctx.guild is None:
-            return True # always allowed in DMs
-        if games[ctx.namespace.game].dm_only:
-            await ctx.response.send_message(embed=error_embed(
-                ctx, Msg('lobby/dm-only-error')), ephemeral=True)
-            return False
-        return True
 
     game.add_check(check_game)
     bot.tree.add_command(game)
