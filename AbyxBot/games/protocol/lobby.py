@@ -4,7 +4,7 @@ from abc import ABCMeta, abstractmethod
 from logging import getLogger
 from collections import defaultdict
 from enum import Enum, auto
-from typing import Optional
+from typing import ClassVar, Optional
 from dataclasses import dataclass, field
 import asyncio
 
@@ -41,47 +41,25 @@ class GameProperties(metaclass=ABCMeta):
         id_to_game[game_id] = cls.name
         game_to_id[cls.name] = game_id
 
-    @classmethod
-    @property
-    @abstractmethod
-    def name(cls) -> str:
-        """The name of the game."""
-        raise NotImplementedError
+    name: ClassVar[str]
+    """The name of the game"""
 
-    @classmethod
-    @property
-    @abstractmethod
-    def wait_time(cls) -> int:
-        """How long to wait before starting (public lobbies only)."""
-        raise NotImplementedError
+    wait_time: ClassVar[int]
+    """How long to wait before starting (public lobbies only)."""
 
-    @classmethod
-    @property
-    def min_players(cls) -> int:
-        """The minimum number of players required to start."""
-        return 2
+    min_players: ClassVar[int] = 2
+    """The minimum number of players required to start."""
 
-    @classmethod
-    @property
-    def max_players(cls) -> Optional[int]:
-        """The maximum number of players allowed in a game.
-        None for no maximum.
-        """
-        return 2
+    max_players: ClassVar[Optional[int]] = 2
+    """The maximum number of players allowed in a game. None for no maximum."""
 
-    @classmethod
-    @property
-    def max_spectators(cls) -> Optional[int]:
-        """The maximum number of spectators allowed in a game.
-        None for no maximum.
-        """
-        return 0
+    max_spectators: ClassVar[Optional[int]] = 0
+    """The maximum number of spectators allowed in a game.
+    None for no maximum.
+    """
 
-    @classmethod
-    @property
-    def dm_only(cls) -> bool:
-        """Whether this game can only be played in DMs."""
-        return False
+    dm_only: bool = False
+    """Whether this game can only be played in DMs."""
 
 class Update(Enum):
     """The type of update being broadcast."""

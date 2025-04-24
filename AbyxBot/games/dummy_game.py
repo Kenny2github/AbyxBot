@@ -42,11 +42,11 @@ class DummyGameView(discord.ui.View):
 
 class DummyGame(GameProperties, game_id=00):
 
-    name: str = 'dummygame'
-    wait_time: int = 20
-    min_players: int = 2
-    max_players: int = 3
-    max_spectators: int = 0
+    name = 'dummygame'
+    wait_time = 20
+    min_players = 2
+    max_players = 3
+    max_spectators = 0
 
     def __init__(self, *, players: LobbyPlayers, spectators: LobbyPlayers) -> None:
         for viewer in chain(players.keys(), spectators.keys()):
