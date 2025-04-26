@@ -40,10 +40,8 @@ async def post_purge(ctx: discord.Interaction, deleted: int) -> None:
 @app_commands.checks.has_permissions(manage_messages=True)
 @app_commands.checks.bot_has_permissions(manage_messages=True)
 async def purge_after(ctx: discord.Interaction, msg: discord.Message):
-    if not isinstance(ctx.channel, discord.abc.Messageable):
-        return
-    if isinstance(ctx.channel, discord.PartialMessageable):
-        return
+    assert isinstance(ctx.channel, discord.abc.Messageable) \
+        and isinstance(ctx.channel, discord.abc.GuildChannel)
     await ctx.response.defer(ephemeral=True)
     deleted = len(await ctx.channel.purge(after=msg))
     await post_purge(ctx, deleted)
@@ -91,10 +89,8 @@ class Miscellaneous(commands.Cog):
                     user: Optional[discord.User] = None,
                     matches: Optional[str] = None):
         """Purge messages. See descriptions of the `after` and `limit` parameters."""
-        if not isinstance(ctx.channel, discord.abc.Messageable):
-            return
-        if isinstance(ctx.channel, discord.PartialMessageable):
-            return
+        assert isinstance(ctx.channel, discord.abc.Messageable) \
+            and isinstance(ctx.channel, discord.abc.GuildChannel)
         def check_msg(msg: discord.Message) -> bool:
             if user is not None:
                 if msg.author.id != user.id:
