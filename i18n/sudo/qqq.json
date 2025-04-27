@@ -4,5 +4,5 @@
 	"cant": "Error for non-bot-owners",
 	"stop": "`/sudo stop` success message",
 	"r25n": "`/sudo r25n` success message",
-	"sync": "`/sudo sync` success message"
+	"sync": "`/sudo sync` success message. {0} is the number of commands synced"
 }

@@ -125,9 +125,9 @@ class Sudo(app_commands.Group):
 
         NOTE: Never change the signature for this command.
         """
-        await ctx.client.tree.sync()
+        count = len(await ctx.client.tree.sync())
         await ctx.response.send_message(
-            mkmsg(ctx, 'sudo/sync'), ephemeral=True)
+            mkmsg(ctx, 'sudo/sync', count), ephemeral=True)
 
     @app_commands.command()
     async def eval(self, ctx: discord.Interaction):
