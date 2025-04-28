@@ -100,22 +100,20 @@ class Numguess(commands.Cog):
 
     def gen_embed(self, ctx: discord.Interaction, game: NumguessEngine,
                   result: Optional[int]) -> discord.Embed:
-        kwargs = dict(
+        return mkembed(ctx,
             title=Msg('numguess/title'),
+            # numguess/cmp:-2
+            # numguess/cmp:-1
+            # numguess/cmp:0
+            # numguess/cmp:1
+            # numguess/cmp:2
+            description=None if result is None else Msg(f'numguess/cmp:{result}'),
             fields=((Msg('numguess/min'), game.cur_min, True),
                     (Msg('numguess/max'), game.cur_max, True),
                     (Msg('numguess/tries'), game.tries, True)),
             footer=Msg('numguess/footer'),
             color=discord.Color.gold() if game.won() is False else 0x000001
         )
-        if result is not None:
-            # numguess/cmp:-2
-            # numguess/cmp:-1
-            # numguess/cmp:0
-            # numguess/cmp:1
-            # numguess/cmp:2
-            kwargs['description'] = Msg(f'numguess/cmp:{result}')
-        return mkembed(ctx, **kwargs)
 
 async def setup(bot: AbyxBot):
     await bot.add_cog(Numguess())
