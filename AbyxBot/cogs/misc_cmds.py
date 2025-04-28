@@ -37,6 +37,9 @@ async def post_purge(ctx: discord.Interaction, deleted: int) -> None:
     await asyncio.sleep(2)
 
 @app_commands.context_menu(name='Purge after this')
+# can't purge in DMs
+@app_commands.allowed_contexts(dms=False, private_channels=False)
+@app_commands.allowed_installs(users=False)
 @app_commands.checks.has_permissions(manage_messages=True)
 @app_commands.checks.bot_has_permissions(manage_messages=True)
 async def purge_after(ctx: discord.Interaction, msg: discord.Message):
