@@ -77,6 +77,9 @@ class Miscellaneous(commands.Cog):
         ))
 
     @app_commands.command()
+    # can't purge in DMs
+    @app_commands.allowed_contexts(dms=False, private_channels=False)
+    @app_commands.allowed_installs(users=False)
     @app_commands.describe(
         limit='Purge (at most) this many messages into the past.',
         user='Only purge messages from this user.',
