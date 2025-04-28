@@ -47,7 +47,7 @@ class Msg:
 
     # instance attributes
     key: str # i18n key
-    params: tuple[Union[str, 'Msg']] # {0}, {1}, etc
+    params: tuple[Union[str, 'Msg'], ...] # {0}, {1}, etc
     kwparams: dict[str, Union[str, 'Msg']] # {param}, {another}, etc
     lang: Optional[str] = None # can be set later
     # only set on init if lang is provided
@@ -250,7 +250,7 @@ def lang_opt(func: T) -> T:
         # sort languages here so that command definition updates
         # aren't triggered by differing choice orders
         for key in sorted(SUPPORTED_LANGS) if key != 'qqq'
-    ]))(func)
+    ])(func))
 
 def channel_opt(func: T) -> T:
     return app_commands.describe(
@@ -312,7 +312,7 @@ class ChannelI18n(app_commands.Group, _I18n):
             channel = channel.resolve()
         if channel is None:
             return False # if we can't get a channel, assume no perms
-        if isinstance(channel, discord.PartialMessageable) \
+        if not isinstance(channel, discord.abc.GuildChannel) \
                 or not isinstance(ctx.user, discord.Member):
             return False # if we're in a DM, fail
         if not channel.permissions_for(ctx.user).manage_channels:
