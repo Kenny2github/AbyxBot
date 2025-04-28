@@ -32,7 +32,7 @@ MODULES: dict[str, tuple[str, str]] = {
     'Connect 4': ('games.connect4', 'connect4'),
     'Go Fish': ('games.card_games.go_fish', 'go_fish'),
     # NOTE: This must come after all game entries
-    'Games': ('games.protocol.main_cog', 'games'),
+    'Games': ('games.protocol.cmd', 'games'),
 }
 
 logger = getLogger(__name__)
