@@ -114,7 +114,7 @@ async def words(
     await ctx.edit_original_response(embed=mkembed(ctx,
         title=Msg('words/title'),
         description=mkmsg(ctx, ',').join(
-            '{score}: {word}'.format(**i)
+            '{score}: {word}'.format(**({'score': -1} | i))
             for i in data
         ) or Msg('none-paren'),
         color=discord.Color.blue()
